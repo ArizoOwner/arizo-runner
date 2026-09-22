@@ -848,7 +848,7 @@ export default {
         afkEnabled: !!auth.user.telegram?.afkEnabled,
         afkMessage: auth.user.telegram?.afkMessage || '',
         afkCooldown: auth.user.telegram?.afkCooldown ?? 10,
-        muteEnabled: !!auth.user.telegram?.muteEnabled,
+        muteEnabled: !!auth.user.telegram?.muteEnabled || (Array.isArray(auth.user.telegram?.mutedUsers) && auth.user.telegram.mutedUsers.length > 0),
         mutedUsers: auth.user.telegram?.mutedUsers || [],
         antiTtlEnabled: !!auth.user.telegram?.antiTtlEnabled,
         status: liveStatus
@@ -1110,14 +1110,19 @@ export default {
       if (b.afkCooldown !== undefined) {
         auth.user.telegram.afkCooldown = Math.max(1, parseInt(b.afkCooldown, 10) || 10);
       }
-      if (b.muteEnabled !== undefined) {
-        auth.user.telegram.muteEnabled = !!b.muteEnabled;
-      }
       if (b.mutedUsers !== undefined) {
         if (Array.isArray(b.mutedUsers)) {
           auth.user.telegram.mutedUsers = b.mutedUsers.map(x => String(x).trim()).filter(Boolean);
         } else if (typeof b.mutedUsers === 'string') {
-          auth.user.telegram.mutedUsers = b.mutedUsers.split(',').map(x => x.trim()).filter(Boolean);
+          auth.user.telegram.mutedUsers = b.mutedUsers.split(/[,،;\s]+/).map(x => x.trim()).filter(Boolean);
+        }
+      }
+      if (b.muteEnabled !== undefined) {
+        auth.user.telegram.muteEnabled = !!b.muteEnabled;
+      }
+      if (Array.isArray(auth.user.telegram.mutedUsers) && auth.user.telegram.mutedUsers.length > 0) {
+        if (b.muteEnabled !== false) {
+          auth.user.telegram.muteEnabled = true;
         }
       }
       if (b.antiTtlEnabled !== undefined) {
@@ -1227,7 +1232,7 @@ export default {
             afkEnabled: !!u.telegram.afkEnabled,
             afkMessage: u.telegram.afkMessage || '',
             afkCooldown: u.telegram.afkCooldown ?? 10,
-            muteEnabled: !!u.telegram.muteEnabled,
+            muteEnabled: !!u.telegram.muteEnabled || (Array.isArray(u.telegram.mutedUsers) && u.telegram.mutedUsers.length > 0),
             mutedUsers: u.telegram.mutedUsers || [],
             antiTtlEnabled: !!u.telegram.antiTtlEnabled,
             lastTime: u.status?.lastTime || null,
@@ -1282,6 +1287,9 @@ export default {
           const u = await env.KV.get('user:' + username, 'json');
           if (u && u.telegram) {
             u.telegram.mutedUsers = mutedUsers.map(x => String(x).trim()).filter(Boolean);
+            if (u.telegram.mutedUsers.length > 0) {
+              u.telegram.muteEnabled = true;
+            }
             await env.KV.put('user:' + username, JSON.stringify(u));
           }
         }
