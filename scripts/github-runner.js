@@ -21,6 +21,7 @@ import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import { NewMessage } from 'telegram/events/index.js';
 import { CustomFile } from 'telegram/client/uploads.js';
+import { strippedPhotoToJpg } from 'telegram/Utils.js';
 import { getStylizedTime, renderDynamicBio, isSleepTime } from '../src/clock.js';
 import { decryptSession } from '../src/crypto.js';
 
@@ -46,11 +47,13 @@ console.log(`📱 Client App ID: ${API_ID} (Official Telegram Desktop)`);
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
 /**
- * نرمال‌سازی و پاکسازی ورودی‌های لیست سکوت (حذف @، لینک‌های t.me و فاصله‌ها)
+ * نرمال‌سازی و پاکسازی ورودی‌های لیست سکوت (حذف @، لینک‌های t.me، فاصله‌ها و تبدیل اعداد فارسی/عربی)
  */
 function cleanMuteTarget(raw) {
   if (!raw) return '';
   let str = String(raw).trim().toLowerCase();
+  str = str.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  str = str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
   str = str.replace(/^https?:\/\/(www\.)?t\.me\//i, '');
   str = str.replace(/^t\.me\//i, '');
   str = str.replace(/^tg:\/\/resolve\?domain=/i, '');
@@ -70,19 +73,27 @@ function resolveMutedUsernames(entry) {
   for (const raw of list) {
     const clean = cleanMuteTarget(raw);
     if (!clean) continue;
-    // اگر آیدی عددی نباشد، یعنی یک یوزرنیم است
-    if (!/^-?\d+$/.test(clean)) {
-      entry.client.getEntity(clean).then(ent => {
-        if (ent && ent.id) {
-          const idStr = ent.id.toString();
-          if (!entry.settings.mutedUsers.includes(idStr)) {
-            entry.settings.mutedUsers.push(idStr);
-            console.log(`🔇 [${clean}] Resolved muted username to Telegram ID: ${idStr}`);
-          }
-          if (entry.localMutedUsers) entry.localMutedUsers.add(idStr);
-        }
-      }).catch(() => {});
+    // اگر آیدی عددی باشد، به لیست محلی اضافه می‌کنیم
+    if (/^-?\d+$/.test(clean)) {
+      if (entry.localMutedUsers) entry.localMutedUsers.add(clean);
+      continue;
     }
+    // اگر یوزرنیم باشد، هویت و AccessHash آن را فعالانه استعلام و در کش کلاینت ذخیره می‌کنیم
+    entry.client.getEntity(clean).then(ent => {
+      if (ent && ent.id) {
+        const idStr = ent.id.toString();
+        if (!entry.settings.mutedUsers.includes(idStr)) {
+          entry.settings.mutedUsers.push(idStr);
+          console.log(`🔇 [${clean}] Resolved muted username to Telegram ID: ${idStr}`);
+        }
+        if (entry.localMutedUsers) entry.localMutedUsers.add(idStr);
+        // ذخیره قطعی در کش انتیتی و نشست حافظه جهت دسترسی فوری در پیام‌های دریافتی
+        try {
+          entry.client._entityCache.add(ent);
+          entry.client.session.processEntities(ent);
+        } catch (_) {}
+      }
+    }).catch(() => {});
   }
 }
 
@@ -92,9 +103,12 @@ function resolveMutedUsernames(entry) {
 async function deleteTelegramMessage(client, message, username = '') {
   const msgId = message.id;
   let deleted = false;
+  const targetPeer = message.peerId || message.chatId || message.senderId;
+  const isChannel = Boolean(message.isChannel || (message.peerId && (message.peerId.className === 'PeerChannel' || message.peerId instanceof Api.PeerChannel)));
+  const isPrivate = Boolean(message.isPrivate || (message.peerId && (message.peerId.className === 'PeerUser' || message.peerId instanceof Api.PeerUser)) || (!isChannel && !message.isGroup));
 
-  // ۱. حذف در کانال یا سوپرگروه (Supergroup / Channel)
-  if (message.isChannel || (message.peerId instanceof Api.PeerChannel)) {
+  // ۱. حذف در کانال یا سوپرگروه (Supergroup / Channel) با channels.DeleteMessages
+  if (isChannel && message.peerId) {
     try {
       const channelPeer = await client.getInputEntity(message.peerId).catch(() => message.peerId);
       await client.invoke(new Api.channels.DeleteMessages({
@@ -104,48 +118,137 @@ async function deleteTelegramMessage(client, message, username = '') {
       deleted = true;
       console.log(`✅ [${username}] Muted message #${msgId} deleted via channels.DeleteMessages`);
     } catch (err1) {
-      console.warn(`⚠️ [${username}] channels.DeleteMessages failed: ${err1.message}`);
+      console.warn(`⚠️ [${username}] channels.DeleteMessages warning: ${err1.message}`);
     }
   }
 
-  // ۲. حذف دوطرفه در پیوی و گروه‌های عادی (Private Chat / Basic Group)
-  if (!deleted) {
+  // ۲. روش مستقیم و قطعی RPC پیام‌ها (Api.messages.DeleteMessages با revoke: true)
+  // این متد برای پیام‌های پیوی و گروه‌های عادی نیازی به InputPeer ندارد و مستقیماً دوطرفه حذف می‌شود
+  try {
+    await client.invoke(new Api.messages.DeleteMessages({
+      id: [msgId],
+      revoke: true
+    }));
+    deleted = true;
+    console.log(`✅ [${username}] Muted message #${msgId} deleted via messages.DeleteMessages (revoke: true)`);
+  } catch (err2) {
+    console.warn(`⚠️ [${username}] messages.DeleteMessages warning: ${err2.message}`);
+  }
+
+  // ۳. در چت‌های خصوصی، اجرای همزمان DeleteHistory دوطرفه جهت تضمین ۱۰۰٪ محو شدن کامل پیام برای هر دو طرف
+  if (isPrivate && targetPeer) {
     try {
-      await client.invoke(new Api.messages.DeleteMessages({
-        id: [msgId],
-        revoke: true
-      }));
-      deleted = true;
-      console.log(`✅ [${username}] Muted message #${msgId} deleted via messages.DeleteMessages`);
-    } catch (err2) {
-      console.warn(`⚠️ [${username}] messages.DeleteMessages failed: ${err2.message}`);
+      const inputPeer = await client.getInputEntity(targetPeer).catch(() => null);
+      if (inputPeer) {
+        await client.invoke(new Api.messages.DeleteHistory({
+          peer: inputPeer,
+          maxId: msgId,
+          revoke: true,
+          justClear: false
+        }));
+        deleted = true;
+        console.log(`✅ [${username}] Muted message #${msgId} history revoked via messages.DeleteHistory`);
+      }
+    } catch (err3) {
+      console.warn(`⚠️ [${username}] messages.DeleteHistory warning: ${err3.message}`);
     }
   }
 
-  // ۳. روش کمکی GramJS deleteMessages با مشخص کردن مخاطب چت
-  if (!deleted) {
+  // ۴. روش رسمی GramJS deleteMessages (پشتیبان)
+  if (!deleted && targetPeer) {
     try {
-      const chatTarget = message.peerId || message.chatId;
-      await client.deleteMessages(chatTarget, [msgId], { revoke: true });
+      await client.deleteMessages(targetPeer, [msgId], { revoke: true });
       deleted = true;
       console.log(`✅ [${username}] Muted message #${msgId} deleted via client.deleteMessages`);
-    } catch (err3) {
-      console.warn(`⚠️ [${username}] client.deleteMessages failed: ${err3.message}`);
+    } catch (err4) {
+      console.warn(`⚠️ [${username}] client.deleteMessages warning: ${err4.message}`);
     }
   }
 
-  // ۴. آخرین تلاش با متد مستقیم Message
+  // ۵. روش شیء پیام (message.delete)
   if (!deleted) {
     try {
       await message.delete({ revoke: true });
       deleted = true;
       console.log(`✅ [${username}] Muted message #${msgId} deleted via message.delete`);
-    } catch (err4) {
-      console.error(`❌ [${username}] All delete methods failed for message #${msgId}: ${err4.message}`);
+    } catch (err5) {
+      console.warn(`⚠️ [${username}] message.delete warning: ${err5.message}`);
     }
   }
 
   return deleted;
+}
+
+/**
+ * دانلود فوق‌پایدار و ۵ لایه انواع رسانه‌های تلگرام با استراتژی‌های جبران خطا و بازیابی
+ */
+async function downloadMediaSafely(client, message, username) {
+  let buffer = null;
+
+  // مرحله ۱: دانلود مستقیم از شیء پیام
+  try {
+    buffer = await client.downloadMedia(message);
+    if (buffer && buffer.length > 0) return buffer;
+  } catch (err1) {
+    console.warn(`⚠️ [${username}] Layer 1 downloadMedia(message) failed: ${err1.message}`);
+  }
+
+  // مرحله ۲: دانلود مستقیم از آبجکت media
+  if (message.media) {
+    try {
+      buffer = await client.downloadMedia(message.media);
+      if (buffer && buffer.length > 0) return buffer;
+    } catch (err2) {
+      console.warn(`⚠️ [${username}] Layer 2 downloadMedia(message.media) failed: ${err2.message}`);
+    }
+  }
+
+  // مرحله ۳: استعلام پیام تازه از سرور تلگرام با getMessages (جهت دریافت AccessHash و FileReference معتبر و تازه)
+  try {
+    const peer = message.peerId || message.chatId || message.senderId;
+    if (peer && message.id) {
+      const inputPeer = await client.getInputEntity(peer).catch(() => peer);
+      const fullMsgs = await client.getMessages(inputPeer, { ids: [message.id] }).catch(() => []);
+      if (fullMsgs && fullMsgs.length > 0 && fullMsgs[0]?.media) {
+        buffer = await client.downloadMedia(fullMsgs[0]);
+        if (buffer && buffer.length > 0) return buffer;
+        buffer = await client.downloadMedia(fullMsgs[0].media);
+        if (buffer && buffer.length > 0) return buffer;
+      }
+    }
+  } catch (err3) {
+    console.warn(`⚠️ [${username}] Layer 3 getMessages downloadMedia failed: ${err3.message}`);
+  }
+
+  // مرحله ۴: دانلود از اشیاء درونی photo یا document
+  try {
+    const innerTarget = message.media?.photo || message.media?.document || message.photo || message.document;
+    if (innerTarget) {
+      buffer = await client.downloadMedia(innerTarget);
+      if (buffer && buffer.length > 0) return buffer;
+    }
+  } catch (err4) {
+    console.warn(`⚠️ [${username}] Layer 4 innerTarget downloadMedia failed: ${err4.message}`);
+  }
+
+  // مرحله ۵: اگر تصویر بود و دانلود اندازه کامل شکست خورد، استخراج تصویر بندانگشتی (PhotoStrippedSize)
+  try {
+    const photo = message.media?.photo || message.photo;
+    if (photo && Array.isArray(photo.sizes)) {
+      const stripped = photo.sizes.find(s => s instanceof Api.PhotoStrippedSize || s.className === 'PhotoStrippedSize');
+      if (stripped && stripped.bytes && stripped.bytes.length > 0) {
+        const jpgBuf = strippedPhotoToJpg(stripped.bytes);
+        if (jpgBuf && jpgBuf.length > 0) {
+          console.log(`ℹ️ [${username}] Anti-TTL recovered photo from stripped thumbnail buffer (${jpgBuf.length} bytes).`);
+          return jpgBuf;
+        }
+      }
+    }
+  } catch (err5) {
+    console.warn(`⚠️ [${username}] Layer 5 stripped photo recovery failed: ${err5.message}`);
+  }
+
+  return null;
 }
 
 /**
@@ -269,6 +372,30 @@ class TelegramConnectionPool {
       await client.connect();
       console.log(`✅ Warm socket connected for [${username}]!`);
 
+      // ۱. ثبت رسمی نشست در تلگرام جهت اشتراک دائمی در دریافت بلادرنگ Push Updates
+      try {
+        await client.invoke(new Api.updates.GetState());
+        console.log(`📡 [${username}] Updates.GetState subscribed successfully.`);
+      } catch (stateErr) {
+        console.warn(`⚠️ [${username}] Updates.GetState warning:`, stateErr.message);
+      }
+
+      // ۲. بارگذاری اولیه دیالوگ‌ها جهت پر کردن EntityCache و Session با کلیه چت‌ها و کاربران
+      try {
+        const initDialogs = await client.getDialogs({ limit: 30 });
+        for (const d of initDialogs) {
+          if (d.entity) {
+            try {
+              client._entityCache.add(d.entity);
+              client.session.processEntities(d.entity);
+            } catch (_) {}
+          }
+        }
+        console.log(`📚 [${username}] Initial dialog entities primed (${initDialogs.length} dialogs in cache).`);
+      } catch (dlgErr) {
+        console.warn(`⚠️ [${username}] Initial dialogs priming warning:`, dlgErr.message);
+      }
+
       entry = {
         client,
         sessionEncrypted,
@@ -301,21 +428,21 @@ class TelegramConnectionPool {
       console.log(`🔌 Reconnecting dropped socket for [${username}]...`);
       await entry.client.connect();
       entry.connected = true;
+      try { await entry.client.invoke(new Api.updates.GetState()); } catch (_) {}
       this.attachEventListeners(entry, username);
     }
 
-    // به‌روزرسانی تنظیمات هوشمند در حافظه و ادغام لیست سکوت محلی
+    // به‌روزرسانی تنظیمات هوشمند در حافظه و ادغام لیست سکوت
     if (userSettings && entry) {
       const serverMuted = Array.isArray(userSettings.mutedUsers) ? userSettings.mutedUsers : [];
-      const localMuted = entry.localMutedUsers ? Array.from(entry.localMutedUsers) : [];
-      const combinedMuted = Array.from(new Set([...serverMuted, ...localMuted]));
+      entry.localMutedUsers = new Set(serverMuted.map(cleanMuteTarget).filter(Boolean));
 
       entry.settings = {
         afkEnabled: !!userSettings.afkEnabled,
         afkMessage: userSettings.afkMessage || '',
         afkCooldown: userSettings.afkCooldown ?? 10,
-        muteEnabled: !!userSettings.muteEnabled || combinedMuted.length > 0,
-        mutedUsers: combinedMuted,
+        muteEnabled: !!userSettings.muteEnabled || serverMuted.length > 0,
+        mutedUsers: serverMuted,
         antiTtlEnabled: !!userSettings.antiTtlEnabled
       };
       resolveMutedUsernames(entry);
@@ -343,6 +470,30 @@ class TelegramConnectionPool {
     const message = event.message;
     if (!message) return;
 
+    // ۱. تزریق بلادرنگ کلیه انتیتی‌های پیوست‌شده در آپدیت دریافتی به کش حافظه
+    if (event.originalUpdate?.users?.length) {
+      try {
+        entry.client._entityCache.add(event.originalUpdate);
+        entry.client.session.processEntities(event.originalUpdate);
+      } catch (_) {}
+    }
+    if (event.originalUpdate?._entities?.size) {
+      for (const ent of event.originalUpdate._entities.values()) {
+        try {
+          entry.client._entityCache.add(ent);
+          entry.client.session.processEntities(ent);
+        } catch (_) {}
+      }
+    }
+    if (event._entities?.size) {
+      for (const ent of event._entities.values()) {
+        try {
+          entry.client._entityCache.add(ent);
+          entry.client.session.processEntities(ent);
+        } catch (_) {}
+      }
+    }
+
     if (!entry.myId && entry.client.connected) {
       try {
         const me = await entry.client.getMe();
@@ -353,6 +504,59 @@ class TelegramConnectionPool {
     const myId = entry.myId;
     const isOut = Boolean(message.out || (myId && message.senderId && message.senderId.toString() === myId));
     const isPrivateChat = Boolean(message.isPrivate || (message.peerId instanceof Api.PeerUser) || (!message.isGroup && !message.isChannel));
+
+    // ۲. بررسی کش بودن مخاطب در اولین پیام افراد ناشناس و واکشی خودکار دیالوگ و اطلاعات پیام
+    const rawPeerId = message.senderId || 
+                      message.fromId?.userId || 
+                      (message.peerId?.userId ? message.peerId.userId : null) || 
+                      message.chatId;
+    const peerIdStr = rawPeerId ? rawPeerId.toString() : null;
+
+    let isPeerCached = false;
+    if (peerIdStr) {
+      try {
+        if (entry.client._entityCache.get(peerIdStr)) isPeerCached = true;
+      } catch (_) {}
+    }
+
+    // اگر مخاطب در کش موجود نیست و چت جدید است، بلافاصله دیالوگ‌ها و پیام را از سرور تلگرام واکشی می‌کنیم
+    if (!isPeerCached && peerIdStr && isPrivateChat && !isOut) {
+      console.log(`🔍 [${username}] New/unknown peer detected (${peerIdStr}). Ingesting dialogs & message entity...`);
+      try {
+        const dialogs = await entry.client.getDialogs({ limit: 10 });
+        for (const d of dialogs) {
+          if (d.entity) {
+            try {
+              entry.client._entityCache.add(d.entity);
+              entry.client.session.processEntities(d.entity);
+            } catch (_) {}
+          }
+        }
+      } catch (dlgErr) {
+        console.warn(`⚠️ [${username}] Auto-resolving new dialog failed:`, dlgErr.message);
+      }
+
+      // واکشی مستقیم انتیتی فرستنده پیام با messages.GetMessages جهت ثبت قطعی AccessHash
+      try {
+        const fullMsgRes = await entry.client.invoke(new Api.messages.GetMessages({
+          id: [new Api.InputMessageID({ id: message.id })]
+        }));
+        if (fullMsgRes?.users) {
+          for (const u of fullMsgRes.users) {
+            try {
+              entry.client._entityCache.add(u);
+              entry.client.session.processEntities(u);
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+
+      if (typeof message._finishInit === 'function') {
+        try {
+          message._finishInit(entry.client, event.originalUpdate?._entities || new Map());
+        } catch (_) {}
+      }
+    }
 
     // ثبت لاگ ورودی پیام‌ها جهت شفافیت عملکرد سلف‌بات
     if (isPrivateChat || !isOut) {
@@ -459,52 +663,148 @@ class TelegramConnectionPool {
       }
     }
 
-    // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL)
+    // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL Saver)
     if (entry.settings.antiTtlEnabled && !isOut && message.media) {
-      const ttl = message.ttlPeriod || 
-                  message.media?.ttlSeconds || 
+      // تشخیص هوشمند انواع تایمر تلگرام (تایمرهای ۱ تا ۶۰ ثانیه‌ای، یک‌بار مصرف View-Once و چت‌های خودتخریب‌گر)
+      const ttl = message.media?.ttlSeconds || 
+                  message.media?.ttl_seconds || 
+                  message.ttlPeriod || 
+                  message.ttl_period || 
                   message.ttlSeconds || 
+                  message.ttl_seconds || 
                   message.media?.photo?.ttlSeconds || 
                   message.media?.document?.ttlSeconds;
 
       if (ttl && ttl > 0) {
-        console.log(`📸 [${username}] Anti-TTL detected self-destruct media (TTL: ${ttl}s) from sender ${message.senderId}. Downloading...`);
+        const rawSenderId = message.senderId || 
+                            message.fromId?.userId || 
+                            (message.peerId instanceof Api.PeerUser ? message.peerId.userId : null) || 
+                            message.chatId;
+        const senderIdStr = rawSenderId ? rawSenderId.toString() : 'ناشناس';
+
+        console.log(`📸 [${username}] Anti-TTL detected self-destruct media (TTL: ${ttl}s) from sender ${senderIdStr}. Downloading safely...`);
         try {
-          const buffer = await entry.client.downloadMedia(message);
+          const buffer = await downloadMediaSafely(entry.client, message, username);
           if (buffer && buffer.length > 0) {
-            const sender = await message.getSender().catch(() => null);
-            const rawName = sender ? (sender.firstName || sender.username || sender.id) : (message.senderId || 'ناشناس');
-            const cleanSenderName = String(rawName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            
-            const timerLabel = (ttl >= 2147483647) ? 'یک‌بار مصرف (View-Once)' : (ttl > 86400 ? (Math.round(ttl / 86400) + ' روز') : (ttl + ' ثانیه'));
-            const caption = `📸 <b>[Arizo Anti-TTL] رسانه زمان‌دار نجات یافت!</b>\n` +
-                            `👤 <b>فرستنده:</b> ${cleanSenderName} (<code>${message.senderId || 'ناشناس'}</code>)\n` +
-                            `⏳ <b>مدت تایمر:</b> ${timerLabel}`;
+            let sender = null;
+            try {
+              sender = await message.getSender();
+            } catch (_) {}
 
-            const isPhoto = message.media instanceof Api.MessageMediaPhoto || !!message.photo;
-            const isVideo = message.media instanceof Api.MessageMediaDocument && (!!message.video || !!message.media.video || message.media.document?.mimeType?.startsWith('video/'));
-            const isVoice = message.media instanceof Api.MessageMediaDocument && (!!message.voice || !!message.media.voice || message.media.document?.mimeType?.startsWith('audio/'));
+            if (!sender && rawSenderId) {
+              try {
+                sender = await entry.client.getEntity(rawSenderId);
+              } catch (_) {}
+            }
 
-            let fileName = 'media.bin';
-            if (isPhoto) fileName = 'saved_photo.jpg';
-            else if (isVideo) fileName = 'saved_video.mp4';
-            else if (isVoice) fileName = 'saved_voice.ogg';
+            const senderFullName = sender ? (
+              [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 
+              sender.title || 
+              (sender.username ? `@${sender.username}` : senderIdStr)
+            ) : senderIdStr;
+
+            const cleanSenderName = String(senderFullName)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
+
+            const senderUsernameStr = sender?.username ? ` (@${sender.username})` : '';
+
+            const timerLabel = (ttl >= 2147483647) 
+              ? 'یک‌بار مصرف (View-Once)' 
+              : (ttl > 86400 ? (Math.round(ttl / 86400) + ' روز') : (ttl + ' ثانیه'));
+
+            const isPhoto = message.media instanceof Api.MessageMediaPhoto || 
+                            Boolean(message.photo) || 
+                            Boolean(message.media?.photo);
+
+            const isVoice = Boolean(message.voice) || 
+                            Boolean(message.media?.voice) || 
+                            Boolean(message.media?.document?.attributes?.some(a => a instanceof Api.DocumentAttributeAudio && a.voice));
+
+            const isVideoNote = Boolean(message.videoNote) || 
+                                Boolean(message.media?.round) || 
+                                Boolean(message.media?.document?.attributes?.some(a => a instanceof Api.DocumentAttributeVideo && a.roundMessage));
+
+            const isVideo = Boolean(message.video) || 
+                            Boolean(message.media?.video) || 
+                            isVideoNote || 
+                            Boolean(message.media?.document?.mimeType?.startsWith('video/')) || 
+                            Boolean(message.media?.document?.attributes?.some(a => a instanceof Api.DocumentAttributeVideo));
+
+            const typeLabel = isPhoto ? 'تصویر' : (isVoice ? 'پیام صوتی (ویس)' : (isVideoNote ? 'ویدیو گرد' : (isVideo ? 'ویدیو' : 'رسانه')));
+
+            let fileName = 'saved_media.bin';
+            if (isPhoto) fileName = `photo_${Date.now()}.jpg`;
+            else if (isVoice) fileName = `voice_${Date.now()}.ogg`;
+            else if (isVideoNote) fileName = `round_video_${Date.now()}.mp4`;
+            else if (isVideo) fileName = `video_${Date.now()}.mp4`;
             else if (message.media?.document?.mimeType) {
               const ext = message.media.document.mimeType.split('/')[1] || 'bin';
-              fileName = `saved_file.${ext}`;
+              fileName = `file_${Date.now()}.${ext}`;
             }
+
+            const caption = `📸 <b>[Arizo Anti-TTL] ${typeLabel} زمان‌دار نجات یافت!</b>\n` +
+                            `👤 <b>فرستنده:</b> ${cleanSenderName}${senderUsernameStr} (<code>${senderIdStr}</code>)\n` +
+                            `⏳ <b>مدت زمان تایمر:</b> ${timerLabel}\n` +
+                            `💾 <b>حجم:</b> ${(buffer.length / 1024).toFixed(1)} KB`;
 
             const customFile = new CustomFile(fileName, buffer.length, '', buffer);
 
-            await entry.client.sendFile('me', {
-              file: customFile,
-              caption,
-              parseMode: 'html',
-              forceDocument: false
-            });
-            console.log(`✅ [${username}] Anti-TTL media (${fileName}, ${buffer.length} bytes) successfully saved to Saved Messages!`);
+            let sendSuccess = false;
+
+            // مرحله ۱: ارسال رسانه مستقیم با حالت بومی (Photo / Video / Voice)
+            try {
+              await entry.client.sendFile('me', {
+                file: customFile,
+                caption,
+                parseMode: 'html',
+                forceDocument: false,
+                voiceNote: isVoice,
+                videoNote: isVideoNote
+              });
+              sendSuccess = true;
+              console.log(`✅ [${username}] Anti-TTL media (${fileName}, ${buffer.length} bytes) successfully saved to Saved Messages as native media!`);
+            } catch (nativeErr) {
+              console.warn(`⚠️ [${username}] Native media send failed (${nativeErr.message}). Retrying as document...`);
+            }
+
+            // مرحله ۲: در صورت عدم پذیرش ابعاد/فرمت توسط تلگرام، ارسال امن به صورت Document
+            if (!sendSuccess) {
+              try {
+                await entry.client.sendFile('me', {
+                  file: customFile,
+                  caption,
+                  parseMode: 'html',
+                  forceDocument: true
+                });
+                sendSuccess = true;
+                console.log(`✅ [${username}] Anti-TTL media (${fileName}) successfully saved as document fallback!`);
+              } catch (docErr) {
+                console.warn(`⚠️ [${username}] Document HTML send failed (${docErr.message}). Retrying with plain text caption...`);
+              }
+            }
+
+            // مرحله ۳: اگر به خاطر کاراکترهای نامتعارف در نام فرستنده خطا داد، با کپشن متنی ساده ارسال می‌کنیم
+            if (!sendSuccess) {
+              try {
+                const plainCaption = `📸 [Arizo Anti-TTL] ${typeLabel} زمان‌دار نجات یافت!\n` +
+                                     `👤 فرستنده: ${cleanSenderName}${senderUsernameStr} (${senderIdStr})\n` +
+                                     `⏳ مدت تایمر: ${timerLabel}\n` +
+                                     `💾 حجم: ${(buffer.length / 1024).toFixed(1)} KB`;
+                await entry.client.sendFile('me', {
+                  file: customFile,
+                  caption: plainCaption,
+                  forceDocument: true
+                });
+                sendSuccess = true;
+                console.log(`✅ [${username}] Anti-TTL media (${fileName}) successfully saved with plain text caption fallback!`);
+              } catch (finalErr) {
+                console.error(`❌ [${username}] All send tiers failed for Anti-TTL:`, finalErr.message);
+              }
+            }
           } else {
-            console.warn(`⚠️ [${username}] Anti-TTL download returned 0 bytes.`);
+            console.warn(`⚠️ [${username}] Anti-TTL all download layers returned 0 bytes.`);
           }
         } catch (ttlErr) {
           console.error(`❌ [${username}] Anti-TTL processing error:`, ttlErr.message);
@@ -514,17 +814,18 @@ class TelegramConnectionPool {
 
     // ۳. 🔇 سکوت و حذف خودکار پیام (Mute)
     const hasMutedUsers = Array.isArray(entry.settings.mutedUsers) && entry.settings.mutedUsers.length > 0;
-    if ((entry.settings.muteEnabled || hasMutedUsers) && !isOut) {
+    const hasLocalMuted = entry.localMutedUsers && entry.localMutedUsers.size > 0;
+    if ((entry.settings.muteEnabled || hasMutedUsers || hasLocalMuted) && !isOut) {
       // جمع‌آوری کلیه شناسه‌های عددی فرستنده
       const senderIds = new Set();
-      if (message.senderId) senderIds.add(message.senderId.toString());
-      if (message.fromId?.userId) senderIds.add(message.fromId.userId.toString());
-      if (message.fromId?.chatId) senderIds.add(message.fromId.chatId.toString());
-      if (message.fromId?.channelId) senderIds.add(message.fromId.channelId.toString());
-      if (message.peerId instanceof Api.PeerUser && message.peerId.userId) {
-        senderIds.add(message.peerId.userId.toString());
-      }
-      if (message.chatId) senderIds.add(message.chatId.toString());
+      if (message.senderId) senderIds.add(cleanMuteTarget(message.senderId));
+      if (message.fromId?.userId) senderIds.add(cleanMuteTarget(message.fromId.userId));
+      if (message.fromId?.chatId) senderIds.add(cleanMuteTarget(message.fromId.chatId));
+      if (message.fromId?.channelId) senderIds.add(cleanMuteTarget(message.fromId.channelId));
+      if (message.peerId?.userId) senderIds.add(cleanMuteTarget(message.peerId.userId));
+      if (message.peerId?.chatId) senderIds.add(cleanMuteTarget(message.peerId.chatId));
+      if (message.peerId?.channelId) senderIds.add(cleanMuteTarget(message.peerId.channelId));
+      if (message.chatId) senderIds.add(cleanMuteTarget(message.chatId));
 
       // دریافت انتیتی فرستنده جهت بررسی یوزرنیم
       let sender = null;
@@ -540,36 +841,61 @@ class TelegramConnectionPool {
       }
 
       if (sender && sender.id) {
-        senderIds.add(sender.id.toString());
+        senderIds.add(cleanMuteTarget(sender.id));
       }
 
       // جمع‌آوری کلیه یوزرنیم‌های فرستنده
       const senderUsernames = new Set();
       if (sender?.username) {
-        senderUsernames.add(sender.username.toLowerCase().replace(/^@/, ''));
+        senderUsernames.add(cleanMuteTarget(sender.username));
       }
       if (Array.isArray(sender?.usernames)) {
         for (const u of sender.usernames) {
-          if (u && u.username) senderUsernames.add(u.username.toLowerCase().replace(/^@/, ''));
+          if (u && u.username) senderUsernames.add(cleanMuteTarget(u.username));
+        }
+      }
+
+      // بررسی کش انتیتی کلاینت برای کلیه شناسه‌های فرستنده (در صورتی که getSender یوزرنیم نداده باشد)
+      for (const id of senderIds) {
+        try {
+          const cached = entry.client._entityCache.get(id);
+          if (cached?.username) senderUsernames.add(cleanMuteTarget(cached.username));
+          if (Array.isArray(cached?.usernames)) {
+            for (const u of cached.usernames) {
+              if (u && u.username) senderUsernames.add(cleanMuteTarget(u.username));
+            }
+          }
+        } catch (_) {}
+      }
+
+      // ساخت لیست یکپارچه از اهداف سکوت (ترکیب تنظیمات سرور و محلی)
+      const allMutedTargets = new Set();
+      if (Array.isArray(entry.settings.mutedUsers)) {
+        for (const raw of entry.settings.mutedUsers) {
+          const c = cleanMuteTarget(raw);
+          if (c) allMutedTargets.add(c);
+        }
+      }
+      if (entry.localMutedUsers) {
+        for (const raw of entry.localMutedUsers) {
+          const c = cleanMuteTarget(raw);
+          if (c) allMutedTargets.add(c);
         }
       }
 
       let isMuted = false;
       let matchedTarget = null;
 
-      for (const raw of entry.settings.mutedUsers) {
-        const t = cleanMuteTarget(raw);
-        if (!t) continue;
-
-        if (senderIds.has(t)) {
+      for (const target of allMutedTargets) {
+        if (senderIds.has(target)) {
           isMuted = true;
-          matchedTarget = raw;
+          matchedTarget = target;
           break;
         }
 
-        if (senderUsernames.has(t)) {
+        if (senderUsernames.has(target)) {
           isMuted = true;
-          matchedTarget = raw;
+          matchedTarget = target;
           break;
         }
       }
@@ -630,13 +956,25 @@ class TelegramConnectionPool {
     const startMs = performance.now();
     try {
       const client = await this.getOrCreateClient(username, sessionEncrypted, userSettings);
-      const updateParams = { lastName: exactTimeStr };
-      if (exactBioStr) updateParams.about = exactBioStr;
+      const entry = this.clients.get(username);
+
+      // اگر زمان و بیو بدون تغییر مانده باشد (مثلاً حالت خواب)، نیازی به ارسال مکرر RPC به تلگرام نیست
+      if (entry && entry.lastTime === exactTimeStr && entry.lastBio === exactBioStr) {
+        return {
+          ok: true,
+          username,
+          lastTime: exactTimeStr,
+          lastBio: exactBioStr,
+          elapsedMs: 0
+        };
+      }
+
+      const updateParams = { lastName: (exactTimeStr || '').slice(0, 64) };
+      if (exactBioStr) updateParams.about = exactBioStr.slice(0, 70);
 
       await client.invoke(new Api.account.UpdateProfile(updateParams));
       const elapsed = Math.round(performance.now() - startMs);
 
-      const entry = this.clients.get(username);
       if (entry) {
         entry.lastTime = exactTimeStr;
         entry.lastBio = exactBioStr;
@@ -880,16 +1218,20 @@ async function main() {
           } catch (_) {}
         }
         if (entry) {
+          // فعال نگه‌داشتن مستمر ثبت نشست در سرور تلگرام برای دریافت آپدیت‌های زنده
+          if (entry.client && entry.client.connected) {
+            entry.client.invoke(new Api.updates.GetState()).catch(() => {});
+          }
+
           const serverMuted = Array.isArray(u.mutedUsers) ? u.mutedUsers : [];
-          const localMuted = entry.localMutedUsers ? Array.from(entry.localMutedUsers) : [];
-          const combinedMuted = Array.from(new Set([...serverMuted, ...localMuted]));
+          entry.localMutedUsers = new Set(serverMuted.map(cleanMuteTarget).filter(Boolean));
 
           entry.settings = {
             afkEnabled: !!u.afkEnabled,
             afkMessage: u.afkMessage || '',
             afkCooldown: u.afkCooldown ?? 10,
-            muteEnabled: !!u.muteEnabled || combinedMuted.length > 0,
-            mutedUsers: combinedMuted,
+            muteEnabled: !!u.muteEnabled || serverMuted.length > 0,
+            mutedUsers: serverMuted,
             antiTtlEnabled: !!u.antiTtlEnabled
           };
           resolveMutedUsernames(entry);
@@ -915,10 +1257,14 @@ async function main() {
       break;
     }
 
-    // ۱. خواب تا ثانیه ۵۷.۵ جهت انجام Pre-fetch
-    const msToPrefetch = getMsUntilSecond(57, 500);
-    if (msToPrefetch > 1000) {
-      await new Promise(r => setTimeout(r, msToPrefetch));
+    // زمان هدف: رأس دقیق دقیقه بعدی بدون کوچک‌ترین لغزش زمانی (Drift-free minute alignment)
+    const nowTs = Date.now();
+    const nextMinuteTs = Math.ceil((nowTs + 50) / 60000) * 60000;
+    const msUntilMinute = nextMinuteTs - Date.now();
+
+    // ۱. خواب تا ۲.۵ ثانیه قبل از رأس دقیقه جهت Pre-fetch و آماده‌سازی سوکت‌ها
+    if (msUntilMinute > 3000) {
+      await new Promise(r => setTimeout(r, msUntilMinute - 2500));
     }
 
     // ۲. پیش‌بارگذاری لیست کاربران و بررسی سوکت‌ها ۲ ثانیه قبل از دقیقه
@@ -932,14 +1278,16 @@ async function main() {
       }
     } catch (_) {}
 
-    // ۳. خواب دقیق تا ۱۰ میلی‌ثانیه قبل از رأس دقیقه (:59.990) برای شلیک بی‌درنگ
-    const msToMinute = getMsUntilSecond(59, 990);
-    await new Promise(r => setTimeout(r, msToMinute));
+    // ۳. خواب دقیق تا ۱۰ میلی‌ثانیه قبل از رأس دقیقه برای شلیک بی‌درنگ
+    const msRemaining = nextMinuteTs - Date.now();
+    if (msRemaining > 15) {
+      await new Promise(r => setTimeout(r, msRemaining - 10));
+    }
 
     if (!cachedUsers.length) continue;
 
-    // ۴. زمان دقیقه جدید
-    const targetMinuteDate = new Date(Date.now() + 1000);
+    // ۴. زمان دقیق رأس دقیقه
+    const targetMinuteDate = new Date(nextMinuteTs);
     const triggerStart = performance.now();
 
     // ۵. شلیک هم‌زمان به تلگرام برای تمامی کاربران
