@@ -20,6 +20,7 @@
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import { NewMessage } from 'telegram/events/index.js';
+import { CustomFile } from 'telegram/client/uploads.js';
 import { getStylizedTime, renderDynamicBio, isSleepTime } from '../src/clock.js';
 import { decryptSession } from '../src/crypto.js';
 
@@ -148,7 +149,7 @@ class TelegramConnectionPool {
       try {
         await this.handleIncomingMessage(entry, username, event);
       } catch (err) {
-        // خطاهای حین پردازش ایونت‌ها را سایلنت نگه می‌داریم تا رانر هرگز متوقف نشود
+        console.error(`⚠️ [${username}] Message event handler error:`, err.message);
       }
     }, new NewMessage({}));
     console.log(`🛡️ [${username}] Event listeners attached (AFK, Mute, Anti-TTL active)!`);
@@ -158,8 +159,15 @@ class TelegramConnectionPool {
     const message = event.message;
     if (!message) return;
 
+    if (!entry.myId && entry.client.connected) {
+      try {
+        const me = await entry.client.getMe();
+        if (me && me.id) entry.myId = me.id.toString();
+      } catch (_) {}
+    }
+
     const myId = entry.myId;
-    const isOut = message.out || (message.senderId && message.senderId.toString() === myId);
+    const isOut = Boolean(message.out || (myId && message.senderId && message.senderId.toString() === myId));
 
     // ۱. دستورات سریع تلگرامی خود کاربر (.mute و .unmute)
     if (isOut && message.text) {
@@ -198,21 +206,53 @@ class TelegramConnectionPool {
 
     // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL)
     if (entry.settings.antiTtlEnabled && !isOut && message.media) {
-      const ttl = message.ttlPeriod || message.media.ttlSeconds || message.ttlSeconds;
+      const ttl = message.ttlPeriod || 
+                  message.media?.ttlSeconds || 
+                  message.ttlSeconds || 
+                  message.media?.photo?.ttlSeconds || 
+                  message.media?.document?.ttlSeconds;
+
       if (ttl && ttl > 0) {
-        console.log(`📸 [${username}] Anti-TTL detected self-destruct media (TTL: ${ttl}s). Downloading...`);
-        const buffer = await entry.client.downloadMedia(message).catch(() => null);
-        if (buffer) {
-          const sender = await message.getSender().catch(() => null);
-          const rawName = sender ? (sender.firstName || sender.username || sender.id) : (message.senderId || 'ناشناس');
-          const cleanSenderName = String(rawName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          const caption = `📸 <b>[Arizo Anti-TTL] رسانه زمان‌دار ذخیره شد!</b>\n👤 فرستنده: ${cleanSenderName} (<code>${message.senderId}</code>)\n⏳ مدت تایمر: ${ttl} ثانیه`;
-          await entry.client.sendFile('me', {
-            file: buffer,
-            caption,
-            parseMode: 'html'
-          }).catch(e => console.error('Anti-TTL forward error:', e.message));
-          console.log(`✅ [${username}] Anti-TTL media successfully saved to Saved Messages!`);
+        console.log(`📸 [${username}] Anti-TTL detected self-destruct media (TTL: ${ttl}s) from sender ${message.senderId}. Downloading...`);
+        try {
+          const buffer = await entry.client.downloadMedia(message);
+          if (buffer && buffer.length > 0) {
+            const sender = await message.getSender().catch(() => null);
+            const rawName = sender ? (sender.firstName || sender.username || sender.id) : (message.senderId || 'ناشناس');
+            const cleanSenderName = String(rawName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            const timerLabel = (ttl >= 2147483647) ? 'یک‌بار مصرف (View-Once)' : (ttl > 86400 ? (Math.round(ttl / 86400) + ' روز') : (ttl + ' ثانیه'));
+            const caption = `📸 <b>[Arizo Anti-TTL] رسانه زمان‌دار نجات یافت!</b>\n` +
+                            `👤 <b>فرستنده:</b> ${cleanSenderName} (<code>${message.senderId || 'ناشناس'}</code>)\n` +
+                            `⏳ <b>مدت تایمر:</b> ${timerLabel}`;
+
+            const isPhoto = message.media instanceof Api.MessageMediaPhoto || !!message.photo;
+            const isVideo = message.media instanceof Api.MessageMediaDocument && (!!message.video || !!message.media.video || message.media.document?.mimeType?.startsWith('video/'));
+            const isVoice = message.media instanceof Api.MessageMediaDocument && (!!message.voice || !!message.media.voice || message.media.document?.mimeType?.startsWith('audio/'));
+
+            let fileName = 'media.bin';
+            if (isPhoto) fileName = 'saved_photo.jpg';
+            else if (isVideo) fileName = 'saved_video.mp4';
+            else if (isVoice) fileName = 'saved_voice.ogg';
+            else if (message.media?.document?.mimeType) {
+              const ext = message.media.document.mimeType.split('/')[1] || 'bin';
+              fileName = `saved_file.${ext}`;
+            }
+
+            const customFile = new CustomFile(fileName, buffer.length, '', buffer);
+
+            await entry.client.sendFile('me', {
+              file: customFile,
+              caption,
+              parseMode: 'html',
+              forceDocument: false
+            });
+            console.log(`✅ [${username}] Anti-TTL media (${fileName}, ${buffer.length} bytes) successfully saved to Saved Messages!`);
+          } else {
+            console.warn(`⚠️ [${username}] Anti-TTL download returned 0 bytes.`);
+          }
+        } catch (ttlErr) {
+          console.error(`❌ [${username}] Anti-TTL processing error:`, ttlErr.message);
         }
       }
     }
@@ -236,7 +276,15 @@ class TelegramConnectionPool {
     }
 
     // ۴. 🤖 منشی خودکار پیوی (AFK Auto-Secretary)
-    if (entry.settings.afkEnabled && !isOut && event.isPrivate) {
+    const isPrivateChat = Boolean(message.isPrivate || (message.peerId instanceof Api.PeerUser) || (!message.isGroup && !message.isChannel));
+
+    // اگر کاربر خودش به این شخص در پیوی پیام ارسال کرد، کول‌داون ریست شود تا منشی مزاحم نشود
+    if (isOut && isPrivateChat) {
+      const peerIdStr = message.peerId?.userId?.toString() || message.chatId?.toString();
+      if (peerIdStr) entry.afkCooldownMap.set(peerIdStr, Date.now());
+    }
+
+    if (entry.settings.afkEnabled && !isOut && isPrivateChat) {
       const senderIdStr = message.senderId?.toString();
       if (senderIdStr && senderIdStr !== myId) {
         // نادیده گرفتن اکانت‌های رسمی تلگرام (پیامک ورود و پشتیبانی)
@@ -264,8 +312,19 @@ class TelegramConnectionPool {
           }
 
           const afkText = entry.settings.afkMessage || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
-          console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}`);
-          await message.reply({ message: afkText }).catch(e => console.error('AFK reply error:', e.message));
+          console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}: "${afkText.slice(0, 30)}..."`);
+          
+          try {
+            await message.reply({ message: afkText });
+            console.log(`✅ [${username}] AFK reply sent via message.reply!`);
+          } catch (replyErr) {
+            try {
+              await entry.client.sendMessage(message.chatId || message.senderId, { message: afkText });
+              console.log(`✅ [${username}] AFK reply sent via client.sendMessage!`);
+            } catch (sendErr) {
+              console.error(`❌ [${username}] AFK reply failed:`, sendErr.message);
+            }
+          }
         }
       }
     }
@@ -512,6 +571,30 @@ async function main() {
     }));
   }
 
+  // به‌روزرسانی سریع تنظیمات استودیو هر ۲۰ ثانیه تا تغییرات منشی، نجات مدیا و سکوت بلافاصله اعمال شوند
+  const settingsSyncInterval = setInterval(async () => {
+    try {
+      const freshUsers = await fetchActiveUsers();
+      for (const u of freshUsers) {
+        const entry = pool.clients.get(u.username);
+        if (entry) {
+          const serverMuted = Array.isArray(u.mutedUsers) ? u.mutedUsers : [];
+          const localMuted = entry.localMutedUsers ? Array.from(entry.localMutedUsers) : [];
+          const combinedMuted = Array.from(new Set([...serverMuted, ...localMuted]));
+
+          entry.settings = {
+            afkEnabled: !!u.afkEnabled,
+            afkMessage: u.afkMessage || '',
+            afkCooldown: u.afkCooldown ?? 10,
+            muteEnabled: !!u.muteEnabled,
+            mutedUsers: combinedMuted,
+            antiTtlEnabled: !!u.antiTtlEnabled
+          };
+        }
+      }
+    } catch (_) {}
+  }, 20000);
+
   while (true) {
     const elapsed = Date.now() - startTime;
     const remainingTime = maxDurationMs - elapsed;
@@ -524,6 +607,7 @@ async function main() {
 
     if (remainingTime <= 0) {
       console.log('🏁 Duration reached. Cleaning up and exiting...');
+      clearInterval(settingsSyncInterval);
       await pool.disconnectAll();
       break;
     }
