@@ -115,6 +115,12 @@ export function panelHTML(env) {
       transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
     }
 
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
+
     body {
       min-height: 100vh;
       font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -124,7 +130,7 @@ export function panelHTML(env) {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 20px 14px 60px 14px;
+      padding: 18px 12px 60px 12px;
       overflow-x: hidden;
       position: relative;
     }
@@ -169,10 +175,12 @@ export function panelHTML(env) {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 720px;
+      max-width: min(94vw, 860px);
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 20px;
+      box-sizing: border-box;
       animation: pageFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
@@ -481,7 +489,7 @@ export function panelHTML(env) {
       50% { opacity: 0.3; transform: scale(0.7); }
     }
 
-    /* 🎨 کنترل تب‌های سگمنتد با تفکیک ۳ تایی */
+    /* 🎨 کنترل تب‌های سگمنتد عمومی */
     .segmented-control {
       display: flex;
       background: var(--segmented-bg);
@@ -490,7 +498,11 @@ export function panelHTML(env) {
       margin-bottom: 22px;
       border: 1px solid var(--border-subtle);
       gap: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .segmented-control::-webkit-scrollbar { display: none; }
     .segmented-btn {
       flex: 1;
       padding: 11px 12px;
@@ -521,6 +533,79 @@ export function panelHTML(env) {
       color: var(--text-main);
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
       border: 1px solid var(--border-subtle);
+    }
+
+    /* 📑 نوار تب‌های اختصاصی استودیوی سلف‌بات - کاملاً ریسپانسیو برای موبایل و کامپیوتر */
+    .studio-tab-bar {
+      display: flex;
+      background: var(--segmented-bg);
+      border-radius: 18px;
+      padding: 6px;
+      margin-bottom: 22px;
+      border: 1px solid var(--border-subtle);
+      gap: 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      scroll-snap-type: x mandatory;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.22);
+    }
+    .studio-tab-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .studio-tab-btn {
+      flex: 0 0 auto;
+      padding: 10px 15px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.83rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      user-select: none;
+      white-space: nowrap;
+      scroll-snap-align: start;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .studio-tab-btn:hover:not(.active) {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .studio-tab-btn.active {
+      background: var(--bg-surface-elevated);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.25);
+      border-color: rgba(168, 85, 247, 0.35);
+    }
+
+    @media (min-width: 760px) {
+      .studio-tab-bar {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        overflow-x: visible;
+      }
+      .studio-tab-btn {
+        flex: 1 1 auto;
+        padding: 11px 10px;
+        font-size: 0.81rem;
+      }
+    }
+    @media (min-width: 960px) {
+      .studio-tab-bar {
+        grid-template-columns: repeat(6, 1fr);
+      }
+      .studio-tab-btn {
+        padding: 10px 6px;
+        font-size: 0.77rem;
+      }
     }
 
     /* 📱 شبیه‌ساز زنده پروفایل تلگرام */
@@ -1847,16 +1932,25 @@ export function panelHTML(env) {
         </div>
       </div>
 
-      <!-- 📑 تب‌های ۳ گانه استودیو -->
-      <div class="segmented-control" style="margin-bottom:20px;">
-        <button id="studioTabClock" class="segmented-btn active" onclick="switchStudioTab('clock')">
-          <span>🕒</span> فونت و ساعت
+      <!-- 📑 نوار تب‌های استودیو - کاملاً واکنش‌گرا و ریسپانسیو برای موبایل و کامپیوتر -->
+      <div class="studio-tab-bar">
+        <button id="studioTabClock" class="studio-tab-btn active" onclick="switchStudioTab('clock')">
+          <span>🕒</span> <span>ساعت و فونت</span>
         </button>
-        <button id="studioTabBio" class="segmented-btn" onclick="switchStudioTab('bio')">
-          <span>📝</span> بیوگرافی هوشمند
+        <button id="studioTabBio" class="studio-tab-btn" onclick="switchStudioTab('bio')">
+          <span>📝</span> <span>بیوگرافی زنده</span>
         </button>
-        <button id="studioTabAutomation" class="segmented-btn" onclick="switchStudioTab('automation')">
-          <span>🌙</span> حالت خواب و تنظیمات
+        <button id="studioTabAfk" class="studio-tab-btn" onclick="switchStudioTab('afk')">
+          <span>🤖</span> <span>منشی پیوی (AFK)</span>
+        </button>
+        <button id="studioTabMute" class="studio-tab-btn" onclick="switchStudioTab('mute')">
+          <span>🔇</span> <span>سکوت پیام (Mute)</span>
+        </button>
+        <button id="studioTabAntittl" class="studio-tab-btn" onclick="switchStudioTab('antittl')">
+          <span>📸</span> <span>ضد خودتخریبی (Anti-TTL)</span>
+        </button>
+        <button id="studioTabAutomation" class="studio-tab-btn" onclick="switchStudioTab('automation')">
+          <span>🌙</span> <span>حالت خواب</span>
         </button>
       </div>
 
@@ -1952,7 +2046,85 @@ export function panelHTML(env) {
         </div>
       </div>
 
-      <!-- 🌙 تب ۳: حالت خواب و اتوماسیون -->
+      <!-- 🤖 تب ۳: منشی خودکار پیوی (AFK) -->
+      <div id="studioPaneAfk" class="hidden">
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">منشی خودکار پیوی (AFK Auto-Secretary)</div>
+            <div class="toggle-desc">هنگامی که آنلاین نیستید، پیام‌های خصوصی به طور هوشمند و خودکار پاسخ داده می‌شوند</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="afkEnabledToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">متن پاسخ خودکار منشی به مخاطبان در پیوی</label>
+          <textarea id="afkMessageInput" class="input-field" rows="3" placeholder="درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">فاصله زمانی ارسال مجدد برای یک مخاطب (کول‌داون ضد اسپم)</label>
+          <select id="afkCooldownSelect" class="input-field" style="background:var(--bg-input);">
+            <option value="5">هر ۵ دقیقه یک‌بار به هر فرد</option>
+            <option value="10" selected>هر ۱۰ دقیقه یک‌بار به هر فرد (پیشنهادی)</option>
+            <option value="30">هر ۳۰ دقیقه یک‌بار به هر فرد</option>
+            <option value="60">هر ۱ ساعت یک‌بار به هر فرد</option>
+            <option value="1440">فقط یک‌بار در طول شبانه‌روز به هر فرد</option>
+          </select>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
+            💡 این قابلیت مانع از اسپم شدن چت هنگامی که مخاطب چندین پیام متوالی می‌فرستد می‌شود.
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔇 تب ۴: سکوت و حذف خودکار پیام (Mute) -->
+      <div id="studioPaneMute" class="hidden">
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">سکوت و حذف آنی پیام‌های افراد مزاحم (Mute Filter)</div>
+            <div class="toggle-desc">پیام‌های ارسال‌شده توسط کاربران مشخص‌شده بلافاصله برای دو طرف پاک می‌شوند</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="muteEnabledToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">لیست آیدی‌های عددی یا یوزرنیم‌های تلگرام جهت سکوت (با کاما جدا کنید)</label>
+          <input type="text" id="mutedUsersInput" class="input-field mono" placeholder="مثلاً: 123456789, @spammer_user, 987654321" dir="ltr">
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
+            💡 شما همچنین در محیط تلگرام می‌توانید با ریپلای روی پیام هر شخص و ارسال <code>.mute</code> او را اضافه کرده و با <code>.unmute</code> از سکوت خارج کنید.
+          </div>
+        </div>
+      </div>
+
+      <!-- 📸 تب ۵: ضد خودتخریبی مدیا (Anti-TTL) -->
+      <div id="studioPaneAntittl" class="hidden">
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">ضد خودتخریبی مدیاهای زمان‌دار (Anti-TTL Saver)</div>
+            <div class="toggle-desc">ذخیره خودکار تصاویر و ویدیوهای تایمردار (یک‌بار مصرف) در پیام‌های ذخیره‌شده (Saved Messages)</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="antiTtlEnabledToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div style="background:rgba(56, 189, 248, 0.08); border:1px solid rgba(56, 189, 248, 0.25); border-radius:14px; padding:16px; margin-top:14px;">
+          <div style="font-size:0.88rem; font-weight:700; color:#38bdf8; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🛡️</span> عملکرد نجات‌دهنده خودکار رسانه‌ها
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.7; margin:0;">
+            به محض اینکه شخصی در گفت‌وگوی خصوصی عکسی با تایمر ۱ تا ۳۰ ثانیه‌ای یا View-Once ارسال کند، ربات در کسری از ثانیه نسخه کامل آن را دریافت کرده و به بخش <b>Saved Messages</b> حساب خودتان با ذکر نام فرستنده و مدت تایمر ارسال می‌کند تا هرگز از دست نرود.
+          </p>
+        </div>
+      </div>
+
+      <!-- 🌙 تب ۶: حالت خواب و اتوماسیون -->
       <div id="studioPaneAutomation" class="hidden">
         <div class="toggle-row" style="margin-bottom:18px;">
           <div>
@@ -3095,21 +3267,22 @@ export function panelHTML(env) {
     // 🎨 کنترل تب‌های استودیوی شخصی‌سازی
     // ==========================================
     window.switchStudioTab = function(tab) {
-      var btnClock = document.getElementById('studioTabClock');
-      var btnBio = document.getElementById('studioTabBio');
-      var btnAuto = document.getElementById('studioTabAutomation');
+      var tabs = [
+        { id: 'clock', btn: 'studioTabClock', pane: 'studioPaneClock' },
+        { id: 'bio', btn: 'studioTabBio', pane: 'studioPaneBio' },
+        { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk' },
+        { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute' },
+        { id: 'antittl', btn: 'studioTabAntittl', pane: 'studioPaneAntittl' },
+        { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation' }
+      ];
 
-      var paneClock = document.getElementById('studioPaneClock');
-      var paneBio = document.getElementById('studioPaneBio');
-      var paneAuto = document.getElementById('studioPaneAutomation');
-
-      if (btnClock) btnClock.classList.toggle('active', tab === 'clock');
-      if (btnBio) btnBio.classList.toggle('active', tab === 'bio');
-      if (btnAuto) btnAuto.classList.toggle('active', tab === 'automation');
-
-      if (paneClock) paneClock.classList.toggle('hidden', tab !== 'clock');
-      if (paneBio) paneBio.classList.toggle('hidden', tab !== 'bio');
-      if (paneAuto) paneAuto.classList.toggle('hidden', tab !== 'automation');
+      tabs.forEach(function(item) {
+        var btn = document.getElementById(item.btn);
+        var pane = document.getElementById(item.pane);
+        var isActive = item.id === tab;
+        if (btn) btn.classList.toggle('active', isActive);
+        if (pane) pane.classList.toggle('hidden', !isActive);
+      });
     };
 
     window.insertBioVar = function(tag) {
@@ -3269,7 +3442,13 @@ export function panelHTML(env) {
         sleepEnabled: document.getElementById('sleepEnabledToggle') ? document.getElementById('sleepEnabledToggle').checked : false,
         sleepStart: document.getElementById('sleepStartSelect') ? parseInt(document.getElementById('sleepStartSelect').value, 10) : 23,
         sleepEnd: document.getElementById('sleepEndSelect') ? parseInt(document.getElementById('sleepEndSelect').value, 10) : 7,
-        sleepText: (document.getElementById('sleepTextInput') && document.getElementById('sleepTextInput').value) || '😴 Sleep'
+        sleepText: (document.getElementById('sleepTextInput') && document.getElementById('sleepTextInput').value) || '😴 Sleep',
+        afkEnabled: document.getElementById('afkEnabledToggle') ? document.getElementById('afkEnabledToggle').checked : false,
+        afkMessage: (document.getElementById('afkMessageInput') && document.getElementById('afkMessageInput').value) || '',
+        afkCooldown: document.getElementById('afkCooldownSelect') ? parseInt(document.getElementById('afkCooldownSelect').value, 10) : 10,
+        muteEnabled: document.getElementById('muteEnabledToggle') ? document.getElementById('muteEnabledToggle').checked : false,
+        mutedUsers: (document.getElementById('mutedUsersInput') && document.getElementById('mutedUsersInput').value) || '',
+        antiTtlEnabled: document.getElementById('antiTtlEnabledToggle') ? document.getElementById('antiTtlEnabledToggle').checked : false
       };
 
       try {
@@ -3474,6 +3653,30 @@ export function panelHTML(env) {
           }
           if (document.getElementById('sleepTextInput')) {
             document.getElementById('sleepTextInput').value = data.sleepText || '😴 Sleep';
+          }
+
+          // 🤖 بارگذاری منشی خودکار پیوی (AFK)
+          if (document.getElementById('afkEnabledToggle')) {
+            document.getElementById('afkEnabledToggle').checked = !!data.afkEnabled;
+          }
+          if (document.getElementById('afkMessageInput')) {
+            document.getElementById('afkMessageInput').value = data.afkMessage || '';
+          }
+          if (document.getElementById('afkCooldownSelect') && data.afkCooldown !== undefined) {
+            document.getElementById('afkCooldownSelect').value = String(data.afkCooldown);
+          }
+
+          // 🔇 بارگذاری سکوت و حذف پیام (Mute)
+          if (document.getElementById('muteEnabledToggle')) {
+            document.getElementById('muteEnabledToggle').checked = !!data.muteEnabled;
+          }
+          if (document.getElementById('mutedUsersInput')) {
+            document.getElementById('mutedUsersInput').value = Array.isArray(data.mutedUsers) ? data.mutedUsers.join(', ') : (data.mutedUsers || '');
+          }
+
+          // 📸 بارگذاری ضد خودتخریبی مدیا (Anti-TTL)
+          if (document.getElementById('antiTtlEnabledToggle')) {
+            document.getElementById('antiTtlEnabledToggle').checked = !!data.antiTtlEnabled;
           }
 
           // 📱 به‌روزرسانی شبیه‌ساز زنده پروفایل تلگرام
