@@ -850,7 +850,7 @@ export default {
         afkCooldown: auth.user.telegram?.afkCooldown ?? 10,
         muteEnabled: !!auth.user.telegram?.muteEnabled || (Array.isArray(auth.user.telegram?.mutedUsers) && auth.user.telegram.mutedUsers.length > 0),
         mutedUsers: auth.user.telegram?.mutedUsers || [],
-        antiTtlEnabled: !!auth.user.telegram?.antiTtlEnabled,
+        antiTtlEnabled: !!(auth.user.telegram?.antiTtlEnabled ?? auth.user.antiTtlEnabled),
         status: liveStatus
       });
     }
@@ -1111,11 +1111,18 @@ export default {
         auth.user.telegram.afkCooldown = Math.max(1, parseInt(b.afkCooldown, 10) || 10);
       }
       if (b.mutedUsers !== undefined) {
+        let rawList = [];
         if (Array.isArray(b.mutedUsers)) {
-          auth.user.telegram.mutedUsers = b.mutedUsers.map(x => String(x).trim()).filter(Boolean);
+          rawList = b.mutedUsers;
         } else if (typeof b.mutedUsers === 'string') {
-          auth.user.telegram.mutedUsers = b.mutedUsers.split(/[,،;\s]+/).map(x => x.trim()).filter(Boolean);
+          rawList = b.mutedUsers.split(/[,،;\s]+/);
         }
+        auth.user.telegram.mutedUsers = rawList.map(x => {
+          let s = String(x).trim();
+          s = s.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+          s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+          return s;
+        }).filter(Boolean);
       }
       if (b.muteEnabled !== undefined) {
         auth.user.telegram.muteEnabled = !!b.muteEnabled;
@@ -1127,6 +1134,7 @@ export default {
       }
       if (b.antiTtlEnabled !== undefined) {
         auth.user.telegram.antiTtlEnabled = !!b.antiTtlEnabled;
+        auth.user.antiTtlEnabled = !!b.antiTtlEnabled;
       }
 
       await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
@@ -1234,7 +1242,7 @@ export default {
             afkCooldown: u.telegram.afkCooldown ?? 10,
             muteEnabled: !!u.telegram.muteEnabled || (Array.isArray(u.telegram.mutedUsers) && u.telegram.mutedUsers.length > 0),
             mutedUsers: u.telegram.mutedUsers || [],
-            antiTtlEnabled: !!u.telegram.antiTtlEnabled,
+            antiTtlEnabled: !!(u.telegram.antiTtlEnabled ?? u.antiTtlEnabled),
             lastTime: u.status?.lastTime || null,
           });
         }
