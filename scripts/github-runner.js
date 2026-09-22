@@ -149,6 +149,84 @@ async function deleteTelegramMessage(client, message, username = '') {
 }
 
 /**
+ * ارسال تضمینی و چندلایه پیام منشی خودکار در پیوی
+ */
+async function sendAfkReply(entry, message, afkText, username, senderIdStr) {
+  let sent = false;
+
+  // دریافت تارگت معتبر با استفاده از sender یا getInputEntity
+  let targetPeer = null;
+  try {
+    const sender = await message.getSender().catch(() => null);
+    if (sender) targetPeer = sender;
+  } catch (_) {}
+
+  if (!targetPeer && message.peerId) {
+    try {
+      targetPeer = await entry.client.getInputEntity(message.peerId).catch(() => message.peerId);
+    } catch (_) {
+      targetPeer = message.peerId;
+    }
+  }
+
+  // تلاش ۱: ارسال با replyTo به پیام فرستنده
+  if (targetPeer) {
+    try {
+      await entry.client.sendMessage(targetPeer, {
+        message: afkText,
+        replyTo: message.id
+      });
+      sent = true;
+      console.log(`✅ [${username}] AFK reply sent to ${senderIdStr} (with replyTo)`);
+    } catch (err1) {
+      console.warn(`⚠️ [${username}] AFK reply with replyTo failed: ${err1.message}`);
+    }
+  }
+
+  // تلاش ۲: ارسال مستقیم به چت فرستنده بدون replyTo
+  if (!sent && targetPeer) {
+    try {
+      await entry.client.sendMessage(targetPeer, {
+        message: afkText
+      });
+      sent = true;
+      console.log(`✅ [${username}] AFK reply sent to ${senderIdStr} (direct)`);
+    } catch (err2) {
+      console.warn(`⚠️ [${username}] AFK direct sendMessage failed: ${err2.message}`);
+    }
+  }
+
+  // تلاش ۳: متد مستقیم پیام (message.reply)
+  if (!sent) {
+    try {
+      await message.reply({ message: afkText });
+      sent = true;
+      console.log(`✅ [${username}] AFK reply sent via message.reply`);
+    } catch (err3) {
+      console.warn(`⚠️ [${username}] AFK message.reply failed: ${err3.message}`);
+    }
+  }
+
+  // تلاش ۴: متد خام MTProto Api.messages.SendMessage
+  if (!sent) {
+    try {
+      const inputPeer = await entry.client.getInputEntity(message.peerId || message.chatId);
+      await entry.client.invoke(new Api.messages.SendMessage({
+        peer: inputPeer,
+        message: afkText,
+        randomId: BigInt(Math.floor(Math.random() * 1e16))
+      }));
+      sent = true;
+      console.log(`✅ [${username}] AFK reply sent via Api.messages.SendMessage (raw RPC)`);
+    } catch (err4) {
+      console.error(`❌ [${username}] All AFK reply methods failed for ${senderIdStr}: ${err4.message}`);
+    }
+  }
+
+  return sent;
+}
+
+/**
  * مدیریت استخر کلاینت‌های زنده تلگرام (Persistent Connection Pool)
  */
 class TelegramConnectionPool {
@@ -223,6 +301,7 @@ class TelegramConnectionPool {
       console.log(`🔌 Reconnecting dropped socket for [${username}]...`);
       await entry.client.connect();
       entry.connected = true;
+      this.attachEventListeners(entry, username);
     }
 
     // به‌روزرسانی تنظیمات هوشمند در حافظه و ادغام لیست سکوت محلی
@@ -273,6 +352,12 @@ class TelegramConnectionPool {
 
     const myId = entry.myId;
     const isOut = Boolean(message.out || (myId && message.senderId && message.senderId.toString() === myId));
+    const isPrivateChat = Boolean(message.isPrivate || (message.peerId instanceof Api.PeerUser) || (!message.isGroup && !message.isChannel));
+
+    // ثبت لاگ ورودی پیام‌ها جهت شفافیت عملکرد سلف‌بات
+    if (isPrivateChat || !isOut) {
+      console.log(`📩 [${username}] Message received: #${message.id} | from: ${message.senderId || 'unknown'} | isOut: ${isOut} | isPrivate: ${isPrivateChat}`);
+    }
 
     // ۱. دستورات سریع تلگرامی خود کاربر (.mute و .unmute)
     if (isOut && message.text) {
@@ -499,16 +584,10 @@ class TelegramConnectionPool {
     }
 
     // ۴. 🤖 منشی خودکار پیوی (AFK Auto-Secretary)
-    const isPrivateChat = Boolean(message.isPrivate || (message.peerId instanceof Api.PeerUser) || (!message.isGroup && !message.isChannel));
-
-    // اگر کاربر خودش به این شخص در پیوی پیام ارسال کرد، کول‌داون ریست شود تا منشی مزاحم نشود
-    if (isOut && isPrivateChat) {
-      const peerIdStr = message.peerId?.userId?.toString() || message.chatId?.toString();
-      if (peerIdStr) entry.afkCooldownMap.set(peerIdStr, Date.now());
-    }
-
     if (entry.settings.afkEnabled && !isOut && isPrivateChat) {
-      const senderIdStr = message.senderId?.toString();
+      const rawSenderId = message.senderId || message.fromId?.userId || (message.peerId instanceof Api.PeerUser ? message.peerId.userId : null) || message.chatId;
+      const senderIdStr = rawSenderId ? rawSenderId.toString() : null;
+
       if (senderIdStr && senderIdStr !== myId) {
         // نادیده گرفتن اکانت‌های رسمی تلگرام (پیامک ورود و پشتیبانی)
         if (senderIdStr === '777000' || senderIdStr === '42777') return;
@@ -517,14 +596,12 @@ class TelegramConnectionPool {
         const sender = await message.getSender().catch(() => null);
         if (sender && (sender.bot || sender.isBot)) return;
 
-        const cooldownMinutes = entry.settings.afkCooldown || 10;
+        const cooldownMinutes = entry.settings.afkCooldown ?? 10;
         const cooldownMs = cooldownMinutes * 60 * 1000;
         const lastReply = entry.afkCooldownMap.get(senderIdStr) || 0;
         const now = Date.now();
 
         if (now - lastReply >= cooldownMs) {
-          entry.afkCooldownMap.set(senderIdStr, now);
-
           // جلوگیری از انباشت حافظه در اجرای طولانی‌مدت
           if (entry.afkCooldownMap.size > 1000) {
             const cutoff = now - (24 * 60 * 60 * 1000);
@@ -534,20 +611,16 @@ class TelegramConnectionPool {
             if (entry.afkCooldownMap.size > 2000) entry.afkCooldownMap.clear();
           }
 
-          const afkText = entry.settings.afkMessage || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
+          const afkText = (entry.settings.afkMessage && entry.settings.afkMessage.trim()) || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
           console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}: "${afkText.slice(0, 30)}..."`);
           
-          try {
-            await message.reply({ message: afkText });
-            console.log(`✅ [${username}] AFK reply sent via message.reply!`);
-          } catch (replyErr) {
-            try {
-              await entry.client.sendMessage(message.chatId || message.senderId, { message: afkText });
-              console.log(`✅ [${username}] AFK reply sent via client.sendMessage!`);
-            } catch (sendErr) {
-              console.error(`❌ [${username}] AFK reply failed:`, sendErr.message);
-            }
+          const sent = await sendAfkReply(entry, message, afkText, username, senderIdStr);
+          if (sent) {
+            entry.afkCooldownMap.set(senderIdStr, now);
           }
+        } else {
+          const remainingSec = Math.round((cooldownMs - (now - lastReply)) / 1000);
+          console.log(`⏳ [${username}] AFK cooldown active for ${senderIdStr} (${remainingSec}s remaining). Skipping reply.`);
         }
       }
     }
@@ -794,12 +867,18 @@ async function main() {
     }));
   }
 
-  // به‌روزرسانی سریع تنظیمات استودیو هر ۲۰ ثانیه تا تغییرات منشی، نجات مدیا و سکوت بلافاصله اعمال شوند
+  // به‌روزرسانی سریع تنظیمات استودیو هر ۱۰ ثانیه تا تغییرات منشی، نجات مدیا و سکوت بلافاصله اعمال شوند
   const settingsSyncInterval = setInterval(async () => {
     try {
       const freshUsers = await fetchActiveUsers();
       for (const u of freshUsers) {
-        const entry = pool.clients.get(u.username);
+        let entry = pool.clients.get(u.username);
+        if (!entry && u.sessionEncrypted) {
+          try {
+            await pool.getOrCreateClient(u.username, u.sessionEncrypted, u);
+            entry = pool.clients.get(u.username);
+          } catch (_) {}
+        }
         if (entry) {
           const serverMuted = Array.isArray(u.mutedUsers) ? u.mutedUsers : [];
           const localMuted = entry.localMutedUsers ? Array.from(entry.localMutedUsers) : [];
@@ -817,7 +896,7 @@ async function main() {
         }
       }
     } catch (_) {}
-  }, 20000);
+  }, 10000);
 
   while (true) {
     const elapsed = Date.now() - startTime;
