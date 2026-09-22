@@ -160,6 +160,7 @@ export function isSleepTime(startHour, endHour, date = new Date()) {
   const end = parseInt(endHour, 10);
   if (isNaN(start) || isNaN(end)) return false;
 
+  if (start === end) return false;
   const { rawHours } = getTehranTimeParts(date);
 
   if (start < end) {
