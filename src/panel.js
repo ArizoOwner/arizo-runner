@@ -790,7 +790,8 @@ export function panelHTML(env) {
       display: flex;
       align-items: baseline;
       justify-content: center;
-      gap: 4px;
+      direction: ltr !important;
+      gap: 6px;
       padding: 10px 0;
     }
     .tg-clock-digits {
@@ -1906,10 +1907,10 @@ export function panelHTML(env) {
           </div>
         </div>
 
-        <!-- Clock preview bar with seconds pulse -->
-        <div class="tg-clock-bar">
-          <div class="tg-clock-digits" id="clockPreview">۰۰:۰۰</div>
-          <div class="clock-seconds-badge" id="secondsPulse">:۰۰</div>
+        <!-- Clock preview bar with seconds pulse positioned to the right of minute -->
+        <div class="tg-clock-bar" dir="ltr">
+          <div class="tg-clock-digits" id="clockPreview" dir="ltr">۰۰:۰۰</div>
+          <div class="clock-seconds-badge" id="secondsPulse" dir="ltr">:۰۰</div>
         </div>
 
         <div class="clock-badges-row">
@@ -3455,6 +3456,7 @@ export function panelHTML(env) {
         var d = selectedDigits || ['0','1','2','3','4','5','6','7','8','9'];
         var stylH = hhStr.split('').map(function(x) { return d[+x] || x; }).join('');
         var stylM = mmStr.split('').map(function(x) { return d[+x] || x; }).join('');
+        var stylS = ss.split('').map(function(x) { return d[+x] || x; }).join('');
 
         var clockOnly = stylH + colon + stylM + ampm;
         var fullLastName = isSleeping ? sleepText : (prefix + clockOnly + suffix);
@@ -3463,7 +3465,7 @@ export function panelHTML(env) {
         if (previewEl) previewEl.textContent = clockOnly;
 
         var secEl = document.getElementById('secondsPulse');
-        if (secEl) secEl.textContent = ':' + ss;
+        if (secEl) secEl.textContent = ':' + stylS;
 
         var mockupLastNameEl = document.getElementById('mockupLastName');
         if (mockupLastNameEl) {
