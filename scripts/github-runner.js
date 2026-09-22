@@ -19,6 +19,7 @@
 
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
+import { NewMessage } from 'telegram/events/index.js';
 import { getStylizedTime, renderDynamicBio, isSleepTime } from '../src/clock.js';
 import { decryptSession } from '../src/crypto.js';
 
@@ -51,7 +52,7 @@ class TelegramConnectionPool {
     this.clients = new Map(); // username -> { client, sessionEncrypted, lastTime, connected }
   }
 
-  async getOrCreateClient(username, sessionEncrypted) {
+  async getOrCreateClient(username, sessionEncrypted, userSettings = null) {
     let entry = this.clients.get(username);
 
     // اگر کاربر قبلاً بوده اما سشن تغییر کرده است، اتصال قبلی را می‌بندیم
@@ -90,22 +91,157 @@ class TelegramConnectionPool {
         client,
         sessionEncrypted,
         lastTime: null,
-        connected: true
+        connected: true,
+        settings: {
+          afkEnabled: false,
+          afkMessage: '',
+          afkCooldown: 10,
+          muteEnabled: false,
+          mutedUsers: [],
+          antiTtlEnabled: false
+        },
+        afkCooldownMap: new Map(),
+        myId: null,
+        hasListeners: false
       };
       this.clients.set(username, entry);
+
+      // دریافت شناسه کاربری جهت تشخیص پیام‌های خروجی و دریافتی
+      client.getMe().then(me => {
+        if (me && me.id) entry.myId = me.id.toString();
+      }).catch(() => {});
+
+      // اتصال رویدادهای زنده سلف‌بات (AFK, Mute, Anti-TTL)
+      this.attachEventListeners(entry, username);
     } else if (!entry.client.connected) {
       console.log(`🔌 Reconnecting dropped socket for [${username}]...`);
       await entry.client.connect();
       entry.connected = true;
     }
 
+    // به‌روزرسانی تنظیمات هوشمند در حافظه
+    if (userSettings && entry) {
+      entry.settings = {
+        afkEnabled: !!userSettings.afkEnabled,
+        afkMessage: userSettings.afkMessage || '',
+        afkCooldown: userSettings.afkCooldown ?? 10,
+        muteEnabled: !!userSettings.muteEnabled,
+        mutedUsers: Array.isArray(userSettings.mutedUsers) ? userSettings.mutedUsers : [],
+        antiTtlEnabled: !!userSettings.antiTtlEnabled
+      };
+    }
+
     return entry.client;
   }
 
-  async updateProfile(username, sessionEncrypted, exactTimeStr, exactBioStr = null) {
+  attachEventListeners(entry, username) {
+    if (entry.hasListeners) return;
+    entry.hasListeners = true;
+
+    entry.client.addEventHandler(async (event) => {
+      try {
+        await this.handleIncomingMessage(entry, username, event);
+      } catch (err) {
+        // خطاهای حین پردازش ایونت‌ها را سایلنت نگه می‌داریم تا رانر هرگز متوقف نشود
+      }
+    }, new NewMessage({}));
+    console.log(`🛡️ [${username}] Event listeners attached (AFK, Mute, Anti-TTL active)!`);
+  }
+
+  async handleIncomingMessage(entry, username, event) {
+    const message = event.message;
+    if (!message) return;
+
+    const myId = entry.myId;
+    const isOut = message.out || (message.senderId && message.senderId.toString() === myId);
+
+    // ۱. دستورات سریع تلگرامی خود کاربر (.mute و .unmute)
+    if (isOut && message.text) {
+      const text = message.text.trim();
+      if (text === '.mute' && message.replyTo) {
+        const repliedMsg = await message.getReplyMessage().catch(() => null);
+        if (repliedMsg && repliedMsg.senderId) {
+          const targetId = repliedMsg.senderId.toString();
+          if (!entry.settings.mutedUsers.includes(targetId)) {
+            entry.settings.mutedUsers.push(targetId);
+          }
+          await message.edit({ text: `🔇 کاربر [${targetId}] به لیست سکوت سلف‌بات اضافه شد.` }).catch(() => {});
+          setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
+          return;
+        }
+      } else if (text === '.unmute' && message.replyTo) {
+        const repliedMsg = await message.getReplyMessage().catch(() => null);
+        if (repliedMsg && repliedMsg.senderId) {
+          const targetId = repliedMsg.senderId.toString();
+          entry.settings.mutedUsers = entry.settings.mutedUsers.filter(id => id !== targetId);
+          await message.edit({ text: `🔊 کاربر [${targetId}] از لیست سکوت خارج شد.` }).catch(() => {});
+          setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
+          return;
+        }
+      }
+    }
+
+    // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL)
+    if (entry.settings.antiTtlEnabled && !isOut && message.media) {
+      const ttl = message.ttlPeriod || message.media.ttlSeconds || message.ttlSeconds;
+      if (ttl && ttl > 0) {
+        console.log(`📸 [${username}] Anti-TTL detected self-destruct media (TTL: ${ttl}s). Downloading...`);
+        const buffer = await entry.client.downloadMedia(message).catch(() => null);
+        if (buffer) {
+          const sender = await message.getSender().catch(() => null);
+          const senderName = sender ? (sender.firstName || sender.username || sender.id) : (message.senderId || 'ناشناس');
+          const caption = `📸 <b>[Arizo Anti-TTL] رسانه زمان‌دار ذخیره شد!</b>\n👤 فرستنده: ${senderName} (<code>${message.senderId}</code>)\n⏳ مدت تایمر: ${ttl} ثانیه`;
+          await entry.client.sendFile('me', {
+            file: buffer,
+            caption,
+            parseMode: 'html'
+          }).catch(e => console.error('Anti-TTL forward error:', e.message));
+          console.log(`✅ [${username}] Anti-TTL media successfully saved to Saved Messages!`);
+        }
+      }
+    }
+
+    // ۳. 🔇 سکوت و حذف خودکار پیام (Mute)
+    if (entry.settings.muteEnabled && !isOut && message.senderId) {
+      const senderIdStr = message.senderId.toString();
+      const sender = await message.getSender().catch(() => null);
+      const senderUsername = sender?.username ? ('@' + sender.username.toLowerCase()) : null;
+
+      const isMuted = entry.settings.mutedUsers.some(target => {
+        const t = String(target).trim().toLowerCase();
+        return t === senderIdStr || (senderUsername && t === senderUsername) || (sender?.username && t === sender.username.toLowerCase());
+      });
+
+      if (isMuted) {
+        console.log(`🔇 [${username}] Mute triggered for sender ${senderIdStr}. Deleting message...`);
+        await message.delete({ revoke: true }).catch(() => {});
+        return; // از ادامه و پاسخ منشی جلوگیری می‌شود
+      }
+    }
+
+    // ۴. 🤖 منشی خودکار پیوی (AFK Auto-Secretary)
+    if (entry.settings.afkEnabled && !isOut && event.isPrivate) {
+      const senderIdStr = message.senderId?.toString();
+      if (senderIdStr && senderIdStr !== myId) {
+        const cooldownMinutes = entry.settings.afkCooldown || 10;
+        const cooldownMs = cooldownMinutes * 60 * 1000;
+        const lastReply = entry.afkCooldownMap.get(senderIdStr) || 0;
+        const now = Date.now();
+
+        if (now - lastReply >= cooldownMs) {
+          entry.afkCooldownMap.set(senderIdStr, now);
+          const afkText = entry.settings.afkMessage || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
+          console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}`);
+          await message.reply({ message: afkText }).catch(e => console.error('AFK reply error:', e.message));
+        }
+      }
+    }
+  }
+
+  async updateProfile(username, sessionEncrypted, exactTimeStr, exactBioStr = null, userSettings = null) {
     const startMs = performance.now();
     try {
-      const client = await this.getOrCreateClient(username, sessionEncrypted);
+      const client = await this.getOrCreateClient(username, sessionEncrypted, userSettings);
       const updateParams = { lastName: exactTimeStr };
       if (exactBioStr) updateParams.about = exactBioStr;
 
@@ -289,7 +425,7 @@ async function main() {
   // پیش‌اتصال سوکت‌ها قبل از شروع اولین دقیقه
   for (const u of cachedUsers) {
     try {
-      await pool.getOrCreateClient(u.username, u.sessionEncrypted);
+      await pool.getOrCreateClient(u.username, u.sessionEncrypted, u);
     } catch (err) {
       console.error(`⚠️ Initial warm socket failed for [${u.username}]:`, err.message);
     }
@@ -320,7 +456,7 @@ async function main() {
         });
       }
 
-      const res = await pool.updateProfile(u.username, u.sessionEncrypted, exactTimeStr, exactBioStr);
+      const res = await pool.updateProfile(u.username, u.sessionEncrypted, exactTimeStr, exactBioStr, u);
       if (res.ok) console.log(`  ✅ [${u.username}] Synced: ${exactTimeStr} (${res.elapsedMs}ms)`);
       else console.error(`  ❌ [${u.username}] Error: ${res.error}`);
     }));
@@ -355,7 +491,7 @@ async function main() {
       
       // اطمینان از متصل بودن سوکت تمام کاربران
       for (const u of cachedUsers) {
-        pool.getOrCreateClient(u.username, u.sessionEncrypted).catch(() => {});
+        pool.getOrCreateClient(u.username, u.sessionEncrypted, u).catch(() => {});
       }
     } catch (_) {}
 
@@ -391,7 +527,7 @@ async function main() {
         });
       }
 
-      return pool.updateProfile(u.username, u.sessionEncrypted, exactTimeStr, exactBioStr);
+      return pool.updateProfile(u.username, u.sessionEncrypted, exactTimeStr, exactBioStr, u);
     }));
 
     const totalBatchMs = Math.round(performance.now() - triggerStart);
