@@ -101,15 +101,17 @@ class TelegramConnectionPool {
           antiTtlEnabled: false
         },
         afkCooldownMap: new Map(),
+        localMutedUsers: new Set(),
         myId: null,
         hasListeners: false
       };
       this.clients.set(username, entry);
 
-      // دریافت شناسه کاربری جهت تشخیص پیام‌های خروجی و دریافتی
-      client.getMe().then(me => {
+      // دریافت فوری شناسه کاربری جهت تشخیص دقیق پیام‌های خروجی و دریافتی
+      try {
+        const me = await client.getMe();
         if (me && me.id) entry.myId = me.id.toString();
-      }).catch(() => {});
+      } catch (_) {}
 
       // اتصال رویدادهای زنده سلف‌بات (AFK, Mute, Anti-TTL)
       this.attachEventListeners(entry, username);
@@ -119,14 +121,18 @@ class TelegramConnectionPool {
       entry.connected = true;
     }
 
-    // به‌روزرسانی تنظیمات هوشمند در حافظه
+    // به‌روزرسانی تنظیمات هوشمند در حافظه و ادغام لیست سکوت محلی
     if (userSettings && entry) {
+      const serverMuted = Array.isArray(userSettings.mutedUsers) ? userSettings.mutedUsers : [];
+      const localMuted = entry.localMutedUsers ? Array.from(entry.localMutedUsers) : [];
+      const combinedMuted = Array.from(new Set([...serverMuted, ...localMuted]));
+
       entry.settings = {
         afkEnabled: !!userSettings.afkEnabled,
         afkMessage: userSettings.afkMessage || '',
         afkCooldown: userSettings.afkCooldown ?? 10,
         muteEnabled: !!userSettings.muteEnabled,
-        mutedUsers: Array.isArray(userSettings.mutedUsers) ? userSettings.mutedUsers : [],
+        mutedUsers: combinedMuted,
         antiTtlEnabled: !!userSettings.antiTtlEnabled
       };
     }
@@ -165,6 +171,11 @@ class TelegramConnectionPool {
           if (!entry.settings.mutedUsers.includes(targetId)) {
             entry.settings.mutedUsers.push(targetId);
           }
+          if (!entry.localMutedUsers) entry.localMutedUsers = new Set();
+          entry.localMutedUsers.add(targetId);
+
+          syncUserMuteToCloudflare(username, entry.settings.mutedUsers).catch(() => {});
+
           await message.edit({ text: `🔇 کاربر [${targetId}] به لیست سکوت سلف‌بات اضافه شد.` }).catch(() => {});
           setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
           return;
@@ -174,6 +185,10 @@ class TelegramConnectionPool {
         if (repliedMsg && repliedMsg.senderId) {
           const targetId = repliedMsg.senderId.toString();
           entry.settings.mutedUsers = entry.settings.mutedUsers.filter(id => id !== targetId);
+          if (entry.localMutedUsers) entry.localMutedUsers.delete(targetId);
+
+          syncUserMuteToCloudflare(username, entry.settings.mutedUsers).catch(() => {});
+
           await message.edit({ text: `🔊 کاربر [${targetId}] از لیست سکوت خارج شد.` }).catch(() => {});
           setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
           return;
@@ -189,8 +204,9 @@ class TelegramConnectionPool {
         const buffer = await entry.client.downloadMedia(message).catch(() => null);
         if (buffer) {
           const sender = await message.getSender().catch(() => null);
-          const senderName = sender ? (sender.firstName || sender.username || sender.id) : (message.senderId || 'ناشناس');
-          const caption = `📸 <b>[Arizo Anti-TTL] رسانه زمان‌دار ذخیره شد!</b>\n👤 فرستنده: ${senderName} (<code>${message.senderId}</code>)\n⏳ مدت تایمر: ${ttl} ثانیه`;
+          const rawName = sender ? (sender.firstName || sender.username || sender.id) : (message.senderId || 'ناشناس');
+          const cleanSenderName = String(rawName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const caption = `📸 <b>[Arizo Anti-TTL] رسانه زمان‌دار ذخیره شد!</b>\n👤 فرستنده: ${cleanSenderName} (<code>${message.senderId}</code>)\n⏳ مدت تایمر: ${ttl} ثانیه`;
           await entry.client.sendFile('me', {
             file: buffer,
             caption,
@@ -223,6 +239,13 @@ class TelegramConnectionPool {
     if (entry.settings.afkEnabled && !isOut && event.isPrivate) {
       const senderIdStr = message.senderId?.toString();
       if (senderIdStr && senderIdStr !== myId) {
+        // نادیده گرفتن اکانت‌های رسمی تلگرام (پیامک ورود و پشتیبانی)
+        if (senderIdStr === '777000' || senderIdStr === '42777') return;
+
+        // نادیده گرفتن ربات‌ها
+        const sender = await message.getSender().catch(() => null);
+        if (sender && (sender.bot || sender.isBot)) return;
+
         const cooldownMinutes = entry.settings.afkCooldown || 10;
         const cooldownMs = cooldownMinutes * 60 * 1000;
         const lastReply = entry.afkCooldownMap.get(senderIdStr) || 0;
@@ -230,6 +253,16 @@ class TelegramConnectionPool {
 
         if (now - lastReply >= cooldownMs) {
           entry.afkCooldownMap.set(senderIdStr, now);
+
+          // جلوگیری از انباشت حافظه در اجرای طولانی‌مدت
+          if (entry.afkCooldownMap.size > 1000) {
+            const cutoff = now - (24 * 60 * 60 * 1000);
+            for (const [k, v] of entry.afkCooldownMap.entries()) {
+              if (v < cutoff) entry.afkCooldownMap.delete(k);
+            }
+            if (entry.afkCooldownMap.size > 2000) entry.afkCooldownMap.clear();
+          }
+
           const afkText = entry.settings.afkMessage || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
           console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}`);
           await message.reply({ message: afkText }).catch(e => console.error('AFK reply error:', e.message));
@@ -363,6 +396,23 @@ async function reportStatusErrors(updates) {
   } catch (err) {
     console.error('⚠️ Cloudflare reportStatusErrors error:', err.message);
   }
+}
+
+/**
+ * همگام‌سازی آنی لیست سکوت کاربر در ورکر کلادفلر
+ */
+async function syncUserMuteToCloudflare(username, mutedUsers) {
+  try {
+    await fetch(`${CLOUDFLARE_URL}/api/internal/update-user-mute`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RUNNER_SECRET}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.0'
+      },
+      body: JSON.stringify({ username, mutedUsers })
+    });
+  } catch (_) {}
 }
 
 /**
