@@ -2445,6 +2445,31 @@ export function panelHTML(env) {
     var currentPresetKey = 'bold';
     var tgStep = 'phone';
     var isBotRunning = true;
+    window.isStudioDirty = false;
+
+    function setSafeValue(id, val) {
+      var el = document.getElementById(id);
+      if (el && document.activeElement !== el) {
+        el.value = val;
+      }
+    }
+    function setSafeChecked(id, chk) {
+      var el = document.getElementById(id);
+      if (el && document.activeElement !== el) {
+        el.checked = !!chk;
+      }
+    }
+
+    document.addEventListener('input', function(e) {
+      if (e.target && e.target.closest('#customizationStudioSection')) {
+        window.isStudioDirty = true;
+      }
+    });
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.closest('#customizationStudioSection')) {
+        window.isStudioDirty = true;
+      }
+    });
 
     function showToast(msg, type) {
       var t = document.getElementById('toast');
@@ -2867,7 +2892,8 @@ export function panelHTML(env) {
       }
     };
 
-    window.setColonChar = function(char) {
+    window.setColonChar = function(char, isQuiet) {
+      if (!isQuiet) window.isStudioDirty = true;
       document.getElementById('colonInput').value = char;
       document.querySelectorAll('.sep-pill').forEach(function(c) {
         c.classList.toggle('active', c.textContent.trim() === char);
@@ -3251,7 +3277,8 @@ export function panelHTML(env) {
       })(key);
     }
 
-    function selectPreset(key) {
+    function selectPreset(key, isQuiet) {
+      if (!isQuiet) window.isStudioDirty = true;
       currentPresetKey = key;
       selectedDigits = presets[key].digits;
       var fontBadge = document.getElementById('userFontBadge');
@@ -3458,6 +3485,7 @@ export function panelHTML(env) {
           body: JSON.stringify(payload)
         });
         if (res.ok) {
+          window.isStudioDirty = false;
           showToast('تنظیمات استودیو Arizo ذخیره و آنی اعمال شد ✨', 'success');
         } else {
           var errData = await res.json().catch(function() { return {}; });
@@ -3608,75 +3636,46 @@ export function panelHTML(env) {
             if (tgAlert) tgAlert.classList.add('hidden');
           }
 
-          if (data.digits && Array.isArray(data.digits)) {
-            selectedDigits = data.digits;
-            for (var k in presets) {
-              if (presets[k].digits.join('') === data.digits.join('')) {
-                selectPreset(k);
-                break;
+          if (!window.isStudioDirty) {
+            if (data.digits && Array.isArray(data.digits)) {
+              selectedDigits = data.digits;
+              for (var k in presets) {
+                if (presets[k].digits.join('') === data.digits.join('')) {
+                  selectPreset(k, true);
+                  break;
+                }
               }
             }
-          }
-          if (data.colon) {
-            document.getElementById('colonInput').value = data.colon;
-            setColonChar(data.colon);
-          }
+            if (data.colon) {
+              setColonChar(data.colon, true);
+            }
 
-          // 🕒 بارگذاری تنظیمات ساعت استودیو
-          if (document.getElementById('prefixInput')) {
-            document.getElementById('prefixInput').value = data.prefix || '';
-          }
-          if (document.getElementById('suffixInput')) {
-            document.getElementById('suffixInput').value = data.suffix || '';
-          }
-          if (document.getElementById('toggle12h')) {
-            document.getElementById('toggle12h').checked = !!data.is12h;
-          }
+            // 🕒 بارگذاری تنظیمات ساعت استودیو
+            setSafeValue('prefixInput', data.prefix || '');
+            setSafeValue('suffixInput', data.suffix || '');
+            setSafeChecked('toggle12h', !!data.is12h);
 
-          // 📝 بارگذاری تنظیمات بیوگرافی هوشمند
-          if (document.getElementById('bioEnabledToggle')) {
-            document.getElementById('bioEnabledToggle').checked = !!data.bioEnabled;
-          }
-          if (document.getElementById('bioTemplateInput')) {
-            document.getElementById('bioTemplateInput').value = data.bioTemplate || '';
-          }
+            // 📝 بارگذاری تنظیمات بیوگرافی هوشمند
+            setSafeChecked('bioEnabledToggle', !!data.bioEnabled);
+            setSafeValue('bioTemplateInput', data.bioTemplate || '');
 
-          // 🌙 بارگذاری تنظیمات حالت خواب و اتوماسیون
-          if (document.getElementById('sleepEnabledToggle')) {
-            document.getElementById('sleepEnabledToggle').checked = !!data.sleepEnabled;
-          }
-          if (document.getElementById('sleepStartSelect') && data.sleepStart !== undefined) {
-            document.getElementById('sleepStartSelect').value = String(data.sleepStart);
-          }
-          if (document.getElementById('sleepEndSelect') && data.sleepEnd !== undefined) {
-            document.getElementById('sleepEndSelect').value = String(data.sleepEnd);
-          }
-          if (document.getElementById('sleepTextInput')) {
-            document.getElementById('sleepTextInput').value = data.sleepText || '😴 Sleep';
-          }
+            // 🌙 بارگذاری تنظیمات حالت خواب و اتوماسیون
+            setSafeChecked('sleepEnabledToggle', !!data.sleepEnabled);
+            if (data.sleepStart !== undefined) setSafeValue('sleepStartSelect', String(data.sleepStart));
+            if (data.sleepEnd !== undefined) setSafeValue('sleepEndSelect', String(data.sleepEnd));
+            setSafeValue('sleepTextInput', data.sleepText || '😴 Sleep');
 
-          // 🤖 بارگذاری منشی خودکار پیوی (AFK)
-          if (document.getElementById('afkEnabledToggle')) {
-            document.getElementById('afkEnabledToggle').checked = !!data.afkEnabled;
-          }
-          if (document.getElementById('afkMessageInput')) {
-            document.getElementById('afkMessageInput').value = data.afkMessage || '';
-          }
-          if (document.getElementById('afkCooldownSelect') && data.afkCooldown !== undefined) {
-            document.getElementById('afkCooldownSelect').value = String(data.afkCooldown);
-          }
+            // 🤖 بارگذاری منشی خودکار پیوی (AFK)
+            setSafeChecked('afkEnabledToggle', !!data.afkEnabled);
+            setSafeValue('afkMessageInput', data.afkMessage || '');
+            if (data.afkCooldown !== undefined) setSafeValue('afkCooldownSelect', String(data.afkCooldown));
 
-          // 🔇 بارگذاری سکوت و حذف پیام (Mute)
-          if (document.getElementById('muteEnabledToggle')) {
-            document.getElementById('muteEnabledToggle').checked = !!data.muteEnabled;
-          }
-          if (document.getElementById('mutedUsersInput')) {
-            document.getElementById('mutedUsersInput').value = Array.isArray(data.mutedUsers) ? data.mutedUsers.join(', ') : (data.mutedUsers || '');
-          }
+            // 🔇 بارگذاری سکوت و حذف پیام (Mute)
+            setSafeChecked('muteEnabledToggle', !!data.muteEnabled);
+            setSafeValue('mutedUsersInput', Array.isArray(data.mutedUsers) ? data.mutedUsers.join(', ') : (data.mutedUsers || ''));
 
-          // 📸 بارگذاری ضد خودتخریبی مدیا (Anti-TTL)
-          if (document.getElementById('antiTtlEnabledToggle')) {
-            document.getElementById('antiTtlEnabledToggle').checked = !!data.antiTtlEnabled;
+            // 📸 بارگذاری ضد خودتخریبی مدیا (Anti-TTL)
+            setSafeChecked('antiTtlEnabledToggle', !!data.antiTtlEnabled);
           }
 
           // 📱 به‌روزرسانی شبیه‌ساز زنده پروفایل تلگرام
