@@ -840,6 +840,12 @@ export default {
         sleepStart: auth.user.telegram?.sleepStart ?? 23,
         sleepEnd: auth.user.telegram?.sleepEnd ?? 7,
         sleepText: auth.user.telegram?.sleepText || '😴 Sleep',
+        afkEnabled: !!auth.user.telegram?.afkEnabled,
+        afkMessage: auth.user.telegram?.afkMessage || '',
+        afkCooldown: auth.user.telegram?.afkCooldown ?? 10,
+        muteEnabled: !!auth.user.telegram?.muteEnabled,
+        mutedUsers: auth.user.telegram?.mutedUsers || [],
+        antiTtlEnabled: !!auth.user.telegram?.antiTtlEnabled,
         status: liveStatus
       });
     }
@@ -1085,6 +1091,28 @@ export default {
       if (b.sleepText !== undefined) {
         auth.user.telegram.sleepText = String(b.sleepText).slice(0, 30);
       }
+      if (b.afkEnabled !== undefined) {
+        auth.user.telegram.afkEnabled = !!b.afkEnabled;
+      }
+      if (b.afkMessage !== undefined) {
+        auth.user.telegram.afkMessage = String(b.afkMessage).slice(0, 300);
+      }
+      if (b.afkCooldown !== undefined) {
+        auth.user.telegram.afkCooldown = Math.max(1, parseInt(b.afkCooldown, 10) || 10);
+      }
+      if (b.muteEnabled !== undefined) {
+        auth.user.telegram.muteEnabled = !!b.muteEnabled;
+      }
+      if (b.mutedUsers !== undefined) {
+        if (Array.isArray(b.mutedUsers)) {
+          auth.user.telegram.mutedUsers = b.mutedUsers.map(x => String(x).trim()).filter(Boolean);
+        } else if (typeof b.mutedUsers === 'string') {
+          auth.user.telegram.mutedUsers = b.mutedUsers.split(',').map(x => x.trim()).filter(Boolean);
+        }
+      }
+      if (b.antiTtlEnabled !== undefined) {
+        auth.user.telegram.antiTtlEnabled = !!b.antiTtlEnabled;
+      }
 
       await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
       await updateSingleUserProfile(auth.user, env, true);
@@ -1181,6 +1209,12 @@ export default {
             sleepStart: u.telegram.sleepStart ?? 23,
             sleepEnd: u.telegram.sleepEnd ?? 7,
             sleepText: u.telegram.sleepText || '😴 Sleep',
+            afkEnabled: !!u.telegram.afkEnabled,
+            afkMessage: u.telegram.afkMessage || '',
+            afkCooldown: u.telegram.afkCooldown ?? 10,
+            muteEnabled: !!u.telegram.muteEnabled,
+            mutedUsers: u.telegram.mutedUsers || [],
+            antiTtlEnabled: !!u.telegram.antiTtlEnabled,
             lastTime: u.status?.lastTime || null,
           });
         }
