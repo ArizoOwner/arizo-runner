@@ -523,6 +523,246 @@ export function panelHTML(env) {
       border: 1px solid var(--border-subtle);
     }
 
+    /* 📱 شبیه‌ساز زنده پروفایل تلگرام */
+    .tg-mockup-wrapper {
+      background: var(--clock-box-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .tg-mockup-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .tg-mockup-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .tg-mockup-avatar {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      box-shadow: 0 8px 25px rgba(168, 85, 247, 0.35);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+    .tg-online-ring {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 14px;
+      height: 14px;
+      background: #10b981;
+      border-radius: 50%;
+      border: 2px solid var(--bg-surface);
+      box-shadow: 0 0 10px #10b981;
+    }
+    .tg-mockup-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+    }
+    .tg-mockup-name-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tg-mockup-firstname {
+      font-size: 1.18rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .tg-mockup-lastname {
+      font-size: 1.18rem;
+      font-weight: 800;
+      background: var(--clock-digits-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+    .tg-mockup-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    .tg-status-dot {
+      width: 7px;
+      height: 7px;
+      background: #38bdf8;
+      border-radius: 50%;
+      animation: pulseDot 2s infinite;
+    }
+    .tg-mockup-body {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tg-mockup-field {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .tg-field-icon {
+      font-size: 1.1rem;
+      line-height: 1.4;
+    }
+    .tg-field-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .tg-field-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .tg-field-value {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+    .tg-clock-bar {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 4px;
+      padding: 10px 0;
+    }
+    .tg-clock-digits {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.8rem;
+      font-weight: 900;
+      background: var(--clock-digits-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: var(--clock-shadow);
+      direction: ltr;
+    }
+
+    /* 🎚️ سوئیچ‌های تاگل مدرن */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: var(--table-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+    }
+    .toggle-label {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 3px;
+    }
+    .toggle-desc {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: 0.3s;
+      border-radius: 34px;
+      border: 1px solid var(--border-subtle);
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    input:checked + .slider {
+      background-color: #8b5cf6;
+      border-color: #a855f7;
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* چیپ‌های متغیر بیوگرافی */
+    .var-chip {
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 8px;
+      padding: 4px 9px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #c084fc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .var-chip:hover {
+      background: rgba(168, 85, 247, 0.25);
+      transform: translateY(-1px);
+    }
+    .bio-templates-box {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bio-preset-pill {
+      background: var(--table-bg);
+      border: 1px dashed var(--border-subtle);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      direction: ltr;
+      text-align: right;
+    }
+    .bio-preset-pill:hover {
+      border-color: var(--primary);
+      color: var(--text-main);
+      background: rgba(168, 85, 247, 0.08);
+    }
+
     /* تب‌های اختصاصی درون پنل ادمین */
     .admin-subtab-bar {
       display: flex;
@@ -1471,23 +1711,54 @@ export function panelHTML(env) {
       </div>
     </div>
 
-    <!-- 🕒 بخش ۱: استیج ساعت زنده و تقویم خورشیدی تهران -->
+    <!-- 🕒 بخش ۱: شبیه‌ساز زنده پروفایل تلگرام (Telegram Profile Live Mockup) -->
     <div id="clockHeroCard" class="glass-card hidden">
       <div class="section-header">
         <div class="section-title">
-          <span>🕒</span> بخش ۱: مانیتور زنده زمان اتمی تهران
+          <span>📱</span> شبیه‌ساز زنده پروفایل تلگرام (Live Telegram Mockup)
         </div>
-        <span class="section-tag">Zero-Latency Sync</span>
+        <span class="section-tag">پیش‌نمایش لحظه‌ای</span>
       </div>
 
-      <div class="hero-clock-box">
-        <div class="hero-calendar-chip">
-          <span>🗓️</span>
-          <span id="persianDateText">درحال محاسبه تقویم خورشیدی...</span>
+      <!-- Telegram Profile Realistic Mockup -->
+      <div class="tg-mockup-wrapper">
+        <div class="tg-mockup-header">
+          <div class="tg-mockup-avatar-wrap">
+            <div class="tg-mockup-avatar" id="mockupAvatar">AZ</div>
+            <div class="tg-online-ring"></div>
+          </div>
+          <div class="tg-mockup-info">
+            <div class="tg-mockup-name-row">
+              <span class="tg-mockup-firstname" id="mockupFirstName">کاربر Arizo</span>
+              <span class="tg-mockup-lastname" id="mockupLastName">۰۰:۰۰</span>
+            </div>
+            <div class="tg-mockup-status">
+              <span class="tg-status-dot"></span>
+              <span>آنلاین (لحظه‌ای به وقت تهران)</span>
+            </div>
+          </div>
         </div>
 
-        <div class="clock-display-wrap">
-          <div class="clock-time-digits" id="clockPreview">۰۰:۰۰</div>
+        <div class="tg-mockup-body">
+          <div class="tg-mockup-field">
+            <div class="tg-field-icon">💬</div>
+            <div class="tg-field-content">
+              <div class="tg-field-label">بیوگرافی زنده تلگرام (Bio / About)</div>
+              <div class="tg-field-value" id="mockupBio">در انتظار فعال‌سازی بیوگرافی هوشمند...</div>
+            </div>
+          </div>
+          <div class="tg-mockup-field">
+            <div class="tg-field-icon">🗓️</div>
+            <div class="tg-field-content">
+              <div class="tg-field-label">تقویم خورشیدی و زمان اتمی تهران</div>
+              <div class="tg-field-value" id="persianDateText">درحال محاسبه تقویم خورشیدی...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clock preview bar with seconds pulse -->
+        <div class="tg-clock-bar">
+          <div class="tg-clock-digits" id="clockPreview">۰۰:۰۰</div>
           <div class="clock-seconds-badge" id="secondsPulse">:۰۰</div>
         </div>
 
@@ -1554,13 +1825,13 @@ export function panelHTML(env) {
       </div>
     </div>
 
-    <!-- 🎨 بخش ۳: استودیوی طراحی فونت و کنترل سلف‌بات -->
+    <!-- 🎨 بخش ۳: استودیوی طراحی و امکانات پیشرفته سلف‌بات -->
     <div id="dashboardSection" class="glass-card hidden">
       <div class="section-header">
         <div class="section-title">
-          <span>🎨</span> بخش ۳: استودیوی تایپوگرافی و کنترل سلف‌بات
+          <span>🎨</span> استودیوی شخصی‌سازی و امکانات پیشرفته
         </div>
-        <span class="section-tag">شخصی‌سازی نام خانوادگی</span>
+        <span class="section-tag">Arizo Studio Pro</span>
       </div>
 
       <!-- هشدار هوشمند خطای ارتباط تلگرام با امکان اتصال مجدد -->
@@ -1576,50 +1847,168 @@ export function panelHTML(env) {
         </div>
       </div>
 
-      <!-- گرید پریست‌های فونت -->
-      <div class="preset-grid" id="presetBtns"></div>
+      <!-- 📑 تب‌های ۳ گانه استودیو -->
+      <div class="segmented-control" style="margin-bottom:20px;">
+        <button id="studioTabClock" class="segmented-btn active" onclick="switchStudioTab('clock')">
+          <span>🕒</span> فونت و ساعت
+        </button>
+        <button id="studioTabBio" class="segmented-btn" onclick="switchStudioTab('bio')">
+          <span>📝</span> بیوگرافی هوشمند
+        </button>
+        <button id="studioTabAutomation" class="segmented-btn" onclick="switchStudioTab('automation')">
+          <span>🌙</span> حالت خواب و تنظیمات
+        </button>
+      </div>
 
-      <!-- جداکننده‌ها -->
-      <div class="form-group">
-        <label class="form-label">انتخاب کاراکتر جداکننده ساعت و دقیقه</label>
-        <div class="sep-scroll-row">
-          <div class="sep-pill active" onclick="setColonChar(':')">:</div>
-          <div class="sep-pill" onclick="setColonChar('•')">•</div>
-          <div class="sep-pill" onclick="setColonChar('✦')">✦</div>
-          <div class="sep-pill" onclick="setColonChar('◈')">◈</div>
-          <div class="sep-pill" onclick="setColonChar('|')">|</div>
-          <div class="sep-pill" onclick="setColonChar('~')">~</div>
-          <div class="sep-pill" onclick="setColonChar('⚡')">⚡</div>
+      <!-- 🕒 تب ۱: فونت و استایل ساعت -->
+      <div id="studioPaneClock">
+        <!-- گرید پریست‌های فونت -->
+        <div class="preset-grid" id="presetBtns"></div>
+
+        <!-- جداکننده‌ها -->
+        <div class="form-group">
+          <label class="form-label">انتخاب کاراکتر جداکننده ساعت و دقیقه</label>
+          <div class="sep-scroll-row">
+            <div class="sep-pill active" onclick="setColonChar(':')">:</div>
+            <div class="sep-pill" onclick="setColonChar('•')">•</div>
+            <div class="sep-pill" onclick="setColonChar('⚡')">⚡</div>
+            <div class="sep-pill" onclick="setColonChar('✦')">✦</div>
+            <div class="sep-pill" onclick="setColonChar('❤️')">❤️</div>
+            <div class="sep-pill" onclick="setColonChar('💎')">💎</div>
+            <div class="sep-pill" onclick="setColonChar('✨')">✨</div>
+            <div class="sep-pill" onclick="setColonChar('◈')">◈</div>
+            <div class="sep-pill" onclick="setColonChar('|')">|</div>
+            <div class="sep-pill" onclick="setColonChar('~')">~</div>
+          </div>
+        </div>
+
+        <!-- پیشوند و پسوند نام خانوادگی -->
+        <div style="display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
+            <label class="form-label">پیشوند ساعت (قبل از ساعت)</label>
+            <input type="text" id="prefixInput" class="input-field" placeholder="مثلاً: [ یا | یا ⚡ " maxlength="15" oninput="updateLiveClock()">
+          </div>
+          <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
+            <label class="form-label">پسوند ساعت (بعد از ساعت)</label>
+            <input type="text" id="suffixInput" class="input-field" placeholder="مثلاً: ] یا ⚡ یا VIP" maxlength="15" oninput="updateLiveClock()">
+          </div>
+        </div>
+
+        <!-- حالت ۱۲ ساعته -->
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">حالت ۱۲ ساعته (AM / PM لوکس)</div>
+            <div class="toggle-desc">نمایش ساعت به‌صورت ۱۲ ساعته همراه با نشانگر فانتزی ᴬᴹ / ᴾᴹ</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle12h" onchange="updateLiveClock()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- ارقام دستی -->
+        <div class="digits-row" style="margin-top:16px;">
+          <div class="form-group" style="flex: 3; margin-bottom: 0;">
+            <label class="form-label">ارقام دلخواه دستی (۱۰ کاراکتر ۰ تا ۹)</label>
+            <input type="text" id="customDigits" class="input-field mono" placeholder="۱۰ رقم دلخواه از ۰ تا ۹ به ترتیب (مثال: ۰۱۲۳۴۵۶۷۸۹)" dir="ltr">
+          </div>
+          <div class="form-group" style="flex: 1; min-width: 70px; margin-bottom: 0;">
+            <label class="form-label">جداکننده</label>
+            <input type="text" id="colonInput" class="input-field mono center-text" value=":" maxlength="4" placeholder=":" style="text-align:center;">
+          </div>
         </div>
       </div>
 
-      <!-- ارقام دستی -->
-      <div class="digits-row">
-        <div class="form-group" style="flex: 3; margin-bottom: 0;">
-          <label class="form-label">ارقام دلخواه (۱۰ کاراکتر ۰ تا ۹)</label>
-          <input type="text" id="customDigits" class="input-field mono" placeholder="۱۰ رقم دلخواه از ۰ تا ۹ به ترتیب (مثال: ۰۱۲۳۴۵۶۷۸۹)" dir="ltr">
+      <!-- 📝 تب ۲: بیوگرافی هوشمند و زنده -->
+      <div id="studioPaneBio" class="hidden">
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">فعال‌سازی بیوگرافی زنده و هوشمند (Live Bio)</div>
+            <div class="toggle-desc">به‌روزرسانی خودکار بیو تلگرام با ساعت، تقویم و متون پویا</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="bioEnabledToggle" onchange="updateLiveClock()">
+            <span class="slider"></span>
+          </label>
         </div>
-        <div class="form-group" style="flex: 1; min-width: 70px; margin-bottom: 0;">
-          <label class="form-label">جداکننده</label>
-          <input type="text" id="colonInput" class="input-field mono center-text" value=":" maxlength="4" placeholder=":" style="text-align:center;">
+
+        <div class="form-group">
+          <label class="form-label">قالب متن بیوگرافی تلگرام (حداکثر ۷۰ کاراکتر)</label>
+          <input type="text" id="bioTemplateInput" class="input-field" placeholder="مثال: ⏳ {time} | 📅 {date} | ⚡ Arizo Pro" maxlength="70" oninput="updateLiveClock()">
+          <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:0.75rem; color:var(--text-muted);">افزودن متغیر با کلیک:</span>
+            <button type="button" class="var-chip" onclick="insertBioVar('{time}')">⏰ {time} (ساعت)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{date}')">🗓️ {date} (تاریخ خورشیدی)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{day}')">☀️ {day} (روز هفته)</button>
+          </div>
+        </div>
+
+        <!-- قالب‌های پیشنهادی آماده -->
+        <div class="bio-templates-box">
+          <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); margin-bottom:8px;">💡 قالب‌های محبوب و آماده:</div>
+          <div class="bio-preset-pill" onclick="applyBioTemplate('⏳ {time} | 📅 {date} | ⚡ Arizo')">⏳ {time} | 📅 {date} | ⚡ Arizo</div>
+          <div class="bio-preset-pill" onclick="applyBioTemplate('⚡ {time} • {day} • Always Online')">⚡ {time} • {day} • Always Online</div>
+          <div class="bio-preset-pill" onclick="applyBioTemplate('『 {time} 』✨ {date} ✨')">『 {time} 』✨ {date} ✨</div>
         </div>
       </div>
 
-      <button class="btn btn-primary" id="saveBtn" onclick="saveFonts()" style="margin-bottom: 18px;">
-        <span>💾 ذخیره تغییرات استودیو</span>
+      <!-- 🌙 تب ۳: حالت خواب و اتوماسیون -->
+      <div id="studioPaneAutomation" class="hidden">
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">حالت خواب و استراحت شبانه (Sleep Mode)</div>
+            <div class="toggle-desc">در ساعات مشخص‌شده، به‌روزرسانی متوقف شده یا متن خواب قرار می‌گیرد</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="sleepEnabledToggle" onchange="updateLiveClock()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
+            <label class="form-label">شروع خواب (ساعت)</label>
+            <select id="sleepStartSelect" class="input-field" style="background:var(--bg-input);" onchange="updateLiveClock()">
+              <option value="22">۲۲:۰۰ (۱۰ شب)</option>
+              <option value="23" selected>۲۳:۰۰ (۱۱ شب)</option>
+              <option value="0">۰۰:۰۰ (نیمه‌شب)</option>
+              <option value="1">۰۱:۰۰ (بامداد)</option>
+              <option value="2">۰۲:۰۰ (بامداد)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
+            <label class="form-label">پایان خواب (ساعت)</label>
+            <select id="sleepEndSelect" class="input-field" style="background:var(--bg-input);" onchange="updateLiveClock()">
+              <option value="6">۰۶:۰۰ (صبح)</option>
+              <option value="7" selected>۰۷:۰۰ (صبح)</option>
+              <option value="8">۰۸:۰۰ (صبح)</option>
+              <option value="9">۰۹:۰۰ (صبح)</option>
+              <option value="10">۱۰:۰۰ (صبح)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">متن نام خانوادگی در طول ساعات خواب</label>
+          <input type="text" id="sleepTextInput" class="input-field" value="😴 Sleep" placeholder="مثلاً: 😴 Sleep یا 🌙 خوابیدم" maxlength="30" oninput="updateLiveClock()">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="saveBtn" onclick="saveFonts()" style="margin-top: 18px; margin-bottom: 22px;">
+        <span>💾 ذخیره و اعمال تغییرات استودیو</span>
       </button>
 
       <!-- ⚡ بخش ۴: عملیات و مانیتورینگ سلامت -->
       <div class="section-header" style="margin-top: 14px;">
         <div class="section-title">
-          <span>⚡</span> بخش ۴: وضعیت سرویس و عملیات فوری
+          <span>⚡</span> وضعیت سرویس و مانیتورینگ سلامت
         </div>
         <span class="section-tag">Edge Telemetry</span>
       </div>
 
       <div class="action-buttons-grid">
         <button class="btn btn-secondary" id="syncBtn" onclick="triggerImmediateSync()">
-          <span>⚡ به‌روزرسانی آنی</span>
+          <span>⚡ تست به‌روزرسانی آنی</span>
         </button>
         <button class="btn btn-warning" id="toggleBotBtn" onclick="toggleBotState()">
           <span id="toggleBotText">⏸️ توقف موقت</span>
@@ -2702,31 +3091,145 @@ export function panelHTML(env) {
       updateLiveClock();
     }
 
+    // ==========================================
+    // 🎨 کنترل تب‌های استودیوی شخصی‌سازی
+    // ==========================================
+    window.switchStudioTab = function(tab) {
+      var btnClock = document.getElementById('studioTabClock');
+      var btnBio = document.getElementById('studioTabBio');
+      var btnAuto = document.getElementById('studioTabAutomation');
+
+      var paneClock = document.getElementById('studioPaneClock');
+      var paneBio = document.getElementById('studioPaneBio');
+      var paneAuto = document.getElementById('studioPaneAutomation');
+
+      if (btnClock) btnClock.classList.toggle('active', tab === 'clock');
+      if (btnBio) btnBio.classList.toggle('active', tab === 'bio');
+      if (btnAuto) btnAuto.classList.toggle('active', tab === 'automation');
+
+      if (paneClock) paneClock.classList.toggle('hidden', tab !== 'clock');
+      if (paneBio) paneBio.classList.toggle('hidden', tab !== 'bio');
+      if (paneAuto) paneAuto.classList.toggle('hidden', tab !== 'automation');
+    };
+
+    window.insertBioVar = function(tag) {
+      var input = document.getElementById('bioTemplateInput');
+      if (!input) return;
+      var val = input.value;
+      var start = input.selectionStart !== undefined ? input.selectionStart : val.length;
+      var end = input.selectionEnd !== undefined ? input.selectionEnd : val.length;
+      input.value = val.substring(0, start) + tag + val.substring(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + tag.length;
+      updateLiveClock();
+    };
+
+    window.applyBioTemplate = function(template) {
+      var input = document.getElementById('bioTemplateInput');
+      var toggle = document.getElementById('bioEnabledToggle');
+      if (input) input.value = template;
+      if (toggle) toggle.checked = true;
+      updateLiveClock();
+      showToast('قالب بیوگرافی انتخاب و اعمال شد ✨', 'success');
+    };
+
+    function isClientSleepTime(startHour, endHour, currentHour) {
+      startHour = parseInt(startHour, 10);
+      endHour = parseInt(endHour, 10);
+      currentHour = parseInt(currentHour, 10);
+      if (isNaN(startHour) || isNaN(endHour) || isNaN(currentHour)) return false;
+      if (startHour === endHour) return false;
+      if (startHour < endHour) {
+        return currentHour >= startHour && currentHour < endHour;
+      } else {
+        return currentHour >= startHour || currentHour < endHour;
+      }
+    }
+
     var tehranPersianDateFmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
       timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+    var tehranPersianShortDateFmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+      timeZone: 'Asia/Tehran', day: 'numeric', month: 'long'
+    });
+    var tehranPersianWeekdayFmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+      timeZone: 'Asia/Tehran', weekday: 'long'
     });
 
     function updateLiveClock() {
       try {
         var now = Date.now();
         var tehranDate = new Date(now + 12600000);
-        var hh = String(tehranDate.getUTCHours()).padStart(2, '0');
-        var mm = String(tehranDate.getUTCMinutes()).padStart(2, '0');
+        var rawH = tehranDate.getUTCHours();
+        var rawM = tehranDate.getUTCMinutes();
         var ss = String(tehranDate.getUTCSeconds()).padStart(2, '0');
-        
-        var d = selectedDigits;
-        var c = (document.getElementById('colonInput') && document.getElementById('colonInput').value) || ':';
 
-        var stylH = hh.split('').map(function(x) { return d[+x] || x; }).join('');
-        var stylM = mm.split('').map(function(x) { return d[+x] || x; }).join('');
+        var is12h = document.getElementById('toggle12h') ? document.getElementById('toggle12h').checked : false;
+        var prefix = (document.getElementById('prefixInput') && document.getElementById('prefixInput').value) || '';
+        var suffix = (document.getElementById('suffixInput') && document.getElementById('suffixInput').value) || '';
+        var colon = (document.getElementById('colonInput') && document.getElementById('colonInput').value) || ':';
+        var sleepEnabled = document.getElementById('sleepEnabledToggle') ? document.getElementById('sleepEnabledToggle').checked : false;
+        var sleepStart = document.getElementById('sleepStartSelect') ? document.getElementById('sleepStartSelect').value : 23;
+        var sleepEnd = document.getElementById('sleepEndSelect') ? document.getElementById('sleepEndSelect').value : 7;
+        var sleepText = (document.getElementById('sleepTextInput') && document.getElementById('sleepTextInput').value) || '😴 Sleep';
+
+        var isSleeping = sleepEnabled && isClientSleepTime(sleepStart, sleepEnd, rawH);
+
+        var displayH = rawH;
+        var ampm = '';
+        if (is12h) {
+          var isPM = rawH >= 12;
+          displayH = rawH % 12;
+          if (displayH === 0) displayH = 12;
+          ampm = isPM ? ' ᴾᴹ' : ' ᴬᴹ';
+        }
+
+        var hhStr = String(displayH).padStart(2, '0');
+        var mmStr = String(rawM).padStart(2, '0');
+
+        var d = selectedDigits || ['0','1','2','3','4','5','6','7','8','9'];
+        var stylH = hhStr.split('').map(function(x) { return d[+x] || x; }).join('');
+        var stylM = mmStr.split('').map(function(x) { return d[+x] || x; }).join('');
+
+        var clockOnly = stylH + colon + stylM + ampm;
+        var fullLastName = isSleeping ? sleepText : (prefix + clockOnly + suffix);
+
         var previewEl = document.getElementById('clockPreview');
-        if (previewEl) previewEl.textContent = stylH + c + stylM;
+        if (previewEl) previewEl.textContent = clockOnly;
+
         var secEl = document.getElementById('secondsPulse');
         if (secEl) secEl.textContent = ':' + ss;
+
+        var mockupLastNameEl = document.getElementById('mockupLastName');
+        if (mockupLastNameEl) {
+          mockupLastNameEl.textContent = fullLastName;
+          mockupLastNameEl.style.color = isSleeping ? '#fbbf24' : 'inherit';
+        }
 
         var dateEl = document.getElementById('persianDateText');
         if (dateEl) {
           dateEl.textContent = tehranPersianDateFmt.format(new Date(now));
+        }
+
+        var bioEnabled = document.getElementById('bioEnabledToggle') ? document.getElementById('bioEnabledToggle').checked : false;
+        var bioTemplate = (document.getElementById('bioTemplateInput') && document.getElementById('bioTemplateInput').value) || '';
+        var mockupBioEl = document.getElementById('mockupBio');
+        if (mockupBioEl) {
+          if (bioEnabled && bioTemplate) {
+            var shortDate = tehranPersianShortDateFmt.format(new Date(now));
+            var weekday = tehranPersianWeekdayFmt.format(new Date(now));
+            var renderedBio = bioTemplate
+              .replace(/{time}/g, clockOnly)
+              .replace(/{clock}/g, clockOnly)
+              .replace(/{date}/g, shortDate)
+              .replace(/{day}/g, weekday);
+            if (renderedBio.length > 70) renderedBio = renderedBio.slice(0, 70);
+            mockupBioEl.textContent = renderedBio;
+            mockupBioEl.style.color = 'var(--text-main)';
+          } else {
+            mockupBioEl.textContent = 'بیوگرافی زنده غیرفعال است (ساده / پیش‌فرض)';
+            mockupBioEl.style.color = 'var(--text-muted)';
+          }
         }
       } catch (err) {}
     }
@@ -2753,24 +3256,39 @@ export function panelHTML(env) {
     window.saveFonts = async function() {
       var btn = document.getElementById('saveBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> ذخیره...';
+      btn.innerHTML = '<span class="spinner"></span> ذخیره درحال انجام...';
+
+      var payload = {
+        digits: selectedDigits,
+        colon: (document.getElementById('colonInput') && document.getElementById('colonInput').value) || ':',
+        prefix: (document.getElementById('prefixInput') && document.getElementById('prefixInput').value) || '',
+        suffix: (document.getElementById('suffixInput') && document.getElementById('suffixInput').value) || '',
+        is12h: document.getElementById('toggle12h') ? document.getElementById('toggle12h').checked : false,
+        bioEnabled: document.getElementById('bioEnabledToggle') ? document.getElementById('bioEnabledToggle').checked : false,
+        bioTemplate: (document.getElementById('bioTemplateInput') && document.getElementById('bioTemplateInput').value) || '',
+        sleepEnabled: document.getElementById('sleepEnabledToggle') ? document.getElementById('sleepEnabledToggle').checked : false,
+        sleepStart: document.getElementById('sleepStartSelect') ? parseInt(document.getElementById('sleepStartSelect').value, 10) : 23,
+        sleepEnd: document.getElementById('sleepEndSelect') ? parseInt(document.getElementById('sleepEndSelect').value, 10) : 7,
+        sleepText: (document.getElementById('sleepTextInput') && document.getElementById('sleepTextInput').value) || '😴 Sleep'
+      };
 
       try {
         var res = await fetch('/api/fonts', {
           method: 'POST',
           headers: authHeaders(),
-          body: JSON.stringify({
-            digits: selectedDigits,
-            colon: document.getElementById('colonInput').value || ':'
-          })
+          body: JSON.stringify(payload)
         });
-        if (res.ok) showToast('تنظیمات فونت Arizo ذخیره شد ✨', 'success');
-        else showToast('خطا در ذخیره‌سازی', 'error');
+        if (res.ok) {
+          showToast('تنظیمات استودیو Arizo ذخیره و آنی اعمال شد ✨', 'success');
+        } else {
+          var errData = await res.json().catch(function() { return {}; });
+          showToast(errData.error || 'خطا در ذخیره‌سازی', 'error');
+        }
       } catch (err) {
         showToast('خطای شبکه', 'error');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>💾 ذخیره تغییرات استودیو</span>';
+        btn.innerHTML = '<span>💾 ذخیره و اعمال تغییرات استودیو</span>';
       }
     };
 
@@ -2923,6 +3441,50 @@ export function panelHTML(env) {
           if (data.colon) {
             document.getElementById('colonInput').value = data.colon;
             setColonChar(data.colon);
+          }
+
+          // 🕒 بارگذاری تنظیمات ساعت استودیو
+          if (document.getElementById('prefixInput')) {
+            document.getElementById('prefixInput').value = data.prefix || '';
+          }
+          if (document.getElementById('suffixInput')) {
+            document.getElementById('suffixInput').value = data.suffix || '';
+          }
+          if (document.getElementById('toggle12h')) {
+            document.getElementById('toggle12h').checked = !!data.is12h;
+          }
+
+          // 📝 بارگذاری تنظیمات بیوگرافی هوشمند
+          if (document.getElementById('bioEnabledToggle')) {
+            document.getElementById('bioEnabledToggle').checked = !!data.bioEnabled;
+          }
+          if (document.getElementById('bioTemplateInput')) {
+            document.getElementById('bioTemplateInput').value = data.bioTemplate || '';
+          }
+
+          // 🌙 بارگذاری تنظیمات حالت خواب و اتوماسیون
+          if (document.getElementById('sleepEnabledToggle')) {
+            document.getElementById('sleepEnabledToggle').checked = !!data.sleepEnabled;
+          }
+          if (document.getElementById('sleepStartSelect') && data.sleepStart !== undefined) {
+            document.getElementById('sleepStartSelect').value = String(data.sleepStart);
+          }
+          if (document.getElementById('sleepEndSelect') && data.sleepEnd !== undefined) {
+            document.getElementById('sleepEndSelect').value = String(data.sleepEnd);
+          }
+          if (document.getElementById('sleepTextInput')) {
+            document.getElementById('sleepTextInput').value = data.sleepText || '😴 Sleep';
+          }
+
+          // 📱 به‌روزرسانی شبیه‌ساز زنده پروفایل تلگرام
+          var mockupFirstEl = document.getElementById('mockupFirstName');
+          if (mockupFirstEl) {
+            mockupFirstEl.textContent = data.username || 'کاربر Arizo';
+          }
+          var mockupAvatarEl = document.getElementById('mockupAvatar');
+          if (mockupAvatarEl) {
+            var initial = (data.username || 'AZ').slice(0, 2).toUpperCase();
+            mockupAvatarEl.textContent = initial;
           }
 
           window.lastServerUpdateTime = data.status?.lastUpdate || 0;
