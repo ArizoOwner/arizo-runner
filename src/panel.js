@@ -1720,25 +1720,25 @@ export function panelHTML(env) {
       var isRunning = true;
 
       function resize() {
-        dpr = window.devicePixelRatio || 1;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
         width = window.innerWidth;
         height = window.innerHeight;
         canvas.width = width * dpr;
         canvas.height = height * dpr;
-        ctx.scale(dpr, dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
 
       function createParticles() {
         particles = [];
-        var count = Math.min(65, Math.max(30, Math.floor((width * height) / 18000)));
+        var count = Math.min(45, Math.max(20, Math.floor((width * height) / 28000)));
         for (var i = 0; i < count; i++) {
           particles.push({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.7,
-            vy: (Math.random() - 0.5) * 0.7,
-            radius: Math.random() * 2 + 1.2,
-            baseAlpha: Math.random() * 0.4 + 0.35,
+            vx: (Math.random() - 0.5) * 0.6,
+            vy: (Math.random() - 0.5) * 0.6,
+            radius: Math.random() * 1.8 + 1.2,
+            baseAlpha: Math.random() * 0.35 + 0.3,
             colorShift: Math.random()
           });
         }
@@ -1772,12 +1772,14 @@ export function panelHTML(env) {
         }
       });
 
+      var maxDistSq = 120 * 120;
+      var mouseDistSq = 130 * 130;
+
       function render() {
         if (!isRunning) return;
         ctx.clearRect(0, 0, width, height);
 
         var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-        var maxDistance = 125;
         var pLen = particles.length;
 
         for (var i = 0; i < pLen; i++) {
@@ -1793,9 +1795,9 @@ export function panelHTML(env) {
           if (mouse.active) {
             var dx = mouse.x - p.x;
             var dy = mouse.y - p.y;
-            var dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 150) {
-              var force = (1 - dist / 150) * 0.4;
+            var d2 = dx * dx + dy * dy;
+            if (d2 < mouseDistSq) {
+              var force = (1 - Math.sqrt(d2) / 130) * 0.35;
               p.x += dx * force * 0.05;
               p.y += dy * force * 0.05;
             }
@@ -1806,7 +1808,7 @@ export function panelHTML(env) {
           if (isDark) {
             ctx.fillStyle = p.colorShift > 0.5 ? 'rgba(168, 85, 247, ' + p.baseAlpha + ')' : 'rgba(56, 189, 248, ' + p.baseAlpha + ')';
           } else {
-            ctx.fillStyle = p.colorShift > 0.5 ? 'rgba(99, 102, 241, ' + (p.baseAlpha * 0.85) + ')' : 'rgba(2, 132, 199, ' + (p.baseAlpha * 0.85) + ')';
+            ctx.fillStyle = p.colorShift > 0.5 ? 'rgba(99, 102, 241, ' + (p.baseAlpha * 0.8) + ')' : 'rgba(2, 132, 199, ' + (p.baseAlpha * 0.8) + ')';
           }
           ctx.fill();
 
@@ -1814,10 +1816,11 @@ export function panelHTML(env) {
             var p2 = particles[j];
             var diffX = p.x - p2.x;
             var diffY = p.y - p2.y;
-            var d = Math.sqrt(diffX * diffX + diffY * diffY);
+            var distSq = diffX * diffX + diffY * diffY;
 
-            if (d < maxDistance) {
-              var lineAlpha = (1 - d / maxDistance) * (isDark ? 0.28 : 0.22);
+            if (distSq < maxDistSq) {
+              var d = Math.sqrt(distSq);
+              var lineAlpha = (1 - d / 120) * (isDark ? 0.25 : 0.18);
               ctx.beginPath();
               ctx.moveTo(p.x, p.y);
               ctx.lineTo(p2.x, p2.y);
@@ -1825,23 +1828,6 @@ export function panelHTML(env) {
                 ? 'rgba(168, 85, 247, ' + lineAlpha + ')' 
                 : 'rgba(99, 102, 241, ' + lineAlpha + ')';
               ctx.lineWidth = 1;
-              ctx.stroke();
-            }
-          }
-
-          if (mouse.active) {
-            var mDx = p.x - mouse.x;
-            var mDy = p.y - mouse.y;
-            var mDist = Math.sqrt(mDx * mDx + mDy * mDy);
-            if (mDist < 120) {
-              var mAlpha = (1 - mDist / 120) * (isDark ? 0.35 : 0.28);
-              ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
-              ctx.lineTo(mouse.x, mouse.y);
-              ctx.strokeStyle = isDark 
-                ? 'rgba(56, 189, 248, ' + mAlpha + ')' 
-                : 'rgba(2, 132, 199, ' + mAlpha + ')';
-              ctx.lineWidth = 1.2;
               ctx.stroke();
             }
           }
@@ -2716,7 +2702,6 @@ export function panelHTML(env) {
       updateLiveClock();
     }
 
-    function updateLiveClock() {
     var tehranPersianDateFmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
       timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
@@ -2975,7 +2960,7 @@ export function panelHTML(env) {
 
     // هماهنگ‌سازی خودکار وضعیت با سرور هر ۱۵ ثانیه تا زمان آپدیت همیشه بدون رفرش صفحه به‌روز بماند
     setInterval(function() {
-      if (localStorage.getItem('token') && isUserLoggedIn && !document.hidden) {
+      if (getAuthToken() && !document.hidden) {
         loadUserDashboard();
       }
     }, 15000);
