@@ -19,7 +19,7 @@
 
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
-import { getStylizedTime } from '../src/clock.js';
+import { getStylizedTime, renderDynamicBio, isSleepTime } from '../src/clock.js';
 import { decryptSession } from '../src/crypto.js';
 
 const CLOUDFLARE_URL = (process.env.CLOUDFLARE_URL || '').replace(/\/+$/, '');
@@ -102,20 +102,27 @@ class TelegramConnectionPool {
     return entry.client;
   }
 
-  async updateProfile(username, sessionEncrypted, exactTimeStr) {
+  async updateProfile(username, sessionEncrypted, exactTimeStr, exactBioStr = null) {
     const startMs = performance.now();
     try {
       const client = await this.getOrCreateClient(username, sessionEncrypted);
-      await client.invoke(new Api.account.UpdateProfile({ lastName: exactTimeStr }));
+      const updateParams = { lastName: exactTimeStr };
+      if (exactBioStr) updateParams.about = exactBioStr;
+
+      await client.invoke(new Api.account.UpdateProfile(updateParams));
       const elapsed = Math.round(performance.now() - startMs);
 
       const entry = this.clients.get(username);
-      if (entry) entry.lastTime = exactTimeStr;
+      if (entry) {
+        entry.lastTime = exactTimeStr;
+        entry.lastBio = exactBioStr;
+      }
 
       return {
         ok: true,
         username,
         lastTime: exactTimeStr,
+        lastBio: exactBioStr,
         elapsedMs: elapsed
       };
     } catch (err) {
@@ -293,9 +300,28 @@ async function main() {
     console.log('⚡ Performing initial profile sync...');
     const now = new Date();
     await Promise.allSettled(cachedUsers.map(async u => {
-      const timeStr = getStylizedTime(u.digits, u.colon, now);
-      const res = await pool.updateProfile(u.username, u.sessionEncrypted, timeStr);
-      if (res.ok) console.log(`  ✅ [${u.username}] Synced: ${timeStr} (${res.elapsedMs}ms)`);
+      let exactTimeStr = getStylizedTime(u.digits, u.colon, now, {
+        prefix: u.prefix,
+        suffix: u.suffix,
+        is12h: u.is12h
+      });
+
+      if (u.sleepEnabled && isSleepTime(u.sleepStart, u.sleepEnd, now)) {
+        exactTimeStr = u.sleepText || '😴 Sleep';
+      }
+
+      let exactBioStr = null;
+      if (u.bioEnabled && u.bioTemplate) {
+        exactBioStr = renderDynamicBio(u.bioTemplate, {
+          digits: u.digits,
+          colon: u.colon,
+          date: now,
+          is12h: u.is12h
+        });
+      }
+
+      const res = await pool.updateProfile(u.username, u.sessionEncrypted, exactTimeStr, exactBioStr);
+      if (res.ok) console.log(`  ✅ [${u.username}] Synced: ${exactTimeStr} (${res.elapsedMs}ms)`);
       else console.error(`  ❌ [${u.username}] Error: ${res.error}`);
     }));
   }
@@ -345,8 +371,27 @@ async function main() {
 
     // ۵. شلیک هم‌زمان به تلگرام برای تمامی کاربران
     const results = await Promise.allSettled(cachedUsers.map(async u => {
-      const exactTimeStr = getStylizedTime(u.digits, u.colon, targetMinuteDate);
-      return pool.updateProfile(u.username, u.sessionEncrypted, exactTimeStr);
+      let exactTimeStr = getStylizedTime(u.digits, u.colon, targetMinuteDate, {
+        prefix: u.prefix,
+        suffix: u.suffix,
+        is12h: u.is12h
+      });
+
+      if (u.sleepEnabled && isSleepTime(u.sleepStart, u.sleepEnd, targetMinuteDate)) {
+        exactTimeStr = u.sleepText || '😴 Sleep';
+      }
+
+      let exactBioStr = null;
+      if (u.bioEnabled && u.bioTemplate) {
+        exactBioStr = renderDynamicBio(u.bioTemplate, {
+          digits: u.digits,
+          colon: u.colon,
+          date: targetMinuteDate,
+          is12h: u.is12h
+        });
+      }
+
+      return pool.updateProfile(u.username, u.sessionEncrypted, exactTimeStr, exactBioStr);
     }));
 
     const totalBatchMs = Math.round(performance.now() - triggerStart);
