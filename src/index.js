@@ -53,6 +53,11 @@ const memoryRateLimits = new Map();
 
 function checkRateLimit(env, key, maxHits, windowSec) {
   const now = Math.floor(Date.now() / 1000);
+  if (memoryRateLimits.size > 500) {
+    for (const [k, v] of memoryRateLimits.entries()) {
+      if (now > v.reset) memoryRateLimits.delete(k);
+    }
+  }
   const entry = memoryRateLimits.get(key);
   if (!entry || now > entry.reset) {
     const reset = now + windowSec;
@@ -931,9 +936,10 @@ export default {
           const sessionEncrypted = await encryptSession(plainSession, env.API_HASH);
 
           auth.user.telegram = {
+            ...(auth.user.telegram || {}),
             sessionEncrypted,
-            digits: digits || null,
-            colon: colon || ':',
+            digits: digits || auth.user.telegram?.digits || null,
+            colon: colon || auth.user.telegram?.colon || ':',
             enabled: true,
             connectedAt: Date.now(),
           };
@@ -991,9 +997,10 @@ export default {
         const sessionEncrypted = await encryptSession(plainSession, env.API_HASH);
 
         auth.user.telegram = {
+          ...(auth.user.telegram || {}),
           sessionEncrypted,
-          digits: digits || null,
-          colon: colon || ':',
+          digits: digits || auth.user.telegram?.digits || null,
+          colon: colon || auth.user.telegram?.colon || ':',
           enabled: true,
           connectedAt: Date.now(),
         };
@@ -1028,9 +1035,10 @@ export default {
         const sessionEncrypted = await encryptSession(b.session.trim(), env.API_HASH);
 
         auth.user.telegram = {
+          ...(auth.user.telegram || {}),
           sessionEncrypted,
-          digits: b.digits || null,
-          colon: b.colon || ':',
+          digits: b.digits || auth.user.telegram?.digits || null,
+          colon: b.colon || auth.user.telegram?.colon || ':',
           enabled: true,
           connectedAt: Date.now(),
         };
@@ -1055,7 +1063,9 @@ export default {
         return json({ error: 'اشتراک شما به پایان رسیده و پنل در حالت تعلیق است. لطفاً اشتراک خود را تمدید فرمایید.', isSuspended: true }, 403);
       }
 
-      if (!auth.user.telegram) return json({ error: 'اکانت تلگرام متصل نیست' }, 400);
+      if (!auth.user.telegram) {
+        auth.user.telegram = { enabled: false };
+      }
 
       const b = await request.json();
       if (Array.isArray(b.digits) && b.digits.length === 10) {
@@ -1115,7 +1125,9 @@ export default {
       }
 
       await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
-      await updateSingleUserProfile(auth.user, env, true);
+      if (auth.user.telegram?.sessionEncrypted) {
+        await updateSingleUserProfile(auth.user, env, true);
+      }
       const freshUser = await env.KV.get('user:' + auth.username, 'json');
       return json({ ok: true, status: freshUser?.status });
     }
@@ -1125,7 +1137,10 @@ export default {
       const auth = await getAuthUser(request, env);
       if (!auth) return json({ error: 'unauthorized' }, 401);
 
-      auth.user.telegram = null;
+      if (auth.user.telegram) {
+        auth.user.telegram.enabled = false;
+        auth.user.telegram.sessionEncrypted = null;
+      }
       auth.user.status = null;
       await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
       return json({ ok: true });
@@ -1248,6 +1263,26 @@ export default {
                 await env.KV.put('user:' + item.username, JSON.stringify(u));
               }
             }
+          }
+        }
+        return json({ ok: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    // ۳. به‌روزرسانی آنی لیست کاربران مسدود/سکوت از رانر گیت‌هاب (.mute و .unmute تلگرام)
+    if (url.pathname === '/api/internal/update-user-mute' && request.method === 'POST') {
+      if (!isRunnerAuthorized(request, env)) {
+        return json({ error: 'unauthorized runner' }, 401);
+      }
+      try {
+        const { username, mutedUsers } = await request.json();
+        if (username && Array.isArray(mutedUsers)) {
+          const u = await env.KV.get('user:' + username, 'json');
+          if (u && u.telegram) {
+            u.telegram.mutedUsers = mutedUsers.map(x => String(x).trim()).filter(Boolean);
+            await env.KV.put('user:' + username, JSON.stringify(u));
           }
         }
         return json({ ok: true });
