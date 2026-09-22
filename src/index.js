@@ -3,7 +3,7 @@ import { StringSession } from 'telegram/sessions/index.js';
 import { MTProtoSender } from 'telegram/network/index.js';
 import { LAYER } from 'telegram/tl/AllTLObjects.js';
 import { computeCheck } from 'telegram/Password.js';
-import { getStylizedTime } from './clock.js';
+import { getStylizedTime, renderDynamicBio, isSleepTime } from './clock.js';
 import { panelHTML } from './panel.js';
 import {
   hashPassword,
@@ -804,7 +804,11 @@ export default {
 
       const liveStatus = {
         lastTime: (auth.user.telegram?.enabled && !auth.user.status?.error)
-          ? getStylizedTime(auth.user.telegram?.digits, auth.user.telegram?.colon)
+          ? getStylizedTime(auth.user.telegram?.digits, auth.user.telegram?.colon, new Date(), {
+              prefix: auth.user.telegram?.prefix,
+              suffix: auth.user.telegram?.suffix,
+              is12h: auth.user.telegram?.is12h
+            })
           : (auth.user.status?.lastTime || null),
         lastUpdate: auth.user.status?.lastUpdate || Date.now(),
         error: auth.user.status?.error || null
@@ -826,7 +830,16 @@ export default {
         hasTelegram: !!auth.user.telegram?.sessionEncrypted,
         enabled: auth.user.telegram?.enabled ?? false,
         digits: auth.user.telegram?.digits,
-        colon: auth.user.telegram?.colon,
+        colon: auth.user.telegram?.colon || ':',
+        prefix: auth.user.telegram?.prefix || '',
+        suffix: auth.user.telegram?.suffix || '',
+        is12h: !!auth.user.telegram?.is12h,
+        bioEnabled: !!auth.user.telegram?.bioEnabled,
+        bioTemplate: auth.user.telegram?.bioTemplate || '',
+        sleepEnabled: !!auth.user.telegram?.sleepEnabled,
+        sleepStart: auth.user.telegram?.sleepStart ?? 23,
+        sleepEnd: auth.user.telegram?.sleepEnd ?? 7,
+        sleepText: auth.user.telegram?.sleepText || '😴 Sleep',
         status: liveStatus
       });
     }
@@ -1026,8 +1039,8 @@ export default {
       }
     }
 
-    // ذخیره فونت اختصاصی کاربر
-    if (url.pathname === '/api/fonts' && request.method === 'POST') {
+    // ذخیره فونت و تنظیمات پیشرفته استودیو
+    if ((url.pathname === '/api/fonts' || url.pathname === '/api/user/settings') && request.method === 'POST') {
       const auth = await getAuthUser(request, env);
       if (!auth) return json({ error: 'unauthorized' }, 401);
 
@@ -1044,6 +1057,33 @@ export default {
       }
       if (typeof b.colon === 'string') {
         auth.user.telegram.colon = b.colon.slice(0, 5) || ':';
+      }
+      if (b.prefix !== undefined) {
+        auth.user.telegram.prefix = String(b.prefix).slice(0, 15);
+      }
+      if (b.suffix !== undefined) {
+        auth.user.telegram.suffix = String(b.suffix).slice(0, 15);
+      }
+      if (b.is12h !== undefined) {
+        auth.user.telegram.is12h = !!b.is12h;
+      }
+      if (b.bioEnabled !== undefined) {
+        auth.user.telegram.bioEnabled = !!b.bioEnabled;
+      }
+      if (b.bioTemplate !== undefined) {
+        auth.user.telegram.bioTemplate = String(b.bioTemplate).slice(0, 70);
+      }
+      if (b.sleepEnabled !== undefined) {
+        auth.user.telegram.sleepEnabled = !!b.sleepEnabled;
+      }
+      if (b.sleepStart !== undefined) {
+        auth.user.telegram.sleepStart = parseInt(b.sleepStart, 10) || 0;
+      }
+      if (b.sleepEnd !== undefined) {
+        auth.user.telegram.sleepEnd = parseInt(b.sleepEnd, 10) || 0;
+      }
+      if (b.sleepText !== undefined) {
+        auth.user.telegram.sleepText = String(b.sleepText).slice(0, 30);
       }
 
       await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
@@ -1131,7 +1171,16 @@ export default {
             username: u.username,
             sessionEncrypted: u.telegram.sessionEncrypted,
             digits: u.telegram.digits,
-            colon: u.telegram.colon,
+            colon: u.telegram.colon || ':',
+            prefix: u.telegram.prefix || '',
+            suffix: u.telegram.suffix || '',
+            is12h: !!u.telegram.is12h,
+            bioEnabled: !!u.telegram.bioEnabled,
+            bioTemplate: u.telegram.bioTemplate || '',
+            sleepEnabled: !!u.telegram.sleepEnabled,
+            sleepStart: u.telegram.sleepStart ?? 23,
+            sleepEnd: u.telegram.sleepEnd ?? 7,
+            sleepText: u.telegram.sleepText || '😴 Sleep',
             lastTime: u.status?.lastTime || null,
           });
         }
@@ -1245,7 +1294,7 @@ async function updateAllUsersOptimized(env) {
  * ارسال مستقیم و فوق‌سبک دستور تغییر پروفایل بدون بارگذاری help.GetConfig و بدون لوپ پس‌زمینه
  * زمان CPU: کمتر از ۱ تا ۲ میلی‌ثانیه برای هر کاربر
  */
-async function updateProfileDirect(sessionStr, apiId, apiHash, lastName) {
+async function updateProfileDirect(sessionStr, apiId, apiHash, lastName, about = null) {
   const client = new TelegramClient(
     new StringSession(sessionStr),
     apiId,
@@ -1275,6 +1324,9 @@ async function updateProfileDirect(sessionStr, apiId, apiHash, lastName) {
   });
   await sender.connect(connection, false);
   try {
+    const updateParams = { lastName };
+    if (about) updateParams.about = about;
+
     const res = await sender.send(new Api.InvokeWithLayer({
       layer: LAYER,
       query: new Api.InitConnection({
@@ -1285,7 +1337,7 @@ async function updateProfileDirect(sessionStr, apiId, apiHash, lastName) {
         systemLangCode: 'en',
         langCode: 'en',
         langPack: '',
-        query: new Api.account.UpdateProfile({ lastName }),
+        query: new Api.account.UpdateProfile(updateParams),
       }),
     }));
     return res;
@@ -1297,32 +1349,52 @@ async function updateProfileDirect(sessionStr, apiId, apiHash, lastName) {
 }
 
 /**
- * به‌روزرسانی فوق‌سریع لست‌نیم با حداقل مصرف پردازنده
+ * به‌روزرسانی فوق‌سریع لست‌نیم و بیوگرافی هوشمند با حداقل مصرف پردازنده
  */
 async function updateSingleUserProfile(user, env, forcePersist = false) {
   const encSession = user.telegram?.sessionEncrypted;
   const sessionStr = await decryptSession(encSession, env.API_HASH);
   if (!sessionStr) return;
 
-  const timeStr = getStylizedTime(user.telegram.digits, user.telegram.colon);
-  if (user.status?.lastTime === timeStr && !user.status?.error && !forcePersist) {
-    return; // ساعت در این دقیقه قبلاً با موفقیت آپدیت شده است
+  const now = new Date();
+  let exactTimeStr = getStylizedTime(user.telegram.digits, user.telegram.colon, now, {
+    prefix: user.telegram.prefix,
+    suffix: user.telegram.suffix,
+    is12h: user.telegram.is12h
+  });
+
+  if (user.telegram.sleepEnabled && isSleepTime(user.telegram.sleepStart, user.telegram.sleepEnd, now)) {
+    exactTimeStr = user.telegram.sleepText || '😴 Sleep';
+  }
+
+  let exactBioStr = null;
+  if (user.telegram.bioEnabled && user.telegram.bioTemplate) {
+    exactBioStr = renderDynamicBio(user.telegram.bioTemplate, {
+      digits: user.telegram.digits,
+      colon: user.telegram.colon,
+      date: now,
+      is12h: user.telegram.is12h
+    });
+  }
+
+  if (user.status?.lastTime === exactTimeStr && !user.status?.error && !forcePersist) {
+    return; // در این دقیقه قبلاً با موفقیت آپدیت شده است
   }
 
   try {
-    const exactTimeStr = getStylizedTime(user.telegram.digits, user.telegram.colon);
     await updateProfileDirect(
       sessionStr,
       parseInt(env.API_ID),
       env.API_HASH,
-      exactTimeStr
+      exactTimeStr,
+      exactBioStr
     );
 
     const hadError = !!user.status?.error;
-    const now = Date.now();
     user.status = {
-      lastUpdate: now,
+      lastUpdate: Date.now(),
       lastTime: exactTimeStr,
+      lastBio: exactBioStr,
       error: null,
     };
 
