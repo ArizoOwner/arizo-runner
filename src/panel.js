@@ -3565,10 +3565,42 @@ export function panelHTML(env) {
       } catch (err) {
         showToast('خطای شبکه', 'error');
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>💾 ذخیره و اعمال تغییرات استودیو</span>';
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>💾 ذخیره و اعمال تغییرات استودیو</span>';
+        }
       }
     };
+
+    // ذخیره آنی و خودکار تغییر وضعیت سوئیچ‌های استودیو (نجات مدیا، منشی، سکوت، بیوگرافی و خواب)
+    ['antiTtlEnabledToggle', 'afkEnabledToggle', 'muteEnabledToggle', 'bioEnabledToggle', 'sleepEnabledToggle', 'toggle12h'].forEach(function(toggleId) {
+      var el = document.getElementById(toggleId);
+      if (el) {
+        el.addEventListener('change', function() {
+          window.saveFonts();
+        });
+      }
+    });
+
+    // فعال‌سازی و ذخیره خودکار هنگام تایپ یا تغییر لیست کاربران سکوت
+    var mutedInput = document.getElementById('mutedUsersInput');
+    if (mutedInput) {
+      mutedInput.addEventListener('input', function() {
+        window.isStudioDirty = true;
+        var toggle = document.getElementById('muteEnabledToggle');
+        if (toggle && mutedInput.value.trim().length > 0) {
+          toggle.checked = true;
+        }
+      });
+      mutedInput.addEventListener('change', function() {
+        window.saveFonts();
+      });
+      mutedInput.addEventListener('blur', function() {
+        if (window.isStudioDirty) {
+          window.saveFonts();
+        }
+      });
+    }
 
     window.triggerImmediateSync = async function() {
       var btn = document.getElementById('syncBtn');
