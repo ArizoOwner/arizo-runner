@@ -46,6 +46,109 @@ console.log(`📱 Client App ID: ${API_ID} (Official Telegram Desktop)`);
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
 /**
+ * نرمال‌سازی و پاکسازی ورودی‌های لیست سکوت (حذف @، لینک‌های t.me و فاصله‌ها)
+ */
+function cleanMuteTarget(raw) {
+  if (!raw) return '';
+  let str = String(raw).trim().toLowerCase();
+  str = str.replace(/^https?:\/\/(www\.)?t\.me\//i, '');
+  str = str.replace(/^t\.me\//i, '');
+  str = str.replace(/^tg:\/\/resolve\?domain=/i, '');
+  str = str.replace(/^@+/, '');
+  str = str.replace(/^id[:\s=]+/, '');
+  return str.trim();
+}
+
+/**
+ * تبدیل خودکار یوزرنیم‌های اضافه شده در لیست سکوت به آیدی عددی تلگرام در پس‌زمینه
+ */
+function resolveMutedUsernames(entry) {
+  if (!entry || !entry.client || !entry.client.connected) return;
+  const list = entry.settings?.mutedUsers;
+  if (!Array.isArray(list) || list.length === 0) return;
+
+  for (const raw of list) {
+    const clean = cleanMuteTarget(raw);
+    if (!clean) continue;
+    // اگر آیدی عددی نباشد، یعنی یک یوزرنیم است
+    if (!/^-?\d+$/.test(clean)) {
+      entry.client.getEntity(clean).then(ent => {
+        if (ent && ent.id) {
+          const idStr = ent.id.toString();
+          if (!entry.settings.mutedUsers.includes(idStr)) {
+            entry.settings.mutedUsers.push(idStr);
+            console.log(`🔇 [${clean}] Resolved muted username to Telegram ID: ${idStr}`);
+          }
+          if (entry.localMutedUsers) entry.localMutedUsers.add(idStr);
+        }
+      }).catch(() => {});
+    }
+  }
+}
+
+/**
+ * حذف چندمرحله‌ای و تضمینی پیام از فرد بی‌صدا شده در تمام انواع چت‌ها (پیوی، سوپرگروه، کانال)
+ */
+async function deleteTelegramMessage(client, message, username = '') {
+  const msgId = message.id;
+  let deleted = false;
+
+  // ۱. حذف در کانال یا سوپرگروه (Supergroup / Channel)
+  if (message.isChannel || (message.peerId instanceof Api.PeerChannel)) {
+    try {
+      const channelPeer = await client.getInputEntity(message.peerId).catch(() => message.peerId);
+      await client.invoke(new Api.channels.DeleteMessages({
+        channel: channelPeer,
+        id: [msgId]
+      }));
+      deleted = true;
+      console.log(`✅ [${username}] Muted message #${msgId} deleted via channels.DeleteMessages`);
+    } catch (err1) {
+      console.warn(`⚠️ [${username}] channels.DeleteMessages failed: ${err1.message}`);
+    }
+  }
+
+  // ۲. حذف دوطرفه در پیوی و گروه‌های عادی (Private Chat / Basic Group)
+  if (!deleted) {
+    try {
+      await client.invoke(new Api.messages.DeleteMessages({
+        id: [msgId],
+        revoke: true
+      }));
+      deleted = true;
+      console.log(`✅ [${username}] Muted message #${msgId} deleted via messages.DeleteMessages`);
+    } catch (err2) {
+      console.warn(`⚠️ [${username}] messages.DeleteMessages failed: ${err2.message}`);
+    }
+  }
+
+  // ۳. روش کمکی GramJS deleteMessages با مشخص کردن مخاطب چت
+  if (!deleted) {
+    try {
+      const chatTarget = message.peerId || message.chatId;
+      await client.deleteMessages(chatTarget, [msgId], { revoke: true });
+      deleted = true;
+      console.log(`✅ [${username}] Muted message #${msgId} deleted via client.deleteMessages`);
+    } catch (err3) {
+      console.warn(`⚠️ [${username}] client.deleteMessages failed: ${err3.message}`);
+    }
+  }
+
+  // ۴. آخرین تلاش با متد مستقیم Message
+  if (!deleted) {
+    try {
+      await message.delete({ revoke: true });
+      deleted = true;
+      console.log(`✅ [${username}] Muted message #${msgId} deleted via message.delete`);
+    } catch (err4) {
+      console.error(`❌ [${username}] All delete methods failed for message #${msgId}: ${err4.message}`);
+    }
+  }
+
+  return deleted;
+}
+
+/**
  * مدیریت استخر کلاینت‌های زنده تلگرام (Persistent Connection Pool)
  */
 class TelegramConnectionPool {
@@ -132,10 +235,11 @@ class TelegramConnectionPool {
         afkEnabled: !!userSettings.afkEnabled,
         afkMessage: userSettings.afkMessage || '',
         afkCooldown: userSettings.afkCooldown ?? 10,
-        muteEnabled: !!userSettings.muteEnabled,
+        muteEnabled: !!userSettings.muteEnabled || combinedMuted.length > 0,
         mutedUsers: combinedMuted,
         antiTtlEnabled: !!userSettings.antiTtlEnabled
       };
+      resolveMutedUsernames(entry);
     }
 
     return entry.client;
@@ -153,6 +257,7 @@ class TelegramConnectionPool {
       }
     }, new NewMessage({}));
     console.log(`🛡️ [${username}] Event listeners attached (AFK, Mute, Anti-TTL active)!`);
+    resolveMutedUsernames(entry);
   }
 
   async handleIncomingMessage(entry, username, event) {
@@ -172,32 +277,97 @@ class TelegramConnectionPool {
     // ۱. دستورات سریع تلگرامی خود کاربر (.mute و .unmute)
     if (isOut && message.text) {
       const text = message.text.trim();
-      if (text === '.mute' && message.replyTo) {
-        const repliedMsg = await message.getReplyMessage().catch(() => null);
-        if (repliedMsg && repliedMsg.senderId) {
-          const targetId = repliedMsg.senderId.toString();
-          if (!entry.settings.mutedUsers.includes(targetId)) {
-            entry.settings.mutedUsers.push(targetId);
+      const muteMatch = text.match(/^\.mute(?:\s+(.+))?$/i);
+      const unmuteMatch = text.match(/^\.unmute(?:\s+(.+))?$/i);
+
+      if (muteMatch) {
+        let targetId = null;
+        let targetUsername = null;
+        let targetLabel = '';
+
+        if (message.replyTo) {
+          const repliedMsg = await message.getReplyMessage().catch(() => null);
+          if (repliedMsg) {
+            targetId = (repliedMsg.senderId || repliedMsg.fromId?.userId || repliedMsg.peerId?.userId)?.toString();
+            const repSender = await repliedMsg.getSender().catch(() => null);
+            if (repSender?.username) targetUsername = repSender.username.toLowerCase();
+            targetLabel = targetUsername ? `@${targetUsername} (${targetId || 'ID'})` : (targetId || 'کاربر');
           }
+        } else if (muteMatch[1]) {
+          const arg = muteMatch[1].trim();
+          targetLabel = arg;
+          if (/^-?\d+$/.test(arg)) {
+            targetId = arg;
+          } else {
+            targetUsername = cleanMuteTarget(arg);
+          }
+        }
+
+        if (targetId || targetUsername) {
+          entry.settings.muteEnabled = true;
           if (!entry.localMutedUsers) entry.localMutedUsers = new Set();
-          entry.localMutedUsers.add(targetId);
+          
+          if (targetId) {
+            if (!entry.settings.mutedUsers.includes(targetId)) entry.settings.mutedUsers.push(targetId);
+            entry.localMutedUsers.add(targetId);
+          }
+          if (targetUsername) {
+            const atUsername = `@${targetUsername}`;
+            if (!entry.settings.mutedUsers.includes(atUsername) && !entry.settings.mutedUsers.includes(targetUsername)) {
+              entry.settings.mutedUsers.push(atUsername);
+            }
+            entry.localMutedUsers.add(atUsername);
+          }
 
           syncUserMuteToCloudflare(username, entry.settings.mutedUsers).catch(() => {});
+          resolveMutedUsernames(entry);
 
-          await message.edit({ text: `🔇 کاربر [${targetId}] به لیست سکوت سلف‌بات اضافه شد.` }).catch(() => {});
+          await message.edit({ text: `🔇 کاربر [${targetLabel}] به لیست سکوت سلف‌بات اضافه شد.` }).catch(() => {});
           setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
           return;
         }
-      } else if (text === '.unmute' && message.replyTo) {
-        const repliedMsg = await message.getReplyMessage().catch(() => null);
-        if (repliedMsg && repliedMsg.senderId) {
-          const targetId = repliedMsg.senderId.toString();
-          entry.settings.mutedUsers = entry.settings.mutedUsers.filter(id => id !== targetId);
-          if (entry.localMutedUsers) entry.localMutedUsers.delete(targetId);
+      } else if (unmuteMatch) {
+        let targetId = null;
+        let targetUsername = null;
+        let targetLabel = '';
+
+        if (message.replyTo) {
+          const repliedMsg = await message.getReplyMessage().catch(() => null);
+          if (repliedMsg) {
+            targetId = (repliedMsg.senderId || repliedMsg.fromId?.userId || repliedMsg.peerId?.userId)?.toString();
+            const repSender = await repliedMsg.getSender().catch(() => null);
+            if (repSender?.username) targetUsername = repSender.username.toLowerCase();
+            targetLabel = targetUsername ? `@${targetUsername} (${targetId || 'ID'})` : (targetId || 'کاربر');
+          }
+        } else if (unmuteMatch[1]) {
+          const arg = unmuteMatch[1].trim();
+          targetLabel = arg;
+          if (/^-?\d+$/.test(arg)) {
+            targetId = arg;
+          } else {
+            targetUsername = cleanMuteTarget(arg);
+          }
+        }
+
+        if (targetId || targetUsername) {
+          const targetsToRemove = new Set();
+          if (targetId) targetsToRemove.add(targetId);
+          if (targetUsername) {
+            targetsToRemove.add(targetUsername);
+            targetsToRemove.add(`@${targetUsername}`);
+          }
+
+          entry.settings.mutedUsers = entry.settings.mutedUsers.filter(id => {
+            const clean = cleanMuteTarget(id);
+            return !targetsToRemove.has(id) && !targetsToRemove.has(clean);
+          });
+          if (entry.localMutedUsers) {
+            for (const t of targetsToRemove) entry.localMutedUsers.delete(t);
+          }
 
           syncUserMuteToCloudflare(username, entry.settings.mutedUsers).catch(() => {});
 
-          await message.edit({ text: `🔊 کاربر [${targetId}] از لیست سکوت خارج شد.` }).catch(() => {});
+          await message.edit({ text: `🔊 کاربر [${targetLabel}] از لیست سکوت خارج شد.` }).catch(() => {});
           setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
           return;
         }
@@ -258,20 +428,73 @@ class TelegramConnectionPool {
     }
 
     // ۳. 🔇 سکوت و حذف خودکار پیام (Mute)
-    if (entry.settings.muteEnabled && !isOut && message.senderId) {
-      const senderIdStr = message.senderId.toString();
-      const sender = await message.getSender().catch(() => null);
-      const senderUsername = sender?.username ? ('@' + sender.username.toLowerCase()) : null;
+    const hasMutedUsers = Array.isArray(entry.settings.mutedUsers) && entry.settings.mutedUsers.length > 0;
+    if ((entry.settings.muteEnabled || hasMutedUsers) && !isOut) {
+      // جمع‌آوری کلیه شناسه‌های عددی فرستنده
+      const senderIds = new Set();
+      if (message.senderId) senderIds.add(message.senderId.toString());
+      if (message.fromId?.userId) senderIds.add(message.fromId.userId.toString());
+      if (message.fromId?.chatId) senderIds.add(message.fromId.chatId.toString());
+      if (message.fromId?.channelId) senderIds.add(message.fromId.channelId.toString());
+      if (message.peerId instanceof Api.PeerUser && message.peerId.userId) {
+        senderIds.add(message.peerId.userId.toString());
+      }
+      if (message.chatId) senderIds.add(message.chatId.toString());
 
-      const isMuted = entry.settings.mutedUsers.some(target => {
-        const t = String(target).trim().toLowerCase();
-        return t === senderIdStr || (senderUsername && t === senderUsername) || (sender?.username && t === sender.username.toLowerCase());
-      });
+      // دریافت انتیتی فرستنده جهت بررسی یوزرنیم
+      let sender = null;
+      try {
+        sender = await message.getSender();
+      } catch (_) {}
+
+      if (!sender && (message.senderId || message.fromId || message.peerId)) {
+        try {
+          const peer = message.fromId || message.senderId || message.peerId;
+          sender = await entry.client.getEntity(peer);
+        } catch (_) {}
+      }
+
+      if (sender && sender.id) {
+        senderIds.add(sender.id.toString());
+      }
+
+      // جمع‌آوری کلیه یوزرنیم‌های فرستنده
+      const senderUsernames = new Set();
+      if (sender?.username) {
+        senderUsernames.add(sender.username.toLowerCase().replace(/^@/, ''));
+      }
+      if (Array.isArray(sender?.usernames)) {
+        for (const u of sender.usernames) {
+          if (u && u.username) senderUsernames.add(u.username.toLowerCase().replace(/^@/, ''));
+        }
+      }
+
+      let isMuted = false;
+      let matchedTarget = null;
+
+      for (const raw of entry.settings.mutedUsers) {
+        const t = cleanMuteTarget(raw);
+        if (!t) continue;
+
+        if (senderIds.has(t)) {
+          isMuted = true;
+          matchedTarget = raw;
+          break;
+        }
+
+        if (senderUsernames.has(t)) {
+          isMuted = true;
+          matchedTarget = raw;
+          break;
+        }
+      }
 
       if (isMuted) {
-        console.log(`🔇 [${username}] Mute triggered for sender ${senderIdStr}. Deleting message...`);
-        await message.delete({ revoke: true }).catch(() => {});
-        return; // از ادامه و پاسخ منشی جلوگیری می‌شود
+        const senderDisplay = sender?.username ? `@${sender.username}` : (Array.from(senderIds)[0] || 'ناشناس');
+        console.log(`🔇 [${username}] Mute triggered for ${senderDisplay} (target: "${matchedTarget}"). Deleting message #${message.id}...`);
+
+        await deleteTelegramMessage(entry.client, message, username);
+        return; // از ادامه اجرای سایر بخش‌ها (از جمله منشی خودکار) جلوگیری می‌شود
       }
     }
 
@@ -586,10 +809,11 @@ async function main() {
             afkEnabled: !!u.afkEnabled,
             afkMessage: u.afkMessage || '',
             afkCooldown: u.afkCooldown ?? 10,
-            muteEnabled: !!u.muteEnabled,
+            muteEnabled: !!u.muteEnabled || combinedMuted.length > 0,
             mutedUsers: combinedMuted,
             antiTtlEnabled: !!u.antiTtlEnabled
           };
+          resolveMutedUsernames(entry);
         }
       }
     } catch (_) {}
