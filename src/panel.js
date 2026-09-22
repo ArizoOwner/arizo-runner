@@ -45,6 +45,34 @@ export function panelHTML(env) {
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --text-dim: #64748b;
+
+      --accent-purple: #c084fc;
+      --accent-purple-bg: rgba(168, 85, 247, 0.14);
+      --accent-purple-border: rgba(168, 85, 247, 0.35);
+
+      --accent-blue: #38bdf8;
+      --accent-blue-bg: rgba(56, 189, 248, 0.12);
+      --accent-blue-border: rgba(56, 189, 248, 0.3);
+
+      --accent-amber: #fbbf24;
+      --accent-amber-bg: rgba(245, 158, 11, 0.14);
+      --accent-amber-border: rgba(245, 158, 11, 0.35);
+
+      --accent-rose: #fb7185;
+      --accent-rose-bg: rgba(244, 63, 94, 0.14);
+      --accent-rose-border: rgba(244, 63, 94, 0.35);
+
+      --accent-green: #4ade80;
+      --accent-green-bg: rgba(16, 185, 129, 0.14);
+      --accent-green-border: rgba(16, 185, 129, 0.35);
+
+      --accent-indigo: #a5b4fc;
+      --accent-indigo-bg: rgba(99, 102, 241, 0.14);
+      --accent-indigo-border: rgba(99, 102, 241, 0.35);
+
+      --btn-secondary-bg: rgba(255, 255, 255, 0.08);
+      --btn-secondary-hover: rgba(255, 255, 255, 0.16);
+      --box-panel-bg: rgba(255, 255, 255, 0.03);
       
       --card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       --modal-bg: #0d0f22;
@@ -69,9 +97,9 @@ export function panelHTML(env) {
 
     [data-theme="light"] {
       --bg-dark: #f0f4f9;
-      --bg-surface: rgba(255, 255, 255, 0.86);
-      --bg-surface-elevated: rgba(255, 255, 255, 0.96);
-      --bg-input: rgba(241, 245, 249, 0.95);
+      --bg-surface: rgba(255, 255, 255, 0.88);
+      --bg-surface-elevated: #ffffff;
+      --bg-input: #f8fafc;
       --border-subtle: rgba(99, 102, 241, 0.15);
       --border-focus: rgba(99, 102, 241, 0.65);
       --border-glow: rgba(99, 102, 241, 0.22);
@@ -88,8 +116,36 @@ export function panelHTML(env) {
       --shimmer-glow: rgba(255, 255, 255, 0.45);
       
       --text-main: #0f172a;
-      --text-muted: #475569;
-      --text-dim: #94a3b8;
+      --text-muted: #334155;
+      --text-dim: #64748b;
+
+      --accent-purple: #7c3aed;
+      --accent-purple-bg: rgba(124, 58, 237, 0.09);
+      --accent-purple-border: rgba(124, 58, 237, 0.28);
+
+      --accent-blue: #0284c7;
+      --accent-blue-bg: rgba(2, 132, 199, 0.09);
+      --accent-blue-border: rgba(2, 132, 199, 0.28);
+
+      --accent-amber: #b45309;
+      --accent-amber-bg: rgba(217, 119, 6, 0.1);
+      --accent-amber-border: rgba(217, 119, 6, 0.32);
+
+      --accent-rose: #e11d48;
+      --accent-rose-bg: rgba(225, 29, 72, 0.09);
+      --accent-rose-border: rgba(225, 29, 72, 0.28);
+
+      --accent-green: #059669;
+      --accent-green-bg: rgba(5, 150, 105, 0.1);
+      --accent-green-border: rgba(5, 150, 105, 0.32);
+
+      --accent-indigo: #4f46e5;
+      --accent-indigo-bg: rgba(79, 70, 229, 0.09);
+      --accent-indigo-border: rgba(79, 70, 229, 0.28);
+
+      --btn-secondary-bg: #f1f5f9;
+      --btn-secondary-hover: #e2e8f0;
+      --box-panel-bg: rgba(248, 250, 252, 0.95);
       
       --card-shadow: 0 20px 45px -10px rgba(99, 102, 241, 0.14), 0 4px 16px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
       --modal-bg: #ffffff;
@@ -253,9 +309,9 @@ export function panelHTML(env) {
       font-weight: 800;
       padding: 3px 8px;
       border-radius: 6px;
-      background: rgba(168, 85, 247, 0.18);
-      border: 1px solid rgba(168, 85, 247, 0.4);
-      color: #c084fc;
+      background: var(--accent-purple-bg);
+      border: 1px solid var(--accent-purple-border);
+      color: var(--accent-purple);
     }
 
     .nav-actions {
@@ -267,7 +323,7 @@ export function panelHTML(env) {
 
     /* دکمه تم شب و روز */
     .btn-theme-toggle {
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--btn-secondary-bg);
       border: 1px solid var(--border-subtle);
       border-radius: 12px;
       padding: 8px 12px;
@@ -282,7 +338,7 @@ export function panelHTML(env) {
       user-select: none;
     }
     .btn-theme-toggle:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: var(--btn-secondary-hover);
       transform: translateY(-2px);
     }
     .btn-theme-toggle:active {
@@ -295,7 +351,7 @@ export function panelHTML(env) {
 
     /* دکمه‌های ناوبری استاندارد */
     .btn-nav-action {
-      background: rgba(255, 255, 255, 0.07);
+      background: var(--btn-secondary-bg);
       border: 1px solid var(--border-subtle);
       border-radius: 11px;
       padding: 8px 13px;
@@ -310,7 +366,7 @@ export function panelHTML(env) {
       user-select: none;
     }
     .btn-nav-action:hover {
-      background: rgba(255, 255, 255, 0.14);
+      background: var(--btn-secondary-hover);
       color: var(--text-main);
       transform: translateY(-2px);
     }
@@ -320,9 +376,9 @@ export function panelHTML(env) {
 
     /* دکمه متمایز و شیک ورود به پنل ادمین */
     .btn-admin-highlight {
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      color: #fbbf24;
+      background: var(--accent-amber-bg);
+      border: 1px solid var(--accent-amber-border);
+      color: var(--accent-amber);
       border-radius: 12px;
       padding: 8px 14px;
       font-size: 0.82rem;
@@ -336,8 +392,8 @@ export function panelHTML(env) {
       overflow: hidden;
     }
     .btn-admin-highlight:hover {
-      background: rgba(245, 158, 11, 0.22);
-      border-color: #f59e0b;
+      background: var(--accent-amber);
+      border-color: var(--accent-amber);
       color: #fff;
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
@@ -404,9 +460,9 @@ export function panelHTML(env) {
       gap: 7px;
       font-size: clamp(0.74rem, 2.2vw, 0.84rem);
       font-weight: 700;
-      color: #93c5fd;
-      background: rgba(59, 130, 246, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.28);
+      color: var(--accent-blue);
+      background: var(--accent-blue-bg);
+      border: 1px solid var(--accent-blue-border);
       padding: 6px 16px;
       border-radius: 30px;
       margin-bottom: 14px;
@@ -440,9 +496,9 @@ export function panelHTML(env) {
       font-family: 'JetBrains Mono', monospace;
       font-size: clamp(0.95rem, 3.2vw, 1.25rem);
       font-weight: 800;
-      color: #c084fc;
-      background: rgba(168, 85, 247, 0.14);
-      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: var(--accent-purple);
+      background: var(--accent-purple-bg);
+      border: 1px solid var(--accent-purple-border);
       border-radius: 11px;
       padding: 3px 8px;
       animation: pulseSeconds 1s infinite alternate;
@@ -579,10 +635,10 @@ export function panelHTML(env) {
       background: rgba(255, 255, 255, 0.06);
     }
     .studio-tab-btn.active {
-      background: var(--bg-surface-elevated);
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.25);
-      border-color: rgba(168, 85, 247, 0.35);
+      background: var(--gradient-btn);
+      color: #ffffff !important;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+      border-color: transparent;
     }
 
     @media (min-width: 760px) {
@@ -687,13 +743,13 @@ export function panelHTML(env) {
       align-items: center;
       gap: 6px;
       font-size: 0.78rem;
-      color: #38bdf8;
+      color: var(--accent-blue);
       font-weight: 600;
     }
     .tg-status-dot {
       width: 7px;
       height: 7px;
-      background: #38bdf8;
+      background: var(--accent-blue);
       border-radius: 50%;
       animation: pulseDot 2s infinite;
     }
@@ -800,8 +856,8 @@ export function panelHTML(env) {
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     input:checked + .slider {
-      background-color: #8b5cf6;
-      border-color: #a855f7;
+      background-color: var(--primary);
+      border-color: var(--primary-hover);
     }
     input:checked + .slider:before {
       transform: translateX(20px);
@@ -809,19 +865,20 @@ export function panelHTML(env) {
 
     /* چیپ‌های متغیر بیوگرافی */
     .var-chip {
-      background: rgba(168, 85, 247, 0.12);
-      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: var(--accent-purple-bg);
+      border: 1px solid var(--accent-purple-border);
       border-radius: 8px;
       padding: 4px 9px;
       font-size: 0.74rem;
       font-weight: 700;
-      color: #c084fc;
+      color: var(--accent-purple);
       cursor: pointer;
       transition: all 0.2s ease;
       font-family: inherit;
     }
     .var-chip:hover {
-      background: rgba(168, 85, 247, 0.25);
+      background: var(--accent-purple);
+      color: #fff;
       transform: translateY(-1px);
     }
     .bio-templates-box {
@@ -999,12 +1056,12 @@ export function panelHTML(env) {
       box-shadow: 0 14px 36px var(--border-glow);
     }
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--btn-secondary-bg);
       color: var(--text-main);
       border: 1px solid var(--border-subtle);
     }
     .btn-secondary:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.16);
+      background: var(--btn-secondary-hover);
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
     .btn-gold {
@@ -1017,14 +1074,22 @@ export function panelHTML(env) {
       box-shadow: 0 14px 30px rgba(245, 158, 11, 0.45);
     }
     .btn-warning {
-      background: rgba(245, 158, 11, 0.15);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
+      background: var(--accent-amber-bg);
+      color: var(--accent-amber);
+      border: 1px solid var(--accent-amber-border);
+    }
+    .btn-warning:hover:not(:disabled) {
+      background: var(--accent-amber);
+      color: #fff;
     }
     .btn-danger {
-      background: rgba(244, 63, 94, 0.15);
-      color: #fb7185;
-      border: 1px solid rgba(244, 63, 94, 0.35);
+      background: var(--accent-rose-bg);
+      color: var(--accent-rose);
+      border: 1px solid var(--accent-rose-border);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: var(--accent-rose);
+      color: #fff;
     }
     .btn:disabled {
       opacity: 0.45;
@@ -1040,7 +1105,7 @@ export function panelHTML(env) {
       margin-bottom: 22px;
     }
     .preset-card {
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--btn-secondary-bg);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 13px 8px;
@@ -1050,17 +1115,17 @@ export function panelHTML(env) {
       position: relative;
     }
     .preset-card:hover {
-      background: rgba(255, 255, 255, 0.09);
-      border-color: rgba(168, 85, 247, 0.45);
+      background: var(--btn-secondary-hover);
+      border-color: var(--border-focus);
       transform: translateY(-2px);
     }
     .preset-card:active {
       transform: scale(0.96);
     }
     .preset-card.active {
-      background: rgba(139, 92, 246, 0.2);
-      border-color: #a855f7;
-      box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+      background: var(--accent-purple-bg);
+      border-color: var(--primary);
+      box-shadow: 0 0 25px var(--border-glow);
       transform: translateY(-2px);
     }
     .preset-name {
@@ -1089,7 +1154,7 @@ export function panelHTML(env) {
     .sep-pill {
       padding: 8px 18px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--btn-secondary-bg);
       border: 1px solid var(--border-subtle);
       color: var(--text-main);
       font-family: 'JetBrains Mono', monospace;
@@ -1101,7 +1166,7 @@ export function panelHTML(env) {
       user-select: none;
     }
     .sep-pill:hover {
-      background: rgba(255, 255, 255, 0.12);
+      background: var(--btn-secondary-hover);
       transform: translateY(-2px);
     }
     .sep-pill:active {
@@ -1122,7 +1187,7 @@ export function panelHTML(env) {
       margin-top: 18px;
     }
     .health-item {
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--btn-secondary-bg);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 14px 18px;
@@ -1147,7 +1212,7 @@ export function panelHTML(env) {
       margin-bottom: 24px;
     }
     .admin-kpi-card {
-      background: rgba(255, 255, 255, 0.04);
+      background: var(--btn-secondary-bg);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 14px;
@@ -1209,10 +1274,10 @@ export function panelHTML(env) {
       font-size: 0.76rem;
     }
     .copy-btn {
-      background: rgba(99, 102, 241, 0.18);
-      border: 1px solid rgba(99, 102, 241, 0.35);
+      background: var(--accent-indigo-bg);
+      border: 1px solid var(--accent-indigo-border);
       border-radius: 8px;
-      color: #a5b4fc;
+      color: var(--accent-indigo);
       padding: 4px 10px;
       font-size: 0.75rem;
       font-weight: 700;
@@ -1220,7 +1285,7 @@ export function panelHTML(env) {
       font-family: inherit;
     }
     .copy-btn:hover {
-      background: #6366f1;
+      background: var(--accent-indigo);
       color: #fff;
     }
     .status-badge {
@@ -1230,8 +1295,8 @@ export function panelHTML(env) {
       font-weight: 700;
       display: inline-block;
     }
-    .status-badge.unused { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .status-badge.used { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .status-badge.unused { background: var(--accent-green-bg); color: var(--accent-green); border: 1px solid var(--accent-green-border); }
+    .status-badge.used { background: var(--accent-rose-bg); color: var(--accent-rose); border: 1px solid var(--accent-rose-border); }
 
     /* ⚓ فوتر اختصاصی سایت */
     .footer-dock {
@@ -1248,7 +1313,7 @@ export function panelHTML(env) {
       gap: 10px;
     }
     .footer-admin-link {
-      color: #fbbf24;
+      color: var(--accent-amber);
       cursor: pointer;
       font-weight: 700;
       display: inline-flex;
@@ -1258,7 +1323,7 @@ export function panelHTML(env) {
       transition: all 0.2s ease;
     }
     .footer-admin-link:hover {
-      color: #fff;
+      color: var(--text-main);
       transform: translateX(-3px);
     }
 
@@ -1535,9 +1600,9 @@ export function panelHTML(env) {
 
         <!-- نشانگر حساب کاربری کاربر متصل -->
         <div id="userHeaderBadge" class="hidden" style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:0.85rem; font-weight:700; color:#a5b4fc;" id="usernameDisplay">کاربر</span>
+          <span style="font-size:0.85rem; font-weight:700; color:var(--accent-indigo);" id="usernameDisplay">کاربر</span>
           <button class="btn-nav-action" onclick="openSettingsModal()" title="تنظیمات حساب">⚙️</button>
-          <button class="btn-nav-action" onclick="logoutUser()" title="خروج" style="color:#fb7185;">🚪</button>
+          <button class="btn-nav-action" onclick="logoutUser()" title="خروج" style="color:var(--accent-rose);">🚪</button>
         </div>
       </div>
     </div>
@@ -1548,15 +1613,15 @@ export function panelHTML(env) {
         <div class="section-title">
           <span>👑</span> مرکز فرماندهی و فروشگاه Arizo Self
         </div>
-        <button class="btn-nav-action" onclick="closeAdminPortal()" style="color:#fb7185;">
+        <button class="btn-nav-action" onclick="closeAdminPortal()" style="color:var(--accent-rose);">
           <span>✕</span> بازگشت به پنل کاربران
         </button>
       </div>
 
       <!-- فرم لاگین ادمین (در صورت نداشتن توکن مدیریت) -->
       <div id="adminLoginBox">
-        <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
-          <div style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-bottom: 6px;">
+        <div style="background: var(--accent-amber-bg); border: 1px solid var(--accent-amber-border); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+          <div style="font-size: 0.95rem; font-weight: 800; color: var(--accent-amber); margin-bottom: 6px;">
             🔒 احراز هویت سطح مدیر کل (Master Key Authentication)
           </div>
           <div style="font-size: 0.78rem; color: var(--text-muted);">
@@ -1597,15 +1662,15 @@ export function panelHTML(env) {
               <div class="admin-kpi-title">👥 کل کاربران</div>
             </div>
             <div class="admin-kpi-card">
-              <div class="admin-kpi-num" id="statBots" style="color:#4ade80;">۰</div>
+              <div class="admin-kpi-num" id="statBots" style="color:var(--accent-green);">۰</div>
               <div class="admin-kpi-title">🟢 ربات‌های فعال</div>
             </div>
             <div class="admin-kpi-card">
-              <div class="admin-kpi-num" id="statAvailCodes" style="color:#38bdf8;">۰</div>
+              <div class="admin-kpi-num" id="statAvailCodes" style="color:var(--accent-blue);">۰</div>
               <div class="admin-kpi-title">🎟️ کدهای آماده فروش</div>
             </div>
             <div class="admin-kpi-card">
-              <div class="admin-kpi-num" id="statUsedCodes" style="color:#fb7185;">۰</div>
+              <div class="admin-kpi-num" id="statUsedCodes" style="color:var(--accent-rose);">۰</div>
               <div class="admin-kpi-title">💳 کدهای مصرف‌شده</div>
             </div>
           </div>
@@ -1623,8 +1688,8 @@ export function panelHTML(env) {
         <!-- 🎟️ تب ۲: تولید و انبار کدهای لایسنس برای فروش -->
         <div id="adminTabContentCodes" class="hidden">
           <!-- فرم تولید کد -->
-          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-md); padding: 18px; margin-bottom: 22px;">
-            <div style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-bottom: 12px; display:flex; align-items:center; gap:6px;">
+          <div style="background: var(--accent-amber-bg); border: 1px solid var(--accent-amber-border); border-radius: var(--radius-md); padding: 18px; margin-bottom: 22px;">
+            <div style="font-size: 0.95rem; font-weight: 800; color: var(--accent-amber); margin-bottom: 12px; display:flex; align-items:center; gap:6px;">
               <span>✨</span> صدور کدهای جدید لایسنس Arizo Self برای فروش به خریداران
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
@@ -1706,7 +1771,7 @@ export function panelHTML(env) {
           </div>
         </div>
 
-        <button class="btn btn-secondary" onclick="logoutAdmin()" style="margin-top: 24px; color:#fb7185;">
+        <button class="btn btn-secondary" onclick="logoutAdmin()" style="margin-top: 24px; color:var(--accent-rose);">
           <span>🚪 خروج از حساب مدیریت</span>
         </button>
 
@@ -1743,12 +1808,12 @@ export function panelHTML(env) {
 
       <!-- فرم ثبت‌نام کاربران با کد لایسنس -->
       <div id="registerFormBox" class="hidden">
-        <div class="form-group" style="background: rgba(168, 85, 247, 0.08); border: 1px dashed rgba(168, 85, 247, 0.4); border-radius: var(--radius-md); padding: 14px;">
-          <label class="form-label" style="color: #c084fc;">
+        <div class="form-group" style="background: var(--accent-purple-bg); border: 1px dashed var(--accent-purple-border); border-radius: var(--radius-md); padding: 14px;">
+          <label class="form-label" style="color: var(--accent-purple);">
             <span>🎟️ کد لایسنس / ردیم‌کد فعال‌سازی</span>
-            <span style="font-size:0.75rem; color:#f59e0b;">الزامی جهت ساخت حساب</span>
+            <span style="font-size:0.75rem; color:var(--accent-amber);">الزامی جهت ساخت حساب</span>
           </label>
-          <input type="text" id="regLicenseCode" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس فعال‌سازی)" style="text-transform: uppercase; font-size:1.05rem; letter-spacing:1px; color:#c084fc;">
+          <input type="text" id="regLicenseCode" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس فعال‌سازی)" style="text-transform: uppercase; font-size:1.05rem; letter-spacing:1px; color:var(--accent-purple);">
           <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
             💳 این کد را از فروشنده دریافت کرده و در اینجا وارد کنید (برای مدیر اول در دیتابیس تازه، نیازی به لایسنس نیست).
           </div>
@@ -1776,18 +1841,18 @@ export function panelHTML(env) {
     </div>
 
     <!-- ⚠️ هشدار و فرم تعلیق هوشمند اشتراک کاربر (Suspension Alert Box) -->
-    <div id="suspensionAlertBox" class="glass-card hidden" style="border: 1px solid rgba(244, 63, 94, 0.45); background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(225, 29, 72, 0.05) 100%);">
+    <div id="suspensionAlertBox" class="glass-card hidden" style="border: 1px solid var(--accent-rose-border); background: var(--accent-rose-bg);">
       <div style="display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
         <div style="font-size: 2.2rem; line-height: 1;">⚠️</div>
         <div style="flex:1; min-width: 250px;">
-          <div style="font-size: 1.05rem; font-weight: 800; color: #fb7185; margin-bottom: 6px;">
+          <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-rose); margin-bottom: 6px;">
             حساب کاربری و سلف‌بات شما در حالت تعلیق قرار دارد (Suspended)
           </div>
           <div style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
             مدت زمان اشتراک شما به پایان رسیده و عملکرد سلف‌بات روی تلگرام متوقف شده است. جهت فعال‌سازی مجدد و خروج آنی از تعلیق، کد لایسنس جدید خود را وارد کنید:
           </div>
           <div style="display: flex; gap: 10px; max-width: 540px; flex-wrap: wrap;">
-            <input type="text" id="quickRenewCodeInput" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس جدید جهت خروج از تعلیق)" style="flex: 2; min-width: 190px; text-transform: uppercase; font-weight: 700; color: #c084fc;">
+            <input type="text" id="quickRenewCodeInput" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس جدید جهت خروج از تعلیق)" style="flex: 2; min-width: 190px; text-transform: uppercase; font-weight: 700; color: var(--accent-purple);">
             <button class="btn btn-primary" id="quickRenewBtn" onclick="doQuickRenew()" style="flex: 1; min-width: 160px; background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);">
               <span>🚀 خروج از تعلیق و شارژ</span>
             </button>
@@ -1920,10 +1985,10 @@ export function panelHTML(env) {
       </div>
 
       <!-- هشدار هوشمند خطای ارتباط تلگرام با امکان اتصال مجدد -->
-      <div id="tgAlertBox" class="hidden" style="background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.35); border-radius:var(--radius-md); padding:14px 18px; margin-bottom:18px;">
+      <div id="tgAlertBox" class="hidden" style="background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); border-radius:var(--radius-md); padding:14px 18px; margin-bottom:18px;">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
           <div>
-            <div style="font-weight:800; color:#fb7185; font-size:0.9rem; margin-bottom:4px;">⚠️ وضعیت ارتباط با تلگرام:</div>
+            <div style="font-weight:800; color:var(--accent-rose); font-size:0.9rem; margin-bottom:4px;">⚠️ وضعیت ارتباط با تلگرام:</div>
             <div id="tgAlertMsg" style="color:var(--text-main); font-size:0.83rem;"></div>
           </div>
           <button class="btn btn-primary" onclick="showTelegramConnect()" style="padding:6px 14px; font-size:0.8rem; background:linear-gradient(135deg,#f43f5e,#e11d48);">
@@ -2114,8 +2179,8 @@ export function panelHTML(env) {
           </label>
         </div>
 
-        <div style="background:rgba(56, 189, 248, 0.08); border:1px solid rgba(56, 189, 248, 0.25); border-radius:14px; padding:16px; margin-top:14px;">
-          <div style="font-size:0.88rem; font-weight:700; color:#38bdf8; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+        <div style="background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); border-radius:14px; padding:16px; margin-top:14px;">
+          <div style="font-size:0.88rem; font-weight:700; color:var(--accent-blue); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
             <span>🛡️</span> عملکرد نجات‌دهنده خودکار رسانه‌ها
           </div>
           <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.7; margin:0;">
@@ -2185,7 +2250,7 @@ export function panelHTML(env) {
         <button class="btn btn-warning" id="toggleBotBtn" onclick="toggleBotState()">
           <span id="toggleBotText">⏸️ توقف موقت</span>
         </button>
-        <button class="btn btn-secondary" onclick="showTelegramConnect()" style="color:#38bdf8; border-color:rgba(56,189,248,0.3); font-size:0.82rem;">
+        <button class="btn btn-secondary" onclick="showTelegramConnect()" style="color:var(--accent-blue); border-color:var(--accent-blue-border); font-size:0.82rem;">
           <span>📱 تعویض اکانت</span>
         </button>
       </div>
@@ -2194,7 +2259,7 @@ export function panelHTML(env) {
       <div class="health-grid">
         <div class="health-item">
           <div class="health-label">وضعیت سلف‌بات شما</div>
-          <div class="health-value" id="botStatusBadge" style="color:#4ade80;">🟢 فعال و آنلاین</div>
+          <div class="health-value" id="botStatusBadge" style="color:var(--accent-green);">🟢 فعال و آنلاین</div>
         </div>
         <div class="health-item">
           <div class="health-label">آخرین به‌روزرسانی تلگرام</div>
@@ -2225,19 +2290,19 @@ export function panelHTML(env) {
       </div>
 
       <!-- تمدید اشتراک با ردیم‌کد -->
-      <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 14px; padding: 16px; margin-bottom: 20px;">
-        <div style="font-size:0.88rem; font-weight:700; color:#c084fc; margin-bottom:8px;">🎟️ تمدید اعتبار با ردیم‌کد جدید Arizo</div>
+      <div style="background: var(--accent-purple-bg); border: 1px solid var(--accent-purple-border); border-radius: 14px; padding: 16px; margin-bottom: 20px;">
+        <div style="font-size:0.88rem; font-weight:700; color:var(--accent-purple); margin-bottom:8px;">🎟️ تمدید اعتبار با ردیم‌کد جدید Arizo</div>
         <div class="form-group">
           <input type="text" id="extendCodeInput" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس تمدید اعتبار)" style="text-transform: uppercase;">
         </div>
-        <button class="btn btn-secondary" onclick="doRedeemExtend()" style="color:#c084fc; border-color:rgba(192,132,252,0.3);">
+        <button class="btn btn-secondary" onclick="doRedeemExtend()" style="color:var(--accent-purple); border-color:var(--accent-purple-border);">
           <span>تمدید و شارژ اشتراک</span>
         </button>
       </div>
 
       <!-- تغییر پسورد -->
       <div style="margin-bottom: 24px;">
-        <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; color: #a5b4fc;">🔑 تغییر رمز عبور ورود</div>
+        <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; color: var(--accent-indigo);">🔑 تغییر رمز عبور ورود</div>
         <div class="form-group">
           <label class="form-label">رمز عبور فعلی</label>
           <input type="password" id="oldPassInput" class="input-field" placeholder="رمز عبور فعلی حساب شما">
@@ -2253,7 +2318,7 @@ export function panelHTML(env) {
 
       <!-- عملیات حساس -->
       <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button class="btn btn-secondary" onclick="doDisconnectTelegram()" style="color:#fbbf24;">
+        <button class="btn btn-secondary" onclick="doDisconnectTelegram()" style="color:var(--accent-amber);">
           <span>🔌 قطع اتصال حساب تلگرام</span>
         </button>
         <button class="btn btn-danger" onclick="doDeleteAccount()">
@@ -2636,12 +2701,12 @@ export function panelHTML(env) {
         var planName = c.planName || (c.plan === 'lifetime' ? 'دائمی و نامحدود' : (c.durationDays ? (c.durationDays + ' روزه') : '۱ ماهه (۳۰ روز)'));
 
         return '<tr>' +
-          '<td style="font-family:monospace; font-weight:bold; color:#c084fc;">' + c.code + '</td>' +
-          '<td><span style="font-weight:700; color:' + (c.plan === 'lifetime' ? '#fbbf24' : '#38bdf8') + ';">' + planName + '</span></td>' +
+          '<td style="font-family:monospace; font-weight:bold; color:var(--accent-purple);">' + c.code + '</td>' +
+          '<td><span style="font-weight:700; color:' + (c.plan === 'lifetime' ? 'var(--accent-amber)' : 'var(--accent-blue)') + ';">' + planName + '</span></td>' +
           '<td>' + statusBadge + '</td>' +
           '<td>' +
             '<button class="copy-btn" data-code="' + c.code + '" onclick="copyCodeToClipboard(this.dataset.code)">📋 کپی</button> ' +
-            '<button class="btn-nav-action" data-code="' + c.code + '" onclick="doDeleteCode(this.dataset.code)" style="color:#fb7185; padding:3px 6px;">🗑️</button>' +
+            '<button class="btn-nav-action" data-code="' + c.code + '" onclick="doDeleteCode(this.dataset.code)" style="color:var(--accent-rose); padding:3px 6px;">🗑️</button>' +
           '</td>' +
         '</tr>';
       }).join('');
@@ -2655,24 +2720,24 @@ export function panelHTML(env) {
       }
       tbody.innerHTML = users.map(function(u) {
         var tgStatus = u.hasTelegram 
-          ? (u.enabled ? '<span style="color:#4ade80;">🟢 فعال</span>' : '<span style="color:#fbbf24;">⏸️ متوقف</span>')
+          ? (u.enabled ? '<span style="color:var(--accent-green);">🟢 فعال</span>' : '<span style="color:var(--accent-amber);">⏸️ متوقف</span>')
           : '<span style="color:var(--text-muted);">قطع</span>';
 
         var suspendBadge = u.isSuspended 
-          ? '<span class="status-badge used" style="color:#fb7185; background:rgba(244,63,94,0.12);">⏸️ معلق</span>'
-          : '<span class="status-badge unused" style="color:#4ade80; background:rgba(16,185,129,0.12);">🟢 فعال</span>';
+          ? '<span class="status-badge used" style="color:var(--accent-rose); background:var(--accent-rose-bg);">⏸️ معلق</span>'
+          : '<span class="status-badge unused" style="color:var(--accent-green); background:var(--accent-green-bg);">🟢 فعال</span>';
 
         var isAdm = !!u.isAdmin || u.role === 'admin';
         var roleBadge = isAdm
-          ? '<span style="color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); padding:3px 8px; border-radius:6px; font-weight:800; font-size:0.75rem;">👑 مدیر ارشد</span>'
+          ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:3px 8px; border-radius:6px; font-weight:800; font-size:0.75rem;">👑 مدیر ارشد</span>'
           : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:3px 8px; border-radius:6px; font-size:0.75rem;">👤 کاربر عادی</span>';
 
         var roleBtnTitle = isAdm ? 'تنزل به کاربر عادی' : 'ارتقا به مدیر ارشد';
         var roleBtnText = isAdm ? '👤 تنزل' : '👑 ارتقا به مدیر';
-        var roleBtnColor = isAdm ? '#94a3b8' : '#fbbf24';
+        var roleBtnColor = isAdm ? 'var(--text-dim)' : 'var(--accent-amber)';
 
         var planCol = '<div style="font-weight:700;">' + (u.planName || u.plan || 'استاندارد') + '</div>' +
-          '<div style="font-size:0.75rem; color:' + (u.isExpired ? '#f43f5e' : '#38bdf8') + ';">' + (u.remainingText || '') + '</div>';
+          '<div style="font-size:0.75rem; color:' + (u.isExpired ? 'var(--danger)' : 'var(--accent-blue)') + ';">' + (u.remainingText || '') + '</div>';
 
         var suspendBtnTitle = u.isSuspended ? 'خروج از تعلیق' : 'تعلیق کاربر';
         var suspendBtnIcon = u.isSuspended ? '🔓' : '🔒';
@@ -2684,12 +2749,12 @@ export function panelHTML(env) {
           '<td>' + tgStatus + '</td>' +
           '<td>' + suspendBadge + '</td>' +
           '<td>' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:#38bdf8; padding:4px 8px; font-size:0.74rem;" title="تغییر نوع اشتراک و روزها">⭐ اشتراک</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 8px; font-size:0.74rem;" title="تغییر نوع اشتراک و روزها">⭐ اشتراک</button> ' +
             '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + roleBtnColor + '; padding:4px 8px; font-size:0.74rem;" title="' + roleBtnTitle + '">' + roleBtnText + '</button> ' +
             '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" title="سوئیچ فعال/مکث ربات">⏸️/▶️</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? '#4ade80' : '#fb7185') + ';" title="' + suspendBtnTitle + '">' + suspendBtnIcon + '</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="disconnect" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:#fbbf24;" title="قطع تلگرام">🔌</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:#fb7185;" title="حذف کاربر">🗑️</button>' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + ';" title="' + suspendBtnTitle + '">' + suspendBtnIcon + '</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="disconnect" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-amber);" title="قطع تلگرام">🔌</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-rose);" title="حذف کاربر">🗑️</button>' +
           '</td>' +
         '</tr>';
       }).join('');
@@ -3712,7 +3777,7 @@ export function panelHTML(env) {
         var diffSec = Math.max(1, Math.round((Date.now() - window.lastServerUpdateTime) / 1000));
         var timeAgoStr = diffSec < 60 ? (diffSec + ' ثانیه پیش') : (Math.round(diffSec / 60) + ' دقیقه پیش');
         lastUpEl.textContent = (window.lastServerTimeStr || '') + ' (' + timeAgoStr + ')';
-        lastUpEl.style.color = window.lastServerError ? '#f43f5e' : '#4ade80';
+        lastUpEl.style.color = window.lastServerError ? 'var(--danger)' : 'var(--accent-green)';
       } else {
         lastUpEl.textContent = 'در انتظار نخستین همگام‌سازی';
         lastUpEl.style.color = 'var(--text-muted)';
