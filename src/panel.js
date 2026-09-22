@@ -3525,25 +3525,29 @@ export function panelHTML(env) {
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> ذخیره درحال انجام...';
 
+      var rawMutedUsers = (document.getElementById('mutedUsersInput') && document.getElementById('mutedUsersInput').value) || '';
+      var hasMutedUsers = rawMutedUsers.trim().length > 0;
+      var muteToggleChecked = document.getElementById('muteEnabledToggle') ? document.getElementById('muteEnabledToggle').checked : false;
+
       var payload = {
         digits: selectedDigits,
-        colon: (document.getElementById('colonInput') && document.getElementById('colonInput').value) || ':',
-        prefix: (document.getElementById('prefixInput') && document.getElementById('prefixInput').value) || '',
-        suffix: (document.getElementById('suffixInput') && document.getElementById('suffixInput').value) || '',
-        is12h: document.getElementById('toggle12h') ? document.getElementById('toggle12h').checked : false,
-        bioEnabled: document.getElementById('bioEnabledToggle') ? document.getElementById('bioEnabledToggle').checked : false,
-        bioTemplate: (document.getElementById('bioTemplateInput') && document.getElementById('bioTemplateInput').value) || '',
-        sleepEnabled: document.getElementById('sleepEnabledToggle') ? document.getElementById('sleepEnabledToggle').checked : false,
-        sleepStart: document.getElementById('sleepStartSelect') ? parseInt(document.getElementById('sleepStartSelect').value, 10) : 23,
-        sleepEnd: document.getElementById('sleepEndSelect') ? parseInt(document.getElementById('sleepEndSelect').value, 10) : 7,
-        sleepText: (document.getElementById('sleepTextInput') && document.getElementById('sleepTextInput').value) || '😴 Sleep',
-        afkEnabled: document.getElementById('afkEnabledToggle') ? document.getElementById('afkEnabledToggle').checked : false,
-        afkMessage: (document.getElementById('afkMessageInput') && document.getElementById('afkMessageInput').value) || '',
-        afkCooldown: document.getElementById('afkCooldownSelect') ? parseInt(document.getElementById('afkCooldownSelect').value, 10) : 10,
-        muteEnabled: document.getElementById('muteEnabledToggle') ? document.getElementById('muteEnabledToggle').checked : false,
-        mutedUsers: (document.getElementById('mutedUsersInput') && document.getElementById('mutedUsersInput').value) || '',
-        antiTtlEnabled: document.getElementById('antiTtlEnabledToggle') ? document.getElementById('antiTtlEnabledToggle').checked : false
-      };
+          colon: (document.getElementById('colonInput') && document.getElementById('colonInput').value) || ':',
+          prefix: (document.getElementById('prefixInput') && document.getElementById('prefixInput').value) || '',
+          suffix: (document.getElementById('suffixInput') && document.getElementById('suffixInput').value) || '',
+          is12h: document.getElementById('toggle12h') ? document.getElementById('toggle12h').checked : false,
+          bioEnabled: document.getElementById('bioEnabledToggle') ? document.getElementById('bioEnabledToggle').checked : false,
+          bioTemplate: (document.getElementById('bioTemplateInput') && document.getElementById('bioTemplateInput').value) || '',
+          sleepEnabled: document.getElementById('sleepEnabledToggle') ? document.getElementById('sleepEnabledToggle').checked : false,
+          sleepStart: document.getElementById('sleepStartSelect') ? parseInt(document.getElementById('sleepStartSelect').value, 10) : 23,
+          sleepEnd: document.getElementById('sleepEndSelect') ? parseInt(document.getElementById('sleepEndSelect').value, 10) : 7,
+          sleepText: (document.getElementById('sleepTextInput') && document.getElementById('sleepTextInput').value) || '😴 Sleep',
+          afkEnabled: document.getElementById('afkEnabledToggle') ? document.getElementById('afkEnabledToggle').checked : false,
+          afkMessage: (document.getElementById('afkMessageInput') && document.getElementById('afkMessageInput').value) || '',
+          afkCooldown: document.getElementById('afkCooldownSelect') ? parseInt(document.getElementById('afkCooldownSelect').value, 10) : 10,
+          muteEnabled: hasMutedUsers ? true : muteToggleChecked,
+          mutedUsers: rawMutedUsers,
+          antiTtlEnabled: document.getElementById('antiTtlEnabledToggle') ? document.getElementById('antiTtlEnabledToggle').checked : false
+        };
 
       try {
         var res = await fetch('/api/fonts', {
@@ -3738,7 +3742,8 @@ export function panelHTML(env) {
             if (data.afkCooldown !== undefined) setSafeValue('afkCooldownSelect', String(data.afkCooldown));
 
             // 🔇 بارگذاری سکوت و حذف پیام (Mute)
-            setSafeChecked('muteEnabledToggle', !!data.muteEnabled);
+            var hasSavedMuted = Array.isArray(data.mutedUsers) ? (data.mutedUsers.length > 0) : Boolean(data.mutedUsers && data.mutedUsers.trim());
+            setSafeChecked('muteEnabledToggle', !!data.muteEnabled || hasSavedMuted);
             setSafeValue('mutedUsersInput', Array.isArray(data.mutedUsers) ? data.mutedUsers.join(', ') : (data.mutedUsers || ''));
 
             // 📸 بارگذاری ضد خودتخریبی مدیا (Anti-TTL)
@@ -3795,6 +3800,17 @@ export function panelHTML(env) {
         loadUserDashboard();
       }
     }, 15000);
+
+    // اتصال هوشمند فیلد سکوت: فعال‌سازی خودکار سوییچ با ورود آیدی یا یوزرنیم
+    var mutedInpEl = document.getElementById('mutedUsersInput');
+    if (mutedInpEl) {
+      mutedInpEl.addEventListener('input', function() {
+        if (this.value.trim().length > 0) {
+          var toggleEl = document.getElementById('muteEnabledToggle');
+          if (toggleEl && !toggleEl.checked) toggleEl.checked = true;
+        }
+      });
+    }
 
     loadUserDashboard();
   </script>
