@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+*.log
+kv_backup.json
+.system_generated/
+temp_user_*.json
+.env
+.env.*
+

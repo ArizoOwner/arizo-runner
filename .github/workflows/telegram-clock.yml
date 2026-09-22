@@ -1,0 +1,44 @@
+name: ⚡ Telegram Clock Engine
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [continue-runner]
+  schedule:
+    # Failsafe restart every 4 hours if runner ever stops
+    - cron: '0 */4 * * *'
+
+concurrency:
+  group: telegram-clock-engine
+  cancel-in-progress: true
+
+jobs:
+  run-clock-engine:
+    name: ⏱️ Run Clock Engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📦 Install Dependencies
+        run: npm install --production
+
+      - name: 🚀 Run Clock Engine
+        env:
+          CLOUDFLARE_URL: ${{ secrets.CLOUDFLARE_URL }}
+          RUNNER_SECRET: ${{ secrets.RUNNER_SECRET || secrets.ADMIN_PASSWORD }}
+          API_ID: ${{ secrets.API_ID || '2040' }}
+          API_HASH: ${{ secrets.API_HASH || 'b18441a1ff607e10a989891a5462e627' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/github-runner.js

@@ -1,0 +1,17 @@
+name = "arizo-self"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["* * * * *"]
+
+[[kv_namespaces]]
+binding = "KV"
+id = "b56bacf321a54731ba4a1e69a5619898"
+
+# متغیرهای محیطی استاندارد (شناسه رسمی کلاینت تلگرام دسکتاپ)
+[vars]
+API_ID = "2040"
+API_HASH = "b18441a1ff607e10a989891a5462e627"
+ADMIN_PASSWORD = "admin_liquid_secret_2026"
