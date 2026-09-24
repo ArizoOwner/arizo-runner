@@ -26,7 +26,7 @@ import { getStylizedTime, renderDynamicBio, isSleepTime } from '../src/clock.js'
 import { decryptSession } from '../src/crypto.js';
 
 const CLOUDFLARE_URL = (process.env.CLOUDFLARE_URL || '').replace(/\/+$/, '');
-const RUNNER_SECRET = process.env.RUNNER_SECRET || process.env.ADMIN_PASSWORD || 'admin_liquid_secret_2026';
+const RUNNER_SECRET = process.env.RUNNER_SECRET || process.env.ADMIN_PASSWORD;
 const API_ID = parseInt(process.env.API_ID || '2040');
 const API_HASH = process.env.API_HASH || 'b18441a1ff607e10a989891a5462e627';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -36,6 +36,11 @@ const MAX_RUN_MINUTES = parseInt(process.env.RUNNER_DURATION_MINUTES || '320');
 
 if (!CLOUDFLARE_URL) {
   console.error('❌ Error: CLOUDFLARE_URL environment variable is required.');
+  process.exit(1);
+}
+
+if (!RUNNER_SECRET) {
+  console.error('❌ Error: RUNNER_SECRET or ADMIN_PASSWORD environment variable is required.');
   process.exit(1);
 }
 
