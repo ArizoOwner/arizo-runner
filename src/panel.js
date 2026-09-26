@@ -2212,7 +2212,7 @@ export function panelHTML(env) {
         <div class="brand-title-wrap">
           <h1>
             <span class="brand-title-gradient">Arizo Self</span>
-            <span class="badge-pro">PRO V3.0</span>
+            <span class="badge-pro">PRO V3.5</span>
           </h1>
         </div>
       </div>
