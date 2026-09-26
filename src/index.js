@@ -854,6 +854,7 @@ export default {
         muteEnabled: !!auth.user.telegram?.muteEnabled || (Array.isArray(auth.user.telegram?.mutedUsers) && auth.user.telegram.mutedUsers.length > 0),
         mutedUsers: auth.user.telegram?.mutedUsers || [],
         antiTtlEnabled: !!(auth.user.telegram?.antiTtlEnabled ?? auth.user.antiTtlEnabled),
+        bot: auth.user.telegram?.bot || null,
         status: liveStatus
       });
     }
@@ -1139,6 +1140,15 @@ export default {
         auth.user.telegram.antiTtlEnabled = !!b.antiTtlEnabled;
         auth.user.antiTtlEnabled = !!b.antiTtlEnabled;
       }
+      if (b.bot !== undefined) {
+        if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
+        if (typeof b.bot === 'object' && b.bot !== null) {
+          if (b.bot.token !== undefined) auth.user.telegram.bot.token = String(b.bot.token).trim();
+          if (b.bot.antiDeleteEnabled !== undefined) auth.user.telegram.bot.antiDeleteEnabled = !!b.bot.antiDeleteEnabled;
+          if (b.bot.antiEditEnabled !== undefined) auth.user.telegram.bot.antiEditEnabled = !!b.bot.antiEditEnabled;
+          if (b.bot.forwardTtlToBot !== undefined) auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
+        }
+      }
 
       await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
       if (auth.user.telegram?.sessionEncrypted) {
@@ -1246,6 +1256,7 @@ export default {
             muteEnabled: !!u.telegram.muteEnabled || (Array.isArray(u.telegram.mutedUsers) && u.telegram.mutedUsers.length > 0),
             mutedUsers: u.telegram.mutedUsers || [],
             antiTtlEnabled: !!(u.telegram.antiTtlEnabled ?? u.antiTtlEnabled),
+            bot: u.telegram?.bot || null,
             lastTime: u.status?.lastTime || null,
           });
         }
@@ -1307,6 +1318,200 @@ export default {
         return json({ ok: true });
       } catch (err) {
         return json({ error: err.message }, 500);
+      }
+    }
+
+    // ۴. اعتبارسنجی و ثبت وب‌هوک ربات تلگرام اختصاصی کاربر (Telegram BotFather API)
+    if (url.pathname === '/api/telegram/verify-bot-token' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'ابتدا وارد حساب کاربری خود شوید' }, 401);
+
+      try {
+        const { token } = await request.json();
+        const cleanToken = String(token || '').trim();
+        if (!cleanToken || !/^\d+:[A-Za-z0-9_-]{20,}$/.test(cleanToken)) {
+          return json({ error: 'فرمت توکن ربات نامعتبر است. توکن دریافت شده از BotFather@ باید شامل اعداد و حروف باشد.' }, 400);
+        }
+
+        // استعلام مشخصات ربات از سرور تلگرام
+        const meRes = await fetch(`https://api.telegram.org/bot${cleanToken}/getMe`);
+        if (!meRes.ok) {
+          const errData = await meRes.json().catch(() => ({}));
+          return json({ error: `توکن توسط تلگرام پذیرفته نشد: ${errData.description || 'توکن نامعتبر یا منقضی است'}` }, 400);
+        }
+
+        const meData = await meRes.json();
+        const botUser = meData.result;
+        if (!botUser || !botUser.is_bot) {
+          return json({ error: 'اطلاعات دریافت شده متعلق به یک ربات معتبر نیست.' }, 400);
+        }
+
+        // تنظیم خودکار وب‌هوک روی سرور Cloudflare جهت دریافت رویدادها و دستورات ربات
+        const hostUrl = new URL(request.url).origin;
+        const webhookUrl = `${hostUrl}/api/bot-webhook/${encodeURIComponent(auth.username)}`;
+        await fetch(`https://api.telegram.org/bot${cleanToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}&drop_pending_updates=true`).catch(() => {});
+
+        // تنظیم دکمه Menu Button به عنوان Web App تلگرام
+        await fetch(`https://api.telegram.org/bot${cleanToken}/setChatMenuButton`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            menu_button: {
+              type: 'web_app',
+              text: '⚡ استودیوی سلف‌بات',
+              web_app: { url: hostUrl }
+            }
+          })
+        }).catch(() => {});
+
+        if (!auth.user.telegram) auth.user.telegram = {};
+        if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
+        auth.user.telegram.bot.token = cleanToken;
+        auth.user.telegram.bot.username = botUser.username;
+        auth.user.telegram.bot.name = botUser.first_name || botUser.username;
+        auth.user.telegram.bot.id = botUser.id.toString();
+        if (auth.user.telegram.bot.antiDeleteEnabled === undefined) auth.user.telegram.bot.antiDeleteEnabled = true;
+        if (auth.user.telegram.bot.antiEditEnabled === undefined) auth.user.telegram.bot.antiEditEnabled = true;
+        if (auth.user.telegram.bot.forwardTtlToBot === undefined) auth.user.telegram.bot.forwardTtlToBot = true;
+
+        await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+
+        return json({
+          ok: true,
+          bot: auth.user.telegram.bot,
+          message: `ربات @${botUser.username} با موفقیت متصل گردید!`
+        });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    // ۵. وب‌هوک اختصاصی ربات تلگرام کاربر جهت ارسال دکمه‌های ورود به مینی‌اپ و کنترل پنل
+    if (url.pathname.startsWith('/api/bot-webhook/')) {
+      const targetUsername = decodeURIComponent(url.pathname.replace('/api/bot-webhook/', ''));
+      if (!targetUsername) return new Response('OK');
+
+      try {
+        const update = await request.json().catch(() => null);
+        if (!update) return new Response('OK');
+
+        const u = await env.KV.get('user:' + targetUsername, 'json');
+        if (!u || !u.telegram?.bot?.token) return new Response('OK');
+
+        const botToken = u.telegram.bot.token;
+        const hostUrl = new URL(request.url).origin;
+
+        // تولید توکن ورود آنی و مستقیم بدون پسورد (Single-Sign-On) برای Mini App
+        const appToken = generateRandomHex(32);
+        await env.KV.put('token:' + appToken, JSON.stringify({ username: targetUsername, createdAt: Date.now() }), { expirationTtl: 30 * 86400 });
+        const directAppUrl = `${hostUrl}/?token=${appToken}`;
+
+        // پاسخ به پیام‌های متنی
+        if (update.message) {
+          const msg = update.message;
+          const chatId = msg.chat.id;
+
+          // ذخیره قطعی شناسه عددی چت کاربر جهت دریافت اعلان‌ها و رسانه‌های Anti-TTL
+          if (String(u.telegram.bot.chatId) !== String(chatId)) {
+            u.telegram.bot.chatId = String(chatId);
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+          }
+
+          const welcomeText = `⚡ <b>به ربات دستیار و کنترل پنل Arizo Self خوش آمدید!</b>\n\n` +
+            `👤 <b>حساب متصل:</b> <code>${targetUsername}</code>\n` +
+            `🛡️ <b>سیستم محافظت:</b> ضد حذف پیام، ضد ویرایش و نجات‌دهنده خودکار مدیا فعال است.\n\n` +
+            `از طریق دکمه شیشه‌ای زیر می‌توانید پنل گرافیکی را مستقیماً <b>داخل محیط تلگرام (Telegram Mini App)</b> باز کنید 👇`;
+
+          const keyboard = {
+            inline_keyboard: [
+              [
+                { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl } }
+              ],
+              [
+                { text: '📊 وضعیت سلف‌بات', callback_data: 'bot_status' },
+                { text: '🔄 روشن / خاموش', callback_data: 'bot_toggle' }
+              ],
+              [
+                { text: '🌐 باز کردن در مرورگر', url: directAppUrl }
+              ]
+            ]
+          };
+
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: welcomeText,
+              parse_mode: 'HTML',
+              reply_markup: keyboard
+            })
+          });
+        }
+
+        // پاسخ به کلیک دکمه‌های اینلاین شیشه‌ای
+        if (update.callback_query) {
+          const cb = update.callback_query;
+          const chatId = cb.message?.chat?.id || cb.from.id;
+          const data = cb.data;
+
+          if (data === 'bot_status') {
+            const isOnline = u.telegram?.enabled && !u.isSuspended;
+            const lastTime = u.status?.lastTime || 'در انتظار اجرا...';
+            const statusMsg = `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
+              `🟢 <b>وضعیت اتصال:</b> ${isOnline ? 'فعال و آنلاین ✅' : 'متوقف شده ⏸️'}\n` +
+              `🕒 <b>آخرین به‌روزرسانی:</b> ${lastTime}\n` +
+              `🗑️ <b>سیستم ضد حذف:</b> ${u.telegram?.bot?.antiDeleteEnabled !== false ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+              `✏️ <b>سیستم ضد ویرایش:</b> ${u.telegram?.bot?.antiEditEnabled !== false ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+              `📸 <b>ارسال مدیا به ربات:</b> ${u.telegram?.bot?.forwardTtlToBot !== false ? 'فعال 🟢' : 'غیرفعال ⚪'}`;
+
+            await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id })
+            });
+
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: statusMsg,
+                parse_mode: 'HTML',
+                reply_markup: {
+                  inline_keyboard: [
+                    [{ text: '⚡ باز کردن پنل گرافیکی', web_app: { url: directAppUrl } }]
+                  ]
+                }
+              })
+            });
+          } else if (data === 'bot_toggle') {
+            u.telegram.enabled = !u.telegram.enabled;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+            const newState = u.telegram.enabled ? 'روشن و فعال شد 🟢' : 'متوقف شد ⏸️';
+
+            await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: `سلف‌بات ${newState}` })
+            });
+
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `🔄 <b>وضعیت سلف‌بات تغییر کرد:</b>\nسلف‌بات شما اکنون <b>${newState}</b> است.`,
+                parse_mode: 'HTML'
+              })
+            });
+          }
+        }
+
+        return new Response('OK');
+      } catch (err) {
+        console.error('Webhook processing error:', err.message);
+        return new Response('OK');
       }
     }
 
