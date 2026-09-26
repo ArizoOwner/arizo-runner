@@ -2187,6 +2187,224 @@ export function panelHTML(env) {
         flex-direction: column;
         gap: 10px;
       }
+    /* ✨ استایل‌های اختصاصی و لوکس پاپ‌آپ معرفی امکانات پلتفرم Arizo Self */
+    .features-modal-container {
+      max-width: 820px;
+      padding: 32px 28px;
+      background: var(--modal-bg);
+      border: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-specular);
+      border-radius: 26px;
+      box-shadow: 0 35px 90px rgba(0, 0, 0, 0.85), 0 0 40px rgba(168, 85, 247, 0.18);
+      position: relative;
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+    .features-modal-container::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--gradient-brand);
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.7);
+    }
+    .features-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--accent-purple-bg);
+      border: 1px solid var(--accent-purple-border);
+      color: var(--accent-purple);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+      box-shadow: 0 4px 14px rgba(168, 85, 247, 0.15);
+    }
+    .features-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .features-subtitle {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .features-pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .pillar-card {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-align: center;
+      align-items: center;
+      transition: transform 0.25s var(--spring-physics), border-color 0.25s ease, background 0.25s ease;
+    }
+    .pillar-card:hover {
+      transform: translateY(-3px);
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--border-specular);
+    }
+    .pillar-icon {
+      font-size: 1.4rem;
+      margin-bottom: 2px;
+    }
+    .pillar-title {
+      font-size: 0.82rem;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+    .pillar-desc {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-specular);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      position: relative;
+      transition: transform 0.25s var(--spring-physics), border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-3px);
+      background: rgba(255, 255, 255, 0.055);
+      border-color: var(--border-focus);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    }
+    .feature-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+    .feature-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .feature-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .feature-name {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .feature-tag {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    .feature-desc {
+      font-size: 0.77rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .features-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-subtle);
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .features-checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .features-checkbox-label input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    .features-footer-btns {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .features-modal-container {
+        padding: 22px 18px;
+        border-radius: 20px;
+      }
+      .features-title {
+        font-size: 1.18rem;
+      }
+      .features-pillars-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .features-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .features-footer-btns {
+        flex-direction: column;
+        width: 100%;
+      }
+      .features-footer-btns button {
+        width: 100%;
+        justify-content: center;
+      }
     }
   </style>
 </head>
@@ -2221,6 +2439,12 @@ export function panelHTML(env) {
         <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="تغییر حالت شب و روز">
           <span class="theme-icon-rotate" id="themeIcon">☀️</span>
           <span class="theme-text" id="themeText">حالت روز</span>
+        </button>
+
+        <!-- ✨ دکمه معرفی قابلیت‌های پلتفرم -->
+        <button class="btn-theme-toggle" id="featureTourNavBtn" onclick="openFeaturesModal()" title="معرفی امکانات و راهنمای Arizo Self" style="border-color: var(--accent-purple-border); color: var(--accent-purple); background: var(--accent-purple-bg);">
+          <span style="font-size: 1rem;">✨</span>
+          <span class="theme-text">امکانات پلتفرم</span>
         </button>
 
         <!-- 👑 دکمه طلایی دسترسی به پنل مدیریت (فقط برای ادمین‌ها پس از لاگین نمایان می‌شود) -->
@@ -3025,6 +3249,165 @@ export function panelHTML(env) {
 
   </div>
 
+  <!-- ✨ مودال معرفی جامع و لوکس قابلیت‌های پلتفرم Arizo Self -->
+  <div id="featuresIntroModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeFeaturesModal();">
+    <div class="modal-container features-modal-container" onclick="event.stopPropagation();">
+      
+      <!-- هدر شیک و دکمه بستن -->
+      <div class="modal-head" style="align-items: flex-start; margin-bottom: 16px;">
+        <div>
+          <div class="features-hero-badge">
+            <span>✨</span>
+            <span>نسل جدید سلف‌بات هوشمند تلگرام | نسخه ۳.۵ پرو</span>
+          </div>
+          <div class="features-title">
+            <span class="brand-title-gradient">Arizo Self Studio</span>
+            <span style="font-size: 1.1rem; color: var(--accent-indigo);">| امکانات و قابلیت‌ها</span>
+          </div>
+          <div class="features-subtitle">
+            خوش آمدید! آریزو سلف یک پلتفرم ابری تمام‌عیار و همیشه آنلاین (۲۴/۷) برای اکانت تلگرام شماست؛ بدون نیاز به روشن بودن گوشی یا لپ‌تاپ و با سرعت پردازش زیر ۱۰۰ میلی‌ثانیه.
+          </div>
+        </div>
+        <button class="btn-close" onclick="closeFeaturesModal()" title="بستن پنجره">&times;</button>
+      </div>
+
+      <!-- ۳ ستون کلیدی زیرساخت و تمایز -->
+      <div class="features-pillars-grid">
+        <div class="pillar-card">
+          <div class="pillar-icon">⚡</div>
+          <div class="pillar-title">سرعت Sub-100ms</div>
+          <div class="pillar-desc">واکنش بلادرنگ به رخدادها، حذف پیام‌ها و رسانه‌های زمان‌دار</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">☁️</div>
+          <div class="pillar-title">۱۰۰٪ ابری و پایدار</div>
+          <div class="pillar-desc">اجرای ۲۴ ساعته بر بستر Cloudflare Workers و GitHub بدون مصرف باتری</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">🔒</div>
+          <div class="pillar-title">امنیت و حریم خصوصی</div>
+          <div class="pillar-desc">ایزولاسیون کامل دیتابیس با رمزنگاری KV و عدم دسترسی شخص ثالث</div>
+        </div>
+      </div>
+
+      <!-- شبکه کارت‌های تفکیک‌شده قابلیت‌ها -->
+      <div class="features-grid">
+        <!-- ۱. ساعت زنده -->
+        <div class="feature-card">
+          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%); border-color: rgba(168, 85, 247, 0.4);">
+            🕒
+          </div>
+          <div class="feature-content">
+            <div class="feature-header-row">
+              <div class="feature-name">ساعت زنده روی نام</div>
+              <span class="feature-tag" style="background: var(--accent-purple-bg); color: var(--accent-purple); border: 1px solid var(--accent-purple-border);">۳۰+ فونت لوکس</span>
+            </div>
+            <div class="feature-desc">
+              نمایش لحظه‌ای ساعت بر روی نام تلگرام با بیش از ۳۰ فونت فارسی و لاتین، پشتیبانی از ایموجی‌های زنده، جداکننده‌ها و به‌روزرسانی اتوماتیک دقیقه به دقیقه.
+            </div>
+          </div>
+        </div>
+
+        <!-- ۲. بیوگرافی هوشمند -->
+        <div class="feature-card">
+          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%); border-color: rgba(56, 189, 248, 0.4);">
+            📝
+          </div>
+          <div class="feature-content">
+            <div class="feature-header-row">
+              <div class="feature-name">بیوگرافی زنده و پویا</div>
+              <span class="feature-tag" style="background: var(--accent-blue-bg); color: var(--accent-blue); border: 1px solid var(--accent-blue-border);">تقویم + باتری</span>
+            </div>
+            <div class="feature-desc">
+              درج تاریخ شمسی و میلادی زنده، نمایش درصد باتری و نقل‌قول‌های الهام‌بخش در بیو با فرمت‌های سفارشی و بدون نیاز به دستکاری مداوم.
+            </div>
+          </div>
+        </div>
+
+        <!-- ۳. منشی و پاسخگوی AFK -->
+        <div class="feature-card">
+          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.25) 100%); border-color: rgba(245, 158, 11, 0.4);">
+            💤
+          </div>
+          <div class="feature-content">
+            <div class="feature-header-row">
+              <div class="feature-name">منشی هوشمند عدم حضور (AFK)</div>
+              <span class="feature-tag" style="background: var(--accent-amber-bg); color: var(--accent-amber); border: 1px solid var(--accent-amber-border);">تایمر غیبت</span>
+            </div>
+            <div class="feature-desc">
+              پاسخگویی خودکار در زمان استراحت یا مشغله با اعلام زمان دقیق غیبت شما، متن کاملاً سفارشی و جلوگیری هوشمند از ارسال پیام تکراری و اسپم.
+            </div>
+          </div>
+        </div>
+
+        <!-- ۴. ربات دستیار و لاگر تلگرام -->
+        <div class="feature-card">
+          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%); border-color: rgba(16, 185, 129, 0.4);">
+            🤖
+          </div>
+          <div class="feature-content">
+            <div class="feature-header-row">
+              <div class="feature-name">ربات دستیار و لاگر تلگرام</div>
+              <span class="feature-tag" style="background: var(--accent-green-bg); color: var(--accent-green); border: 1px solid var(--accent-green-border);">Anti-Delete & Edit</span>
+            </div>
+            <div class="feature-desc">
+              ارسال فوری تمام پیام‌های حذف‌شده و ویرایش‌شده مخاطبان به ربات اختصاصی شما به همراه دسترسی آسان به کنترل پنل وب از داخل تلگرام با Mini App.
+            </div>
+          </div>
+        </div>
+
+        <!-- ۵. نجات رسانه‌های خودتخریبی Anti-TTL -->
+        <div class="feature-card">
+          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(244, 63, 94, 0.25) 0%, rgba(225, 29, 72, 0.25) 100%); border-color: rgba(244, 63, 94, 0.4);">
+            📸
+          </div>
+          <div class="feature-content">
+            <div class="feature-header-row">
+              <div class="feature-name">نجات رسانه‌های زمان‌دار (Anti-TTL)</div>
+              <span class="feature-tag" style="background: var(--accent-rose-bg); color: var(--accent-rose); border: 1px solid var(--accent-rose-border);">View-Once</span>
+            </div>
+            <div class="feature-desc">
+              عکس‌ها، ویدیوها و وویس‌های تایمردار یا یکبارمصرف ارسال‌شده در پیوی را به محض دریافت و قبل از سوختن، مستقیماً با کیفیت اصلی به ربات شما می‌فرستد.
+            </div>
+          </div>
+        </div>
+
+        <!-- ۶. مدیریت سکوت و اتومیشن -->
+        <div class="feature-card">
+          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%); border-color: rgba(99, 102, 241, 0.4);">
+            🔇
+          </div>
+          <div class="feature-content">
+            <div class="feature-header-row">
+              <div class="feature-name">حالت سکوت و کنترل مزاحمین</div>
+              <span class="feature-tag" style="background: var(--accent-indigo-bg); color: var(--accent-indigo); border: 1px solid var(--accent-indigo-border);">Mute Manager</span>
+            </div>
+            <div class="feature-desc">
+              بی‌صدا کردن و فیلتر هوشمند پیام‌های کاربران مزاحم در چت‌ها و گروه‌ها بر اساس آیدی عددی یا یوزرنیم، بدون نیاز به بلاک کردن اکانت آنها.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- فوتر پاپ‌آپ همراه با کنترل نمایش و دکمه شروع -->
+      <div class="features-modal-footer">
+        <label class="features-checkbox-label">
+          <input type="checkbox" id="dontShowFeaturesAgain">
+          <span>متوجه شدم، دیگر در ورودهای بعدی خودکار باز نشود</span>
+        </label>
+        <div class="features-footer-btns">
+          <button class="btn btn-secondary" onclick="closeFeaturesModal()" style="padding: 10px 18px; font-size: 0.85rem;">
+            <span>بستن</span>
+          </button>
+          <button class="btn btn-primary" onclick="closeFeaturesModal();" style="padding: 10px 24px; font-size: 0.9rem; font-weight: 800; background: var(--gradient-brand);">
+            <span>🚀 شروع و ورود به پلتفرم</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- 🪟 مودال تنظیمات کاربر -->
   <div id="settingsModal" class="modal-backdrop hidden">
     <div class="modal-container">
@@ -3712,6 +4095,32 @@ export function panelHTML(env) {
 
     window.openSettingsModal = function() { document.getElementById('settingsModal').classList.remove('hidden'); };
     window.closeSettingsModal = function() { document.getElementById('settingsModal').classList.add('hidden'); };
+
+    window.openFeaturesModal = function() {
+      var modal = document.getElementById('featuresIntroModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        var noShowCheckbox = document.getElementById('dontShowFeaturesAgain');
+        if (noShowCheckbox) {
+          noShowCheckbox.checked = localStorage.getItem('arizo_features_intro_dismissed') === 'true';
+        }
+      }
+    };
+
+    window.closeFeaturesModal = function() {
+      var modal = document.getElementById('featuresIntroModal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      var noShowCheckbox = document.getElementById('dontShowFeaturesAgain');
+      if (noShowCheckbox) {
+        if (noShowCheckbox.checked) {
+          localStorage.setItem('arizo_features_intro_dismissed', 'true');
+        } else {
+          localStorage.removeItem('arizo_features_intro_dismissed');
+        }
+      }
+    };
 
     window.doRedeemExtend = async function() {
       var code = document.getElementById('extendCodeInput').value.trim().toUpperCase();
@@ -4791,6 +5200,32 @@ export function panelHTML(env) {
 
     initStudioNavDots();
     loadUserDashboard();
+
+    // 🌟 نمایش خودکار پاپ‌آپ معرفی امکانات به هر کاربری که وارد سایت می‌شود
+    (function checkAutoShowFeatures() {
+      try {
+        var isDismissed = localStorage.getItem('arizo_features_intro_dismissed');
+        if (!isDismissed) {
+          setTimeout(function() {
+            window.openFeaturesModal();
+          }, 450);
+        }
+      } catch (e) {}
+    })();
+
+    // ⌨️ بستن پاپ‌آپ‌ها با فشردن کلید Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var featModal = document.getElementById('featuresIntroModal');
+        if (featModal && !featModal.classList.contains('hidden')) {
+          closeFeaturesModal();
+        }
+        var setModal = document.getElementById('settingsModal');
+        if (setModal && !setModal.classList.contains('hidden')) {
+          closeSettingsModal();
+        }
+      }
+    });
   </script>
 </body>
 </html>`;
