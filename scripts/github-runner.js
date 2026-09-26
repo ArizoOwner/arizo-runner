@@ -698,7 +698,7 @@ class TelegramConnectionPool {
         fileName
       };
 
-      entry.recentMessagesCache.set(message.id, cacheObj);
+      entry.recentMessagesCache.set(Number(message.id), cacheObj);
       if (entry.recentMessagesCache.size > 1200) {
         const oldestKey = entry.recentMessagesCache.keys().next().value;
         entry.recentMessagesCache.delete(oldestKey);
@@ -1135,6 +1135,21 @@ class TelegramConnectionPool {
     const bot = entry.settings?.bot;
     if (!bot || !bot.token) return;
 
+    // پردازش آپدیت‌های تک یا دسته‌ای (Updates / UpdatesCombined / UpdateShort)
+    if (Array.isArray(update.updates)) {
+      for (const sub of update.updates) {
+        await this.processSingleRawUpdate(entry, username, sub, bot);
+      }
+    } else if (update.update) {
+      await this.processSingleRawUpdate(entry, username, update.update, bot);
+    } else {
+      await this.processSingleRawUpdate(entry, username, update, bot);
+    }
+  }
+
+  async processSingleRawUpdate(entry, username, update, bot) {
+    if (!update || !bot) return;
+
     const targetChatId = bot.chatId || entry.myId;
     if (!targetChatId) return;
 
@@ -1145,7 +1160,8 @@ class TelegramConnectionPool {
                      update.className === 'UpdateDeleteChannelMessages';
 
     if (isDelete && Array.isArray(update.messages) && bot.antiDeleteEnabled !== false) {
-      for (const msgId of update.messages) {
+      for (const rawMsgId of update.messages) {
+        const msgId = Number(rawMsgId);
         // اگر این پیام توسط خود سلف‌بات حذف شده باشد (مثلاً فیلتر سکوت)، نادیده می‌گیریم
         if (entry.selfbotDeletedIds && entry.selfbotDeletedIds.has(msgId)) {
           entry.selfbotDeletedIds.delete(msgId);
@@ -1164,7 +1180,7 @@ class TelegramConnectionPool {
           const caption = `🗑️ <b>پیام حذف شده در پیوی!</b>\n\n` +
             `👤 <b>فرستنده:</b> ${cached.senderName}${senderUserStr} (<code>${cached.senderId}</code>)\n` +
             `🕒 <b>زمان ارسال پیام:</b> ${dateStr}\n\n` +
-            `📝 <b>متن پیام:</b>\n${cached.text ? cached.text : '<i>(پیام فاقد متن بود)</i>'}`;
+            `📝 <b>متن پیام حذف شده:</b>\n<blockquote>${cached.text ? cached.text : '<i>(پیام فاقد متن بود)</i>'}</blockquote>`;
 
           console.log(`🗑️ [${username}] Anti-Delete triggered for message #${msgId} from ${cached.senderId}`);
 
@@ -1195,14 +1211,14 @@ class TelegramConnectionPool {
 
     if (isEdit && update.message && bot.antiEditEnabled !== false) {
       const editMsg = update.message;
-      const msgId = editMsg.id;
+      const msgId = Number(editMsg.id);
 
       if (entry.recentMessagesCache && entry.recentMessagesCache.has(msgId)) {
         const cached = entry.recentMessagesCache.get(msgId);
         const oldText = (cached.text || '').trim();
         const newText = (editMsg.message || editMsg.text || '').trim();
 
-        if (newText && oldText !== newText) {
+        if (oldText !== newText) {
           const dateStr = editMsg.date 
             ? new Date(editMsg.date * 1000).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' }) 
             : 'اکنون';
@@ -1212,7 +1228,7 @@ class TelegramConnectionPool {
             `👤 <b>فرستنده:</b> ${cached.senderName}${senderUserStr} (<code>${cached.senderId}</code>)\n` +
             `🕒 <b>زمان ویرایش:</b> ${dateStr}\n\n` +
             `⏮️ <b>متن قبل از ویرایش:</b>\n<blockquote>${oldText || '(خالی)'}</blockquote>\n\n` +
-            `⏭️ <b>متن جدید:</b>\n<blockquote>${newText}</blockquote>`;
+            `⏭️ <b>متن جدید:</b>\n<blockquote>${newText || '(خالی)'}</blockquote>`;
 
           console.log(`✏️ [${username}] Anti-Edit triggered for message #${msgId} from ${cached.senderId}`);
           sendBotTelegramMessage(bot.token, targetChatId, alertText)
@@ -1505,7 +1521,8 @@ async function main() {
             afkCooldown: u.afkCooldown ?? 10,
             muteEnabled: !!u.muteEnabled || serverMuted.length > 0,
             mutedUsers: serverMuted,
-            antiTtlEnabled: !!u.antiTtlEnabled
+            antiTtlEnabled: !!u.antiTtlEnabled,
+            bot: u.bot || null
           };
           resolveMutedUsernames(entry);
         }
