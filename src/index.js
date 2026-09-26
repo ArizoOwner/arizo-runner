@@ -1141,12 +1141,17 @@ export default {
         auth.user.antiTtlEnabled = !!b.antiTtlEnabled;
       }
       if (b.bot !== undefined) {
-        if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
         if (typeof b.bot === 'object' && b.bot !== null) {
-          if (b.bot.token !== undefined) auth.user.telegram.bot.token = String(b.bot.token).trim();
-          if (b.bot.antiDeleteEnabled !== undefined) auth.user.telegram.bot.antiDeleteEnabled = !!b.bot.antiDeleteEnabled;
-          if (b.bot.antiEditEnabled !== undefined) auth.user.telegram.bot.antiEditEnabled = !!b.bot.antiEditEnabled;
-          if (b.bot.forwardTtlToBot !== undefined) auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
+          const rawToken = b.bot.token !== undefined ? String(b.bot.token).trim() : null;
+          if (rawToken === '') {
+            delete auth.user.telegram.bot;
+          } else {
+            if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
+            if (rawToken) auth.user.telegram.bot.token = rawToken;
+            if (b.bot.antiDeleteEnabled !== undefined) auth.user.telegram.bot.antiDeleteEnabled = !!b.bot.antiDeleteEnabled;
+            if (b.bot.antiEditEnabled !== undefined) auth.user.telegram.bot.antiEditEnabled = !!b.bot.antiEditEnabled;
+            if (b.bot.forwardTtlToBot !== undefined) auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
+          }
         }
       }
 
@@ -1386,6 +1391,47 @@ export default {
       }
     }
 
+    // ۴.۱ قطع اتصال ربات تلگرام اختصاصی و پاکسازی منابع و حافظه KV
+    if (url.pathname === '/api/telegram/disconnect-bot' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'ابتدا وارد حساب کاربری خود شوید' }, 401);
+
+      try {
+        const botToken = auth.user.telegram?.bot?.token;
+        if (botToken) {
+          // ۱. حذف وب‌هوک در سرورهای تلگرام جهت توقف ارسال ترافیک
+          await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook?drop_pending_updates=true`).catch(() => {});
+          // ۲. بازگردانی دکمه منو به پیش‌فرض
+          await fetch(`https://api.telegram.org/bot${botToken}/setChatMenuButton`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ menu_button: { type: 'default' } })
+          }).catch(() => {});
+        }
+
+        // ۳. آزادسازی حافظه KV و حذف توکن‌های متصل به Mini App
+        const existingAppToken = await env.KV.get('miniapp_token:' + auth.username);
+        if (existingAppToken) {
+          await env.KV.delete('token:' + existingAppToken);
+          await env.KV.delete('miniapp_token:' + auth.username);
+        }
+
+        // ۴. پاکسازی آبجکت bot از اطلاعات کاربر در دیتابیس
+        if (auth.user.telegram) {
+          delete auth.user.telegram.bot;
+        }
+
+        await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+
+        return json({
+          ok: true,
+          message: 'اتصال ربات تلگرام با موفقیت قطع گردید و منابع و حافظه کلادفلر آزاد شد.'
+        });
+      } catch (err) {
+        return json({ error: err.message || 'خطا در قطع اتصال ربات' }, 500);
+      }
+    }
+
     // ۵. وب‌هوک اختصاصی ربات تلگرام کاربر جهت ارسال دکمه‌های ورود به مینی‌اپ و کنترل پنل
     if (url.pathname.startsWith('/api/bot-webhook/')) {
       const targetUsername = decodeURIComponent(url.pathname.replace('/api/bot-webhook/', ''));
@@ -1401,9 +1447,13 @@ export default {
         const botToken = u.telegram.bot.token;
         const hostUrl = new URL(request.url).origin;
 
-        // تولید توکن ورود آنی و مستقیم بدون پسورد (Single-Sign-On) برای Mini App
-        const appToken = generateRandomHex(32);
-        await env.KV.put('token:' + appToken, JSON.stringify({ username: targetUsername, createdAt: Date.now() }), { expirationTtl: 30 * 86400 });
+        // تولید توکن ورود آنی و مستقیم بدون پسورد (Single-Sign-On) برای Mini App با بهینه‌سازی حافظه KV
+        let appToken = await env.KV.get('miniapp_token:' + targetUsername);
+        if (!appToken) {
+          appToken = generateRandomHex(32);
+          await env.KV.put('token:' + appToken, JSON.stringify({ username: targetUsername, createdAt: Date.now() }), { expirationTtl: 7 * 86400 });
+          await env.KV.put('miniapp_token:' + targetUsername, appToken, { expirationTtl: 7 * 86400 });
+        }
         const directAppUrl = `${hostUrl}/?token=${appToken}`;
 
         // پاسخ به پیام‌های متنی
