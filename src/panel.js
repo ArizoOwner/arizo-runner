@@ -2187,11 +2187,13 @@ export function panelHTML(env) {
         flex-direction: column;
         gap: 10px;
       }
+    }
+
     /* ==========================================================================
        💎 Arizo Self — Executive Feature Introduction Modal (SaaS Grade)
        ========================================================================== */
     .features-modal-container {
-      width: 94%;
+      width: 95%;
       max-width: 780px;
       padding: 24px 26px;
       background: #090d1a;
@@ -3351,11 +3353,11 @@ export function panelHTML(env) {
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">ساعت زنده نام</span>
+                <span class="feature-item-title">ساعت زنده نام کاربری</span>
                 <span class="feature-item-badge">۳۰+ قلم نوشتاری</span>
               </div>
               <div class="feature-item-desc">
-                به‌روزرسانی خودکار زمان رسمی در نام حساب با قلم‌های فارسی و لاتین بدون افت سرعت.
+                به‌روزرسانی دقیق دقیقه به دقیقه زمان تهران در نام حساب با فونت‌های لوکس فارسی و لاتین، ارقام دستی و حالت ۱۲/۲۴ ساعته بدون افت سرعت.
               </div>
             </div>
           </div>
@@ -3367,11 +3369,11 @@ export function panelHTML(env) {
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">بیوگرافی هوشمند</span>
-                <span class="feature-item-badge">تقویم + باتری</span>
+                <span class="feature-item-title">بیوگرافی زنده و تقویم</span>
+                <span class="feature-item-badge">متغیرهای پویا</span>
               </div>
               <div class="feature-item-desc">
-                درج پویای تقویم خورشیدی و میلادی، درصد شارژ دستگاه و عبارات سفارشی در نمایه.
+                درج خودکار تقویم هجری شمسی، روز هفته و زمان در بخش Bio تلگرام با استفاده از قالب‌های مدرن و متغیرهای پویا.
               </div>
             </div>
           </div>
@@ -3379,36 +3381,52 @@ export function panelHTML(env) {
           <!-- ۳. منشی و پاسخگوی AFK -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">منشی خودکار (AFK)</span>
-                <span class="feature-item-badge">تایمر غیبت</span>
+                <span class="feature-item-title">منشی خودکار پیوی (AFK)</span>
+                <span class="feature-item-badge">سیستم ضد اسپم</span>
               </div>
               <div class="feature-item-desc">
-                پاسخگویی هوشمند به پیام‌ها در زمان غیبت با محاسبه دقیق مدت زمان و سیستم ضد اسپم.
+                پاسخگویی هوشمند به پیام‌های شخصی در هنگام آفلاین بودن شما با زمان‌بندی کول‌داون ضد اسپم و متن کاملاً سفارشی.
               </div>
             </div>
           </div>
 
-          <!-- ۴. ربات دستیار و لاگر تلگرام -->
+          <!-- ۴. ربات دستیار و لاگر ضد حذف تلگرام -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">لاگر و پایشگر وقایع</span>
-                <span class="feature-item-badge">حذف و ویرایش</span>
+                <span class="feature-item-title">پایشگر ضد حذف (Anti-Delete)</span>
+                <span class="feature-item-badge">متن، عکس و ویس</span>
               </div>
               <div class="feature-item-desc">
-                ارسال آنی پیام‌های حذف‌شده (Anti-Delete) با فایل و پیام‌های ویرایش‌شده به ربات شما.
+                ذخیره و ارسال آنی پیام‌ها، فایل‌ها، تصاویر و وویس‌های پاک‌شده توسط مخاطبان در پیوی به ربات دستیار تلگرام شما.
               </div>
             </div>
           </div>
 
-          <!-- ۵. نجات رسانه‌های خودتخریبی Anti-TTL -->
+          <!-- ۵. مانیتور و ضد ویرایش پیام -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">مانیتور ضد ویرایش (Anti-Edit)</span>
+                <span class="feature-item-badge">متن قبل و بعد ادیت</span>
+              </div>
+              <div class="feature-item-desc">
+                آشکارسازی و ارسال متن اولیه پیام‌ها قبل از تغییر همراه با نسخه ویرایش‌شده در چت ربات برای آگاهی از ویرایش‌های مخفیانه.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۶. نجات رسانه‌های خودتخریبی Anti-TTL -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -3416,26 +3434,74 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">آرشیو رسانه‌ها (Anti-TTL)</span>
-                <span class="feature-item-badge">View-Once</span>
+                <span class="feature-item-badge">View-Once یک‌بار مصرف</span>
               </div>
               <div class="feature-item-desc">
-                ذخیره و فوروارد فوری عکس‌ها، ویدیوها و وویس‌های تایمردار به پیوی ربات با کیفیت اصلی.
+                دانلود و فوروارد فوری عکس‌ها، ویدیوها و ویس‌های تایمردار و محوشونده به پیوی ربات شما با کیفیت اورجینال قبل از سوختن.
               </div>
             </div>
           </div>
 
-          <!-- ۶. مدیریت سکوت و فیلتر پیام‌ها -->
+          <!-- ۷. مدیریت سکوت و فیلتر پیام‌ها -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">مدیریت سکوت و فیلتر</span>
-                <span class="feature-item-badge">کنترل گفت‌وگوها</span>
+                <span class="feature-item-title">مدیریت سکوت و فیلتر (Mute)</span>
+                <span class="feature-item-badge">پاکسازی دوطرفه</span>
               </div>
               <div class="feature-item-desc">
-                پالایش و بی‌صدا کردن خودکار پیام‌های کاربران موردنظر در گروه‌ها و چت‌ها بدون مسدودسازی.
+                پالایش و حذف خودکار و آنی پیام‌های کاربران مزاحم با دستورات تلگرامی <code>.mute</code> یا از طریق تنظیمات پنل.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۸. حالت خواب و استراحت شبانه -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">حالت خواب شبانه (Sleep Mode)</span>
+                <span class="feature-item-badge">اتوماسیون استراحت</span>
+              </div>
+              <div class="feature-item-desc">
+                تغییر خودکار نام خانوادگی به متن استراحت (مانند 😴 Sleep) و توقف هوشمند وظایف در ساعات مشخص‌شده شبانه.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۹. کنترل پنل درون تلگرام (Telegram Mini App) -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">مینی اپلیکیشن تلگرام</span>
+                <span class="feature-item-badge">دسترسی مستقیم درون‌برنامه‌ای</span>
+              </div>
+              <div class="feature-item-desc">
+                اتصال وب‌اپلیکیشن به ربات تلگرام اختصاصی شما جهت مدیریت آسان و تغییر آنی تنظیمات بدون نیاز به خروج از تلگرام.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۰. زیرساخت ابری سرورلس ۲۴/۷ -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">معماری ابری سرورلس</span>
+                <span class="feature-item-badge">پایداری دائمی ۲۴/۷</span>
+              </div>
+              <div class="feature-item-desc">
+                میزبانی در شبکه جهانی Cloudflare با رمزنگاری ایزوله سشن‌ها؛ کاملاً مستقل از اینترنت یا آنلاین بودن گوشی همراه شما.
               </div>
             </div>
           </div>
