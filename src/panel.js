@@ -3947,10 +3947,13 @@ export function panelHTML(env) {
           ? '<span class="status-badge used" style="color:var(--accent-rose); background:var(--accent-rose-bg);">⏸️ معلق</span>'
           : '<span class="status-badge unused" style="color:var(--accent-green); background:var(--accent-green-bg);">🟢 فعال</span>';
 
-        var isAdm = !!u.isAdmin || u.role === 'admin';
-        var roleBadge = isAdm
-          ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:3px 8px; border-radius:6px; font-weight:800; font-size:0.75rem;">👑 مدیر ارشد</span>'
-          : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:3px 8px; border-radius:6px; font-size:0.75rem;">👤 کاربر عادی</span>';
+        var isOwner = !!u.isOwner || u.username.toLowerCase() === 'amirmaster' || u.username.toLowerCase() === 'admin';
+        var isAdm = isOwner || !!u.isAdmin || u.role === 'admin';
+        var roleBadge = isOwner
+          ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:3px 8px; border-radius:6px; font-weight:800; font-size:0.75rem;">👑 مالک اصلی سامانه</span>'
+          : (isAdm
+            ? '<span style="color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:3px 8px; border-radius:6px; font-weight:800; font-size:0.75rem;">🛡️ مدیر ارشد</span>'
+            : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:3px 8px; border-radius:6px; font-size:0.75rem;">👤 کاربر عادی</span>');
 
         var roleBtnTitle = isAdm ? 'تنزل به کاربر عادی' : 'ارتقا به مدیر ارشد';
         var roleBtnText = isAdm ? '👤 تنزل' : '👑 ارتقا به مدیر';
@@ -3962,20 +3965,24 @@ export function panelHTML(env) {
         var suspendBtnTitle = u.isSuspended ? 'خروج از تعلیق' : 'تعلیق کاربر';
         var suspendBtnIcon = u.isSuspended ? '🔓' : '🔒';
 
+        var actionBtns = isOwner
+          ? '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 8px; font-size:0.74rem;" title="تغییر نوع اشتراک و روزها">⭐ اشتراک</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" title="سوئیچ فعال/مکث ربات">⏸️/▶️</button> ' +
+            '<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; color:var(--accent-amber); font-weight:700; padding:4px 8px; background:rgba(245, 158, 11, 0.1); border-radius:6px; border:1px solid rgba(245, 158, 11, 0.25);" title="مالک اصلی سامانه غیرقابل تعلیق یا حذف است">🔒 غیرقابل حذف</span>'
+          : '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 8px; font-size:0.74rem;" title="تغییر نوع اشتراک و روزها">⭐ اشتراک</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + roleBtnColor + '; padding:4px 8px; font-size:0.74rem;" title="' + roleBtnTitle + '">' + roleBtnText + '</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" title="سوئیچ فعال/مکث ربات">⏸️/▶️</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + ';" title="' + suspendBtnTitle + '">' + suspendBtnIcon + '</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="disconnect" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-amber);" title="قطع تلگرام">🔌</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-rose);" title="حذف کاربر">🗑️</button>';
+
         return '<tr>' +
           '<td style="font-weight:bold;">' + u.username + '</td>' +
           '<td>' + roleBadge + '</td>' +
           '<td>' + planCol + '</td>' +
           '<td>' + tgStatus + '</td>' +
           '<td>' + suspendBadge + '</td>' +
-          '<td>' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 8px; font-size:0.74rem;" title="تغییر نوع اشتراک و روزها">⭐ اشتراک</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + roleBtnColor + '; padding:4px 8px; font-size:0.74rem;" title="' + roleBtnTitle + '">' + roleBtnText + '</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" title="سوئیچ فعال/مکث ربات">⏸️/▶️</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + ';" title="' + suspendBtnTitle + '">' + suspendBtnIcon + '</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="disconnect" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-amber);" title="قطع تلگرام">🔌</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-rose);" title="حذف کاربر">🗑️</button>' +
-          '</td>' +
+          '<td>' + actionBtns + '</td>' +
         '</tr>';
       }).join('');
     }
