@@ -509,7 +509,10 @@ class TelegramConnectionPool {
       // دریافت فوری شناسه کاربری جهت تشخیص دقیق پیام‌های خروجی و دریافتی
       try {
         const me = await client.getMe();
-        if (me && me.id) entry.myId = me.id.toString();
+        if (me && me.id) {
+          entry.myId = me.id.toString();
+          syncOwnerTgIdToCloudflare(username, entry.myId);
+        }
       } catch (_) {}
 
       // اتصال رویدادهای زنده سلف‌بات (AFK, Mute, Anti-TTL, Anti-Delete, Anti-Edit)
@@ -518,7 +521,16 @@ class TelegramConnectionPool {
       console.log(`🔌 Reconnecting dropped socket for [${username}]...`);
       await entry.client.connect();
       entry.connected = true;
-      try { await entry.client.invoke(new Api.updates.GetState()); } catch (_) {}
+      try {
+        await entry.client.invoke(new Api.updates.GetState());
+        if (!entry.myId) {
+          const me = await entry.client.getMe();
+          if (me && me.id) {
+            entry.myId = me.id.toString();
+            syncOwnerTgIdToCloudflare(username, entry.myId);
+          }
+        }
+      } catch (_) {}
       this.attachEventListeners(entry, username);
     }
 
@@ -1393,6 +1405,24 @@ async function syncUserMuteToCloudflare(username, mutedUsers) {
         'User-Agent': 'Arizo-Sub100ms-Engine/3.0'
       },
       body: JSON.stringify({ username, mutedUsers })
+    });
+  } catch (_) {}
+}
+
+/**
+ * همگام‌سازی فوری شناسه عددی تلگرام کاربر با ورکر جهت قفل انحصاری امنیتی ربات به مالک
+ */
+async function syncOwnerTgIdToCloudflare(username, tgUserId) {
+  if (!username || !tgUserId || !CLOUDFLARE_URL) return;
+  try {
+    await fetch(`${CLOUDFLARE_URL}/api/internal/set-user-tg-id`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RUNNER_SECRET}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.0'
+      },
+      body: JSON.stringify({ username, tgUserId })
     });
   } catch (_) {}
 }
