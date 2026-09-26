@@ -1140,18 +1140,20 @@ export default {
         auth.user.telegram.antiTtlEnabled = !!b.antiTtlEnabled;
         auth.user.antiTtlEnabled = !!b.antiTtlEnabled;
       }
-      if (b.bot !== undefined) {
-        if (typeof b.bot === 'object' && b.bot !== null) {
-          const rawToken = b.bot.token !== undefined ? String(b.bot.token).trim() : null;
-          if (rawToken === '') {
-            delete auth.user.telegram.bot;
-          } else {
-            if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
-            if (rawToken) auth.user.telegram.bot.token = rawToken;
-            if (b.bot.antiDeleteEnabled !== undefined) auth.user.telegram.bot.antiDeleteEnabled = !!b.bot.antiDeleteEnabled;
-            if (b.bot.antiEditEnabled !== undefined) auth.user.telegram.bot.antiEditEnabled = !!b.bot.antiEditEnabled;
-            if (b.bot.forwardTtlToBot !== undefined) auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
-          }
+      if (b.bot !== undefined && typeof b.bot === 'object' && b.bot !== null) {
+        if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
+        const rawToken = b.bot.token !== undefined ? String(b.bot.token).trim() : null;
+        if (rawToken && /^\d+:[A-Za-z0-9_-]{20,}$/.test(rawToken)) {
+          auth.user.telegram.bot.token = rawToken;
+        }
+        if (b.bot.antiDeleteEnabled !== undefined) {
+          auth.user.telegram.bot.antiDeleteEnabled = !!b.bot.antiDeleteEnabled;
+        }
+        if (b.bot.antiEditEnabled !== undefined) {
+          auth.user.telegram.bot.antiEditEnabled = !!b.bot.antiEditEnabled;
+        }
+        if (b.bot.forwardTtlToBot !== undefined) {
+          auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
         }
       }
 
@@ -1354,7 +1356,15 @@ export default {
         // تنظیم خودکار وب‌هوک روی سرور Cloudflare جهت دریافت رویدادها و دستورات ربات
         const hostUrl = new URL(request.url).origin;
         const webhookUrl = `${hostUrl}/api/bot-webhook/${encodeURIComponent(auth.username)}`;
-        await fetch(`https://api.telegram.org/bot${cleanToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}&drop_pending_updates=true`).catch(() => {});
+        await fetch(`https://api.telegram.org/bot${cleanToken}/setWebhook`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: webhookUrl,
+            drop_pending_updates: true,
+            allowed_updates: ['message', 'edited_message', 'callback_query']
+          })
+        }).catch(() => {});
 
         // تنظیم دکمه Menu Button به عنوان Web App تلگرام
         await fetch(`https://api.telegram.org/bot${cleanToken}/setChatMenuButton`, {
@@ -1366,6 +1376,19 @@ export default {
               text: '⚡ استودیوی سلف‌بات',
               web_app: { url: hostUrl }
             }
+          })
+        }).catch(() => {});
+
+        // ثبت دستورات رسمی ربات در تلگرام
+        await fetch(`https://api.telegram.org/bot${cleanToken}/setMyCommands`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            commands: [
+              { command: 'start', description: 'نمایش پنل اصلی، وضعیت و راهنما' },
+              { command: 'test', description: 'تست ارسال گزارش ضد حذف و ویرایش' },
+              { command: 'status', description: 'استعلام وضعیت زنده سلف‌بات' }
+            ]
           })
         }).catch(() => {});
 
@@ -1441,7 +1464,10 @@ export default {
         const update = await request.json().catch(() => null);
         if (!update) return new Response('OK');
 
-        const u = await env.KV.get('user:' + targetUsername, 'json');
+        let u = await env.KV.get('user:' + targetUsername, 'json');
+        if (!u) {
+          u = await env.KV.get('user:' + targetUsername.toLowerCase(), 'json');
+        }
         if (!u || !u.telegram?.bot?.token) return new Response('OK');
 
         const botToken = u.telegram.bot.token;
@@ -1456,36 +1482,105 @@ export default {
         }
         const directAppUrl = `${hostUrl}/?token=${appToken}`;
 
+        const isOnline = u.telegram?.enabled && !u.isSuspended;
+        const lastTime = u.status?.lastTime || 'در انتظار اجرا...';
+        const antiDelete = u.telegram?.bot?.antiDeleteEnabled !== false;
+        const antiEdit = u.telegram?.bot?.antiEditEnabled !== false;
+        const forwardTtl = u.telegram?.bot?.forwardTtlToBot !== false;
+
+        const mainKeyboard = {
+          inline_keyboard: [
+            [
+              { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl } }
+            ],
+            [
+              { text: '📊 استعلام وضعیت زنده', callback_data: 'bot_status' },
+              { text: '🔄 روشن / خاموش سلف', callback_data: 'bot_toggle' }
+            ],
+            [
+              { text: '🧪 تست ارسال گزارش (Anti-Delete/Edit)', callback_data: 'bot_test' }
+            ],
+            [
+              { text: '🌐 باز کردن پنل در مرورگر', url: directAppUrl }
+            ]
+          ]
+        };
+
         // پاسخ به پیام‌های متنی
         if (update.message) {
           const msg = update.message;
           const chatId = msg.chat.id;
+          const text = (msg.text || '').trim();
 
-          // ذخیره قطعی شناسه عددی چت کاربر جهت دریافت اعلان‌ها و رسانه‌های Anti-TTL
+          // ذخیره قطعی شناسه عددی چت کاربر جهت دریافت اعلان‌ها و رسانه‌های Anti-TTL و ضد حذف/ویرایش
           if (String(u.telegram.bot.chatId) !== String(chatId)) {
             u.telegram.bot.chatId = String(chatId);
             await env.KV.put('user:' + targetUsername, JSON.stringify(u));
           }
 
-          const welcomeText = `⚡ <b>به ربات دستیار و کنترل پنل Arizo Self خوش آمدید!</b>\n\n` +
-            `👤 <b>حساب متصل:</b> <code>${targetUsername}</code>\n` +
-            `🛡️ <b>سیستم محافظت:</b> ضد حذف پیام، ضد ویرایش و نجات‌دهنده خودکار مدیا فعال است.\n\n` +
-            `از طریق دکمه شیشه‌ای زیر می‌توانید پنل گرافیکی را مستقیماً <b>داخل محیط تلگرام (Telegram Mini App)</b> باز کنید 👇`;
+          if (text === '/test') {
+            // ۱. پیام آزمایشی ضد حذف
+            const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n\n` +
+              `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
+              `🕒 <b>زمان ارسال پیام:</b> همین حالا\n\n` +
+              `📝 <b>متن پیام حذف شده:</b>\n` +
+              `<blockquote>این یک پیام آزمایشی برای بررسی دریافت پیام‌های پاک‌شده پیوی است. اتصال به ربات شما کاملاً فعال و پایدار است! ✅</blockquote>`;
 
-          const keyboard = {
-            inline_keyboard: [
-              [
-                { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl } }
-              ],
-              [
-                { text: '📊 وضعیت سلف‌بات', callback_data: 'bot_status' },
-                { text: '🔄 روشن / خاموش', callback_data: 'bot_toggle' }
-              ],
-              [
-                { text: '🌐 باز کردن در مرورگر', url: directAppUrl }
-              ]
-            ]
-          };
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML' })
+            });
+
+            // ۲. پیام آزمایشی ضد ویرایش
+            const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n\n` +
+              `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
+              `🕒 <b>زمان ویرایش:</b> همین حالا\n\n` +
+              `⏮️ <b>متن قبل از ویرایش:</b>\n` +
+              `<blockquote>سلام داداش، ساعت ۵ عصر می‌بینمت.</blockquote>\n\n` +
+              `⏭️ <b>متن جدید و ویرایش‌شده:</b>\n` +
+              `<blockquote>سلام، برنامه تغییر کرد، فردا ساعت ۸ صبح تماس می‌گیرم!</blockquote>`;
+
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML' })
+            });
+            return new Response('OK');
+          }
+
+          if (text === '/status') {
+            const statusMsg = `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
+              `🟢 <b>وضعیت اتصال:</b> ${isOnline ? 'فعال و آنلاین ✅' : 'متوقف شده ⏸️'}\n` +
+              `🕒 <b>آخرین ساعت فعال:</b> <code>${lastTime}</code>\n` +
+              `🗑️ <b>سیستم ضد حذف (Anti-Delete):</b> ${antiDelete ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+              `✏️ <b>سیستم ضد ویرایش (Anti-Edit):</b> ${antiEdit ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+              `📸 <b>ارسال مدیا زمان‌دار به ربات:</b> ${forwardTtl ? 'فعال 🟢' : 'ارسال به سیومسیج ⚪'}`;
+
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, text: statusMsg, parse_mode: 'HTML', reply_markup: mainKeyboard })
+            });
+            return new Response('OK');
+          }
+
+          // پیام استارت اصلی با جزئیات کامل و جامع
+          const welcomeText = `⚡ <b>ربات دستیار و لاگر هوشمند Arizo Self</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `👤 <b>حساب کاربری:</b> <code>${targetUsername}</code>\n` +
+            `📡 <b>وضعیت سلف‌بات:</b> ${isOnline ? '🟢 آنلاین و فعال' : '⏸️ متوقف شده'}\n` +
+            `🕒 <b>ساعت فعال سلف:</b> <code>${lastTime}</code>\n\n` +
+            `🛡️ <b>وضعیت سیستم‌های مانیتورینگ اختصاصی:</b>\n` +
+            `🗑️ <b>سطل زباله و ضد حذف:</b> ${antiDelete ? 'فعال 🟢 (ارسال مستقیم به این چت)' : 'غیرفعال ⚪'}\n` +
+            `✏️ <b>مانیتور و ضد ویرایش:</b> ${antiEdit ? 'فعال 🟢 (نمایش قبل و بعد)' : 'غیرفعال ⚪'}\n` +
+            `📸 <b>نجات‌دهنده مدیا تایمردار:</b> ${forwardTtl ? 'فعال 🟢 (ارسال مستقیم به ربات)' : 'ارسال به سیومسیج ⚪'}\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📌 <b>امکانات و نحوه عملکرد:</b>\n` +
+            `• در صورت حذف هرگونه پیام در چت‌های خصوصی، محتوای متنی یا رسانه آن فوراً به این چت ارسال می‌شود.\n` +
+            `• در صورت ویرایش متن در پیوی، متن قبل و بعد به صورت کاملاً تفکیک‌شده گزارش خواهد شد.\n` +
+            `• تصاویر و ویدیوهای محوشونده زمان‌دار (View-Once) بدون نابودی ذخیره و به اینجا ارسال می‌شوند.\n` +
+            `• از طریق دکمه زیر می‌توانید پنل گرافیکی را مستقیماً <b>داخل تلگرام (Mini App)</b> باز کنید 👇`;
 
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
@@ -1494,7 +1589,7 @@ export default {
               chat_id: chatId,
               text: welcomeText,
               parse_mode: 'HTML',
-              reply_markup: keyboard
+              reply_markup: mainKeyboard
             })
           });
         }
@@ -1506,14 +1601,12 @@ export default {
           const data = cb.data;
 
           if (data === 'bot_status') {
-            const isOnline = u.telegram?.enabled && !u.isSuspended;
-            const lastTime = u.status?.lastTime || 'در انتظار اجرا...';
             const statusMsg = `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
               `🟢 <b>وضعیت اتصال:</b> ${isOnline ? 'فعال و آنلاین ✅' : 'متوقف شده ⏸️'}\n` +
-              `🕒 <b>آخرین به‌روزرسانی:</b> ${lastTime}\n` +
-              `🗑️ <b>سیستم ضد حذف:</b> ${u.telegram?.bot?.antiDeleteEnabled !== false ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-              `✏️ <b>سیستم ضد ویرایش:</b> ${u.telegram?.bot?.antiEditEnabled !== false ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-              `📸 <b>ارسال مدیا به ربات:</b> ${u.telegram?.bot?.forwardTtlToBot !== false ? 'فعال 🟢' : 'غیرفعال ⚪'}`;
+              `🕒 <b>آخرین به‌روزرسانی ساعت:</b> <code>${lastTime}</code>\n` +
+              `🗑️ <b>سیستم ضد حذف (Anti-Delete):</b> ${antiDelete ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+              `✏️ <b>سیستم ضد ویرایش (Anti-Edit):</b> ${antiEdit ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+              `📸 <b>ارسال مدیا به ربات:</b> ${forwardTtl ? 'فعال 🟢' : 'ارسال به سیومسیج ⚪'}`;
 
             await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
               method: 'POST',
@@ -1530,7 +1623,7 @@ export default {
                 parse_mode: 'HTML',
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: '⚡ باز کردن پنل گرافیکی', web_app: { url: directAppUrl } }]
+                    [{ text: '⚡ باز کردن پنل گرافیکی (Mini App)', web_app: { url: directAppUrl } }]
                   ]
                 }
               })
@@ -1551,9 +1644,43 @@ export default {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: `🔄 <b>وضعیت سلف‌بات تغییر کرد:</b>\nسلف‌بات شما اکنون <b>${newState}</b> است.`,
+                text: `🔄 <b>وضعیت سلف‌بات تغییر کرد:</b>\nسلف‌بات حساب شما اکنون <b>${newState}</b> است.`,
                 parse_mode: 'HTML'
               })
+            });
+          } else if (data === 'bot_test') {
+            await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: 'در حال ارسال پیام‌های تستی...' })
+            });
+
+            // پیام آزمایشی ضد حذف
+            const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n\n` +
+              `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
+              `🕒 <b>زمان ارسال پیام:</b> همین حالا\n\n` +
+              `📝 <b>متن پیام حذف شده:</b>\n` +
+              `<blockquote>این یک پیام آزمایشی برای بررسی دریافت پیام‌های پاک‌شده پیوی است. اتصال به ربات شما کاملاً فعال و پایدار است! ✅</blockquote>`;
+
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML' })
+            });
+
+            // پیام آزمایشی ضد ویرایش
+            const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n\n` +
+              `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
+              `🕒 <b>زمان ویرایش:</b> همین حالا\n\n` +
+              `⏮️ <b>متن قبل از ویرایش:</b>\n` +
+              `<blockquote>سلام داداش، ساعت ۵ عصر می‌بینمت.</blockquote>\n\n` +
+              `⏭️ <b>متن جدید و ویرایش‌شده:</b>\n` +
+              `<blockquote>سلام، برنامه تغییر کرد، فردا ساعت ۸ صبح تماس می‌گیرم!</blockquote>`;
+
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML' })
             });
           }
         }
