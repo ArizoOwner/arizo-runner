@@ -1154,6 +1154,8 @@ export default {
         }
         if (b.bot.forwardTtlToBot !== undefined) {
           auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
+          auth.user.telegram.antiTtlEnabled = !!b.bot.forwardTtlToBot;
+          auth.user.antiTtlEnabled = !!b.bot.forwardTtlToBot;
         }
       }
 
