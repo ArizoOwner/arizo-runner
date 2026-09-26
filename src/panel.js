@@ -2642,9 +2642,6 @@ export function panelHTML(env) {
         <button id="studioTabMute" class="studio-tab-btn" onclick="switchStudioTab('mute')">
           <span>🔇</span> <span>فیلتر سکوت</span>
         </button>
-        <button id="studioTabAntittl" class="studio-tab-btn" onclick="switchStudioTab('antittl')">
-          <span>📸</span> <span>ضد خودتخریبی</span>
-        </button>
         <button id="studioTabAutomation" class="studio-tab-btn" onclick="switchStudioTab('automation')">
           <span>🌙</span> <span>حالت خواب</span>
         </button>
@@ -2800,30 +2797,7 @@ export function panelHTML(env) {
         </div>
       </div>
 
-      <!-- 📸 تب ۵: ضد خودتخریبی مدیا (Anti-TTL) -->
-      <div id="studioPaneAntittl" class="hidden">
-        <div class="toggle-row" style="margin-bottom:18px;">
-          <div>
-            <div class="toggle-label">ضد خودتخریبی مدیاهای زمان‌دار (Anti-TTL Saver)</div>
-            <div class="toggle-desc">ذخیره خودکار تصاویر و ویدیوهای تایمردار (یک‌بار مصرف) در پیام‌های ذخیره‌شده (Saved Messages)</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="antiTtlEnabledToggle">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div style="background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); border-radius:14px; padding:16px; margin-top:14px;">
-          <div style="font-size:0.88rem; font-weight:700; color:var(--accent-blue); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-            <span>🛡️</span> عملکرد نجات‌دهنده خودکار رسانه‌ها
-          </div>
-          <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.7; margin:0;">
-            به محض اینکه شخصی در گفت‌وگوی خصوصی عکسی با تایمر ۱ تا ۳۰ ثانیه‌ای یا View-Once ارسال کند، ربات در کسری از ثانیه نسخه کامل آن را دریافت کرده و به بخش <b>Saved Messages</b> حساب خودتان با ذکر نام فرستنده و مدت تایمر ارسال می‌کند تا هرگز از دست نرود.
-          </p>
-        </div>
-      </div>
-
-      <!-- 🌙 تب ۶: حالت خواب و اتوماسیون -->
+      <!-- 🌙 تب ۵: حالت خواب و اتوماسیون -->
       <div id="studioPaneAutomation" class="hidden">
         <div class="toggle-row" style="margin-bottom:18px;">
           <div>
@@ -2962,11 +2936,11 @@ export function panelHTML(env) {
           </label>
         </div>
 
-        <!-- سوییچ ۳: ارسال رسانه‌های خودتخریبی به ربات -->
+        <!-- سوییچ ۳: نجات رسانه‌های زمان‌دار (Anti-TTL) -->
         <div class="toggle-row" style="margin-bottom:18px;">
           <div>
-            <div class="toggle-label">📸 ارسال مدیاهای زمان‌دار به ربات تلگرام (بجای Saved Messages)</div>
-            <div class="toggle-desc">تصاویر و ویدیوهای تایمردار (Anti-TTL) مستقیماً به چت ربات تلگرام شما ارسال خواهند شد</div>
+            <div class="toggle-label">📸 نجات و ارسال رسانه‌های زمان‌دار به ربات (Anti-TTL)</div>
+            <div class="toggle-desc">تصاویر، فیلم‌ها و ویس‌های محوشونده (View-Once) مستقیماً به پیوی ربات اختصاصی شما ارسال می‌شوند</div>
           </div>
           <label class="switch">
             <input type="checkbox" id="botForwardTtlToggle" checked>
@@ -2988,7 +2962,7 @@ export function panelHTML(env) {
         <div class="studio-nav-center">
           <div class="studio-nav-counter">
             <span id="studioNavCurrentTitle" style="color:var(--text-main); font-weight:800; font-size:0.83rem;">🕒 ساعت و استایل</span>
-            <span style="opacity:0.6; font-size:0.75rem;"> (<span id="studioNavCurrentStep">۱</span> از ۷)</span>
+            <span style="opacity:0.6; font-size:0.75rem;"> (<span id="studioNavCurrentStep">۱</span> از ۶)</span>
           </div>
           <div class="studio-nav-dots" id="studioNavDots"></div>
         </div>
@@ -4134,7 +4108,6 @@ export function panelHTML(env) {
       { id: 'bio', btn: 'studioTabBio', pane: 'studioPaneBio', title: 'بیوگرافی زنده', icon: '📝' },
       { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk', title: 'منشی خودکار', icon: '🤖' },
       { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute', title: 'فیلتر سکوت', icon: '🔇' },
-      { id: 'antittl', btn: 'studioTabAntittl', pane: 'studioPaneAntittl', title: 'ضد خودتخریبی', icon: '📸' },
       { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation', title: 'حالت خواب', icon: '🌙' },
       { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot', title: 'ربات و لاگر', icon: '⚡' }
     ];
@@ -4398,7 +4371,7 @@ export function panelHTML(env) {
           afkCooldown: document.getElementById('afkCooldownSelect') ? parseInt(document.getElementById('afkCooldownSelect').value, 10) : 10,
           muteEnabled: hasMutedUsers ? true : muteToggleChecked,
           mutedUsers: rawMutedUsers,
-          antiTtlEnabled: document.getElementById('antiTtlEnabledToggle') ? document.getElementById('antiTtlEnabledToggle').checked : false,
+          antiTtlEnabled: document.getElementById('botForwardTtlToggle') ? document.getElementById('botForwardTtlToggle').checked : true,
           bot: {
             token: (document.getElementById('botTokenInput') && document.getElementById('botTokenInput').value.trim()) || (window.currentBotToken || ''),
             antiDeleteEnabled: document.getElementById('botAntiDeleteToggle') ? document.getElementById('botAntiDeleteToggle').checked : true,
@@ -4505,7 +4478,7 @@ export function panelHTML(env) {
     };
 
     // ذخیره آنی و خودکار تغییر وضعیت سوئیچ‌های استودیو (نجات مدیا، منشی، سکوت، بیوگرافی، خواب و ربات)
-    ['antiTtlEnabledToggle', 'afkEnabledToggle', 'muteEnabledToggle', 'bioEnabledToggle', 'sleepEnabledToggle', 'toggle12h', 'botAntiDeleteToggle', 'botAntiEditToggle', 'botForwardTtlToggle'].forEach(function(toggleId) {
+    ['afkEnabledToggle', 'muteEnabledToggle', 'bioEnabledToggle', 'sleepEnabledToggle', 'toggle12h', 'botAntiDeleteToggle', 'botAntiEditToggle', 'botForwardTtlToggle'].forEach(function(toggleId) {
       var el = document.getElementById(toggleId);
       if (el) {
         el.addEventListener('change', function() {
@@ -4709,9 +4682,6 @@ export function panelHTML(env) {
             var hasSavedMuted = Array.isArray(data.mutedUsers) ? (data.mutedUsers.length > 0) : Boolean(data.mutedUsers && data.mutedUsers.trim());
             setSafeChecked('muteEnabledToggle', !!data.muteEnabled || hasSavedMuted);
             setSafeValue('mutedUsersInput', Array.isArray(data.mutedUsers) ? data.mutedUsers.join(', ') : (data.mutedUsers || ''));
-
-            // 📸 بارگذاری ضد خودتخریبی مدیا (Anti-TTL)
-            setSafeChecked('antiTtlEnabledToggle', !!data.antiTtlEnabled);
 
             // 🤖 بارگذاری ربات تلگرام اختصاصی و تنظیمات لاگر
             if (data.bot) {
