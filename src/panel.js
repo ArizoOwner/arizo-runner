@@ -2187,138 +2187,167 @@ export function panelHTML(env) {
         flex-direction: column;
         gap: 10px;
       }
-    /* ✨ استایل‌های اختصاصی و لوکس پاپ‌آپ معرفی امکانات پلتفرم Arizo Self */
+    /* ==========================================================================
+       💎 Arizo Self — Executive Feature Introduction Modal (SaaS Grade)
+       ========================================================================== */
     .features-modal-container {
-      max-width: 820px;
-      padding: 32px 28px;
-      background: var(--modal-bg);
-      border: 1px solid var(--border-subtle);
-      border-top: 1px solid var(--border-specular);
-      border-radius: 26px;
-      box-shadow: 0 35px 90px rgba(0, 0, 0, 0.85), 0 0 40px rgba(168, 85, 247, 0.18);
+      max-width: 860px;
+      padding: 34px 32px;
+      background: #090d1a;
+      background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.14) 0%, rgba(9, 13, 26, 0.98) 75%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 24px;
+      box-shadow: 0 30px 100px -10px rgba(0, 0, 0, 0.9), 0 0 60px -15px rgba(139, 92, 246, 0.25);
       position: relative;
       overflow-y: auto;
       max-height: 90vh;
+      color: #e2e8f0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
     }
-    .features-modal-container::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
-      background: var(--gradient-brand);
-      box-shadow: 0 0 16px rgba(168, 85, 247, 0.7);
+    .features-modal-container::-webkit-scrollbar {
+      width: 6px;
     }
-    .features-hero-badge {
+    .features-modal-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+    }
+    .features-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+    }
+    .features-header-meta {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      background: var(--accent-purple-bg);
-      border: 1px solid var(--accent-purple-border);
-      color: var(--accent-purple);
-      padding: 5px 14px;
+      gap: 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: #a78bfa;
+      background: rgba(167, 139, 250, 0.1);
+      border: 1px solid rgba(167, 139, 250, 0.25);
+      padding: 4px 12px;
       border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 800;
       margin-bottom: 10px;
-      letter-spacing: -0.2px;
-      box-shadow: 0 4px 14px rgba(168, 85, 247, 0.15);
     }
-    .features-title {
-      font-size: 1.4rem;
-      font-weight: 900;
-      letter-spacing: -0.5px;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      line-height: 1.3;
+    .features-header-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      color: #ffffff;
+      line-height: 1.35;
       margin-bottom: 8px;
-      flex-wrap: wrap;
     }
-    .features-subtitle {
+    .features-header-desc {
       font-size: 0.86rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-      margin-bottom: 20px;
+      color: #94a3b8;
+      line-height: 1.7;
+      max-width: 720px;
     }
-    .features-pillars-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 22px;
-    }
-    .pillar-card {
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 14px 12px;
+    .features-metrics-strip {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
-      text-align: center;
       align-items: center;
-      transition: transform 0.25s var(--spring-physics), border-color 0.25s ease, background 0.25s ease;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+      gap: 16px;
     }
-    .pillar-card:hover {
-      transform: translateY(-3px);
-      background: rgba(255, 255, 255, 0.06);
-      border-color: var(--border-specular);
-    }
-    .pillar-icon {
-      font-size: 1.4rem;
-      margin-bottom: 2px;
-    }
-    .pillar-title {
-      font-size: 0.82rem;
-      font-weight: 900;
-      color: var(--text-main);
-    }
-    .pillar-desc {
-      font-size: 0.73rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-bottom: 22px;
-    }
-    .feature-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-subtle);
-      border-top: 1px solid var(--border-specular);
-      border-radius: 18px;
-      padding: 16px;
+    .metric-item {
       display: flex;
-      gap: 14px;
-      align-items: flex-start;
-      position: relative;
-      transition: transform 0.25s var(--spring-physics), border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
     }
-    .feature-card:hover {
-      transform: translateY(-3px);
-      background: rgba(255, 255, 255, 0.055);
-      border-color: var(--border-focus);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-    }
-    .feature-icon-box {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
+    .metric-icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      color: #c4b5fd;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.35rem;
       flex-shrink: 0;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
     }
-    .feature-content {
+    .metric-text-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .metric-val {
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #f1f5f9;
+      letter-spacing: -0.2px;
+    }
+    .metric-label {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    .metric-divider {
+      width: 1px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+    .features-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .feature-card-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .feature-card-item:hover {
+      background: rgba(255, 255, 255, 0.045);
+      border-color: rgba(168, 85, 247, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .feature-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #a78bfa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+    }
+    .feature-card-item:hover .feature-item-icon {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #c084fc;
+      transform: scale(1.05);
+    }
+    .feature-item-body {
       flex: 1;
       min-width: 0;
     }
-    .feature-header-row {
+    .feature-item-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -2326,82 +2355,132 @@ export function panelHTML(env) {
       margin-bottom: 6px;
       flex-wrap: wrap;
     }
-    .feature-name {
+    .feature-item-title {
       font-size: 0.92rem;
-      font-weight: 800;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.2px;
     }
-    .feature-tag {
+    .feature-item-badge {
       font-size: 0.68rem;
-      font-weight: 800;
+      font-weight: 700;
       padding: 2px 8px;
       border-radius: 6px;
-      letter-spacing: -0.2px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
       white-space: nowrap;
     }
-    .feature-desc {
-      font-size: 0.77rem;
-      color: var(--text-muted);
-      line-height: 1.55;
+    .feature-item-desc {
+      font-size: 0.79rem;
+      color: #94a3b8;
+      line-height: 1.65;
     }
-    .features-modal-footer {
+    .features-modal-action-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding-top: 18px;
-      border-top: 1px solid var(--border-subtle);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       gap: 16px;
       flex-wrap: wrap;
     }
-    .features-checkbox-label {
+    .features-pref-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
+      gap: 9px;
+      font-size: 0.82rem;
+      color: #94a3b8;
       cursor: pointer;
       user-select: none;
+      transition: color 0.2s ease;
     }
-    .features-checkbox-label input[type="checkbox"] {
+    .features-pref-toggle:hover {
+      color: #e2e8f0;
+    }
+    .features-pref-toggle input[type="checkbox"] {
       width: 17px;
       height: 17px;
-      accent-color: var(--primary);
+      accent-color: #8b5cf6;
       cursor: pointer;
     }
-    .features-footer-btns {
+    .features-action-buttons {
       display: flex;
       align-items: center;
       gap: 10px;
     }
+    .btn-feature-dismiss {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-feature-dismiss:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+    .btn-feature-start {
+      background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(124, 58, 237, 0.35);
+      transition: all 0.22s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-feature-start:hover {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      box-shadow: 0 6px 24px rgba(124, 58, 237, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-feature-start:active {
+      transform: scale(0.98);
+    }
 
     @media (max-width: 768px) {
       .features-modal-container {
-        padding: 22px 18px;
+        padding: 24px 18px;
         border-radius: 20px;
       }
-      .features-title {
-        font-size: 1.18rem;
+      .features-header-title {
+        font-size: 1.2rem;
       }
-      .features-pillars-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
+      .features-metrics-strip {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 16px;
       }
-      .features-grid {
+      .metric-divider {
+        display: none;
+      }
+      .features-cards-grid {
         grid-template-columns: 1fr;
         gap: 10px;
       }
-      .features-modal-footer {
+      .features-modal-action-bar {
         flex-direction: column;
         align-items: stretch;
       }
-      .features-footer-btns {
+      .features-action-buttons {
         flex-direction: column;
         width: 100%;
       }
-      .features-footer-btns button {
+      .features-action-buttons button {
         width: 100%;
         justify-content: center;
       }
@@ -2441,10 +2520,10 @@ export function panelHTML(env) {
           <span class="theme-text" id="themeText">حالت روز</span>
         </button>
 
-        <!-- ✨ دکمه معرفی قابلیت‌های پلتفرم -->
-        <button class="btn-theme-toggle" id="featureTourNavBtn" onclick="openFeaturesModal()" title="معرفی امکانات و راهنمای Arizo Self" style="border-color: var(--accent-purple-border); color: var(--accent-purple); background: var(--accent-purple-bg);">
-          <span style="font-size: 1rem;">✨</span>
-          <span class="theme-text">امکانات پلتفرم</span>
+        <!-- 💡 دکمه رسمی راهنمای امکانات سامانه -->
+        <button class="btn-theme-toggle" id="featureTourNavBtn" onclick="openFeaturesModal()" title="راهنمای جامع امکانات و سرویس‌های سامانه Arizo Self" style="border-color: rgba(168, 85, 247, 0.3); color: #c4b5fd; background: rgba(168, 85, 247, 0.1);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span class="theme-text" style="font-weight:700;">راهنمای امکانات</span>
         </button>
 
         <!-- 👑 دکمه طلایی دسترسی به پنل مدیریت (فقط برای ادمین‌ها پس از لاگین نمایان می‌شود) -->
@@ -3249,158 +3328,172 @@ export function panelHTML(env) {
 
   </div>
 
-  <!-- ✨ مودال معرفی جامع و لوکس قابلیت‌های پلتفرم Arizo Self -->
+  <!-- 💎 مودال رسمی و حرفه‌ای راهنما و معرفی امکانات سامانه Arizo Self -->
   <div id="featuresIntroModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeFeaturesModal();">
     <div class="modal-container features-modal-container" onclick="event.stopPropagation();">
       
-      <!-- هدر شیک و دکمه بستن -->
-      <div class="modal-head" style="align-items: flex-start; margin-bottom: 16px;">
+      <!-- سربرگ رسمی و عنوان سامانه -->
+      <div class="features-modal-header">
         <div>
-          <div class="features-hero-badge">
-            <span>✨</span>
-            <span>نسل جدید سلف‌بات هوشمند تلگرام | نسخه ۳.۵ پرو</span>
+          <div class="features-header-meta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>راهنمای خدمات و قابلیت‌های سامانه | نسخه رسمی ۳.۵ PRO</span>
           </div>
-          <div class="features-title">
-            <span class="brand-title-gradient">Arizo Self Studio</span>
-            <span style="font-size: 1.1rem; color: var(--accent-indigo);">| امکانات و قابلیت‌ها</span>
+          <div class="features-header-title">
+            <span>استودیوی هوشمند ابری Arizo Self</span>
           </div>
-          <div class="features-subtitle">
-            خوش آمدید! آریزو سلف یک پلتفرم ابری تمام‌عیار و همیشه آنلاین (۲۴/۷) برای اکانت تلگرام شماست؛ بدون نیاز به روشن بودن گوشی یا لپ‌تاپ و با سرعت پردازش زیر ۱۰۰ میلی‌ثانیه.
+          <div class="features-header-desc">
+            سامانه Arizo Self یک زیرساخت رایانش ابری متمرکز جهت خودکارسازی، ارتقای نمایه و پایش هوشمند حساب‌های کاربری تلگرام است. این پلتفرم به‌صورت ۲۴ ساعته بر بستر سرورلس بین‌المللی مستقر بوده و بدون وابستگی به سخت‌افزار محلی، بالاترین پایداری و امنیت را ارائه می‌نماید.
           </div>
         </div>
-        <button class="btn-close" onclick="closeFeaturesModal()" title="بستن پنجره">&times;</button>
+        <button class="btn-close" onclick="closeFeaturesModal()" title="بستن پنجره" style="margin-top:-2px;">&times;</button>
       </div>
 
-      <!-- ۳ ستون کلیدی زیرساخت و تمایز -->
-      <div class="features-pillars-grid">
-        <div class="pillar-card">
-          <div class="pillar-icon">⚡</div>
-          <div class="pillar-title">سرعت Sub-100ms</div>
-          <div class="pillar-desc">واکنش بلادرنگ به رخدادها، حذف پیام‌ها و رسانه‌های زمان‌دار</div>
+      <!-- نوار شاخص‌های کلیدی زیرساخت ابری -->
+      <div class="features-metrics-strip">
+        <div class="metric-item">
+          <div class="metric-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </div>
+          <div class="metric-text-wrap">
+            <div class="metric-val">تاخیر زیر ۱۰۰ میلی‌ثانیه</div>
+            <div class="metric-label">پاسخ‌دهی آنی و پردازش بلادرنگ وقایع</div>
+          </div>
         </div>
-        <div class="pillar-card">
-          <div class="pillar-icon">☁️</div>
-          <div class="pillar-title">۱۰۰٪ ابری و پایدار</div>
-          <div class="pillar-desc">اجرای ۲۴ ساعته بر بستر Cloudflare Workers و GitHub بدون مصرف باتری</div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <div class="metric-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+          </div>
+          <div class="metric-text-wrap">
+            <div class="metric-val">پایداری ۲۴ ساعته (۱۰۰٪ ابری)</div>
+            <div class="metric-label">فعالیت پیوسته بر بستر شبکه سرورلس</div>
+          </div>
         </div>
-        <div class="pillar-card">
-          <div class="pillar-icon">🔒</div>
-          <div class="pillar-title">امنیت و حریم خصوصی</div>
-          <div class="pillar-desc">ایزولاسیون کامل دیتابیس با رمزنگاری KV و عدم دسترسی شخص ثالث</div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <div class="metric-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <div class="metric-text-wrap">
+            <div class="metric-val">ایزولاسیون کامل نشست‌ها</div>
+            <div class="metric-label">امنیت پایگاه داده با استاندارد رمزنگاری KV</div>
+          </div>
         </div>
       </div>
 
-      <!-- شبکه کارت‌های تفکیک‌شده قابلیت‌ها -->
-      <div class="features-grid">
+      <!-- شبکه کارت‌های تفکیک‌شده قابلیت‌های سامانه -->
+      <div class="features-cards-grid">
         <!-- ۱. ساعت زنده -->
-        <div class="feature-card">
-          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%); border-color: rgba(168, 85, 247, 0.4);">
-            🕒
+        <div class="feature-card-item">
+          <div class="feature-item-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           </div>
-          <div class="feature-content">
-            <div class="feature-header-row">
-              <div class="feature-name">ساعت زنده روی نام</div>
-              <span class="feature-tag" style="background: var(--accent-purple-bg); color: var(--accent-purple); border: 1px solid var(--accent-purple-border);">۳۰+ فونت لوکس</span>
+          <div class="feature-item-body">
+            <div class="feature-item-top">
+              <div class="feature-item-title">سیستم همگام‌سازی زمان واقعی در نام کاربری</div>
+              <span class="feature-item-badge">۳۰+ قلم استاندارد</span>
             </div>
-            <div class="feature-desc">
-              نمایش لحظه‌ای ساعت بر روی نام تلگرام با بیش از ۳۰ فونت فارسی و لاتین، پشتیبانی از ایموجی‌های زنده، جداکننده‌ها و به‌روزرسانی اتوماتیک دقیقه به دقیقه.
+            <div class="feature-item-desc">
+              نمایش خودکار و دقیقه به دقیقه زمان رسمی بر روی نام حساب تلگرام با پشتیبانی از خطوط متنوع فارسی و لاتین، جداکننده‌های نگارشی و نشانگرهای پویا بدون بروز اختلال.
             </div>
           </div>
         </div>
 
-        <!-- ۲. بیوگرافی هوشمند -->
-        <div class="feature-card">
-          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%); border-color: rgba(56, 189, 248, 0.4);">
-            📝
+        <!-- ۲. بیوگرافی پویا -->
+        <div class="feature-card-item">
+          <div class="feature-item-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           </div>
-          <div class="feature-content">
-            <div class="feature-header-row">
-              <div class="feature-name">بیوگرافی زنده و پویا</div>
-              <span class="feature-tag" style="background: var(--accent-blue-bg); color: var(--accent-blue); border: 1px solid var(--accent-blue-border);">تقویم + باتری</span>
+          <div class="feature-item-body">
+            <div class="feature-item-top">
+              <div class="feature-item-title">سامانه به‌روزرسانی پویای نمایه (Dynamic Bio)</div>
+              <span class="feature-item-badge">تقویم رسمی + وضعیت</span>
             </div>
-            <div class="feature-desc">
-              درج تاریخ شمسی و میلادی زنده، نمایش درصد باتری و نقل‌قول‌های الهام‌بخش در بیو با فرمت‌های سفارشی و بدون نیاز به دستکاری مداوم.
+            <div class="feature-item-desc">
+              به‌روزرسانی خودکار بیوگرافی حساب کاربری متناسب با تقویم رسمی خورشیدی و میلادی، درصد شارژ دستگاه و متن‌های برگزیده متغیر بدون نیاز به تنظیم مداوم.
             </div>
           </div>
         </div>
 
         <!-- ۳. منشی و پاسخگوی AFK -->
-        <div class="feature-card">
-          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.25) 100%); border-color: rgba(245, 158, 11, 0.4);">
-            💤
+        <div class="feature-card-item">
+          <div class="feature-item-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           </div>
-          <div class="feature-content">
-            <div class="feature-header-row">
-              <div class="feature-name">منشی هوشمند عدم حضور (AFK)</div>
-              <span class="feature-tag" style="background: var(--accent-amber-bg); color: var(--accent-amber); border: 1px solid var(--accent-amber-border);">تایمر غیبت</span>
+          <div class="feature-item-body">
+            <div class="feature-item-top">
+              <div class="feature-item-title">دستیار پاسخگوی هوشمند در غیاب کاربر (AFK)</div>
+              <span class="feature-item-badge">محاسبه دقیق مدت غیبت</span>
             </div>
-            <div class="feature-desc">
-              پاسخگویی خودکار در زمان استراحت یا مشغله با اعلام زمان دقیق غیبت شما، متن کاملاً سفارشی و جلوگیری هوشمند از ارسال پیام تکراری و اسپم.
+            <div class="feature-item-desc">
+              پاسخ‌دهی خودکار به گفت‌وگوهای خصوصی در زمان عدم حضور، همراه با محاسبه و اعلام دقیق مدت غیبت و فیلتر پیشرفته جلوگیری از ارسال پیام‌های تکراری.
             </div>
           </div>
         </div>
 
         <!-- ۴. ربات دستیار و لاگر تلگرام -->
-        <div class="feature-card">
-          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%); border-color: rgba(16, 185, 129, 0.4);">
-            🤖
+        <div class="feature-card-item">
+          <div class="feature-item-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           </div>
-          <div class="feature-content">
-            <div class="feature-header-row">
-              <div class="feature-name">ربات دستیار و لاگر تلگرام</div>
-              <span class="feature-tag" style="background: var(--accent-green-bg); color: var(--accent-green); border: 1px solid var(--accent-green-border);">Anti-Delete & Edit</span>
+          <div class="feature-item-body">
+            <div class="feature-item-top">
+              <div class="feature-item-title">سامانه پایش و ثبت رخدادهای حساب (Event Logger)</div>
+              <span class="feature-item-badge">ثبت حذف و ویرایش</span>
             </div>
-            <div class="feature-desc">
-              ارسال فوری تمام پیام‌های حذف‌شده و ویرایش‌شده مخاطبان به ربات اختصاصی شما به همراه دسترسی آسان به کنترل پنل وب از داخل تلگرام با Mini App.
+            <div class="feature-item-desc">
+              انتقال آنی پیام‌های حذف‌شده (Anti-Delete) به همراه رسانه‌ها و لاگ متن ویرایش‌شده پیام‌های مخاطبان به چت خصوصی ربات تلگرام به همراه Mini App وب.
             </div>
           </div>
         </div>
 
         <!-- ۵. نجات رسانه‌های خودتخریبی Anti-TTL -->
-        <div class="feature-card">
-          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(244, 63, 94, 0.25) 0%, rgba(225, 29, 72, 0.25) 100%); border-color: rgba(244, 63, 94, 0.4);">
-            📸
+        <div class="feature-card-item">
+          <div class="feature-item-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
           </div>
-          <div class="feature-content">
-            <div class="feature-header-row">
-              <div class="feature-name">نجات رسانه‌های زمان‌دار (Anti-TTL)</div>
-              <span class="feature-tag" style="background: var(--accent-rose-bg); color: var(--accent-rose); border: 1px solid var(--accent-rose-border);">View-Once</span>
+          <div class="feature-item-body">
+            <div class="feature-item-top">
+              <div class="feature-item-title">سامانه حفاظت و نگهداری رسانه‌های زمان‌دار (Anti-TTL)</div>
+              <span class="feature-item-badge">رسانه‌های View-Once</span>
             </div>
-            <div class="feature-desc">
-              عکس‌ها، ویدیوها و وویس‌های تایمردار یا یکبارمصرف ارسال‌شده در پیوی را به محض دریافت و قبل از سوختن، مستقیماً با کیفیت اصلی به ربات شما می‌فرستد.
+            <div class="feature-item-desc">
+              دریافت و ذخیره‌سازی فوری تصاویر، ویدیوها و فایل‌های صوتی خودتخریبی و انتقال بدون ردپای آن‌ها با کیفیت اصلی به محیط امن ربات پیش از انقضا.
             </div>
           </div>
         </div>
 
-        <!-- ۶. مدیریت سکوت و اتومیشن -->
-        <div class="feature-card">
-          <div class="feature-icon-box" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%); border-color: rgba(99, 102, 241, 0.4);">
-            🔇
+        <!-- ۶. مدیریت سکوت و فیلتر پیام‌ها -->
+        <div class="feature-card-item">
+          <div class="feature-item-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
           </div>
-          <div class="feature-content">
-            <div class="feature-header-row">
-              <div class="feature-name">حالت سکوت و کنترل مزاحمین</div>
-              <span class="feature-tag" style="background: var(--accent-indigo-bg); color: var(--accent-indigo); border: 1px solid var(--accent-indigo-border);">Mute Manager</span>
+          <div class="feature-item-body">
+            <div class="feature-item-top">
+              <div class="feature-item-title">ماژول مدیریت و پالایش پیام‌های دریافتی (Mute)</div>
+              <span class="feature-item-badge">پالایش گفت‌وگوها</span>
             </div>
-            <div class="feature-desc">
-              بی‌صدا کردن و فیلتر هوشمند پیام‌های کاربران مزاحم در چت‌ها و گروه‌ها بر اساس آیدی عددی یا یوزرنیم، بدون نیاز به بلاک کردن اکانت آنها.
+            <div class="feature-item-desc">
+              پالایش و کنترل هوشمند پیام‌های کاربران تعیین‌شده در گروه‌ها و گفت‌وگوها بر پایه شناسه یا نام کاربری، جهت سازماندهی محیط کاربری بدون مسدودسازی مستقیم.
             </div>
           </div>
         </div>
       </div>
 
-      <!-- فوتر پاپ‌آپ همراه با کنترل نمایش و دکمه شروع -->
-      <div class="features-modal-footer">
-        <label class="features-checkbox-label">
+      <!-- نوار پایانی همراه با تنظیمات نمایش و دکمه ورود -->
+      <div class="features-modal-action-bar">
+        <label class="features-pref-toggle">
           <input type="checkbox" id="dontShowFeaturesAgain">
-          <span>متوجه شدم، دیگر در ورودهای بعدی خودکار باز نشود</span>
+          <span>عدم نمایش خودکار این راهنما در مراجعات بعدی</span>
         </label>
-        <div class="features-footer-btns">
-          <button class="btn btn-secondary" onclick="closeFeaturesModal()" style="padding: 10px 18px; font-size: 0.85rem;">
-            <span>بستن</span>
+        <div class="features-action-buttons">
+          <button class="btn-feature-dismiss" onclick="closeFeaturesModal()">
+            <span>بستن پنجره</span>
           </button>
-          <button class="btn btn-primary" onclick="closeFeaturesModal();" style="padding: 10px 24px; font-size: 0.9rem; font-weight: 800; background: var(--gradient-brand);">
-            <span>🚀 شروع و ورود به پلتفرم</span>
+          <button class="btn-feature-start" onclick="closeFeaturesModal()">
+            <span>ورود به استودیو و پنل کاربری</span>
+            <span style="font-size: 1.1rem; line-height: 1;">←</span>
           </button>
         </div>
       </div>
