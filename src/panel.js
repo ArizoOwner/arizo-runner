@@ -2921,8 +2921,20 @@ export function panelHTML(env) {
               🎛️ <b>ورود به پنل (Mini App):</b> دکمه منو فعال شد
             </div>
           </div>
+          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 10px 14px; margin-top: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.1rem;">🔒</span>
+              <div>
+                <div style="font-size:0.82rem; font-weight:700; color:var(--text-main);">امنیت انحصاری (مخصوص شما):</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);" id="botLockStatusText">ربات منحصراً به شناسه تلگرام شما پاسخ می‌دهد و برای بقیه مسدود است.</div>
+              </div>
+            </div>
+            <div id="botOwnerIdDisplay" style="font-family:var(--font-mono); font-size:0.8rem; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:6px; color:var(--accent-indigo); font-weight:700;">
+              🔒 آماده قفل با اولین /start
+            </div>
+          </div>
           <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
-            💡 <b>نکته:</b> پس از اتصال، یک‌بار وارد ربات تلگرام خود شده و دستور <code>/start</code> را بفرستید تا پنل گرافیکی را داخل تلگرام باز کنید و ربات آماده ارسال گزارش‌ها شود.
+            💡 <b>نکته:</b> پس از اتصال، یک‌بار وارد ربات تلگرام خود شده و دستور <code>/start</code> را بفرستید تا ربات منحصراً به اکانت شما قفل شده و پنل گرافیکی داخل تلگرام فعال شود.
           </div>
         </div>
 
@@ -4724,6 +4736,20 @@ export function panelHTML(env) {
                   userLink.href = tgLink;
                 }
                 if (directBtn) directBtn.href = tgLink;
+
+                var lockEl = document.getElementById('botOwnerIdDisplay');
+                var lockStatusEl = document.getElementById('botLockStatusText');
+                var ownerId = data.bot.ownerId || data.userId || data.bot.chatId;
+                if (lockEl) {
+                  if (ownerId) {
+                    lockEl.textContent = '🔒 قفل روی شناسه: ' + ownerId;
+                    lockEl.style.color = 'var(--accent-green)';
+                    if (lockStatusEl) lockStatusEl.textContent = 'ربات به صورت ۱۰۰٪ انحصاری فقط به این شناسه عددی پاسخ می‌دهد و برای سایرین مسدود است.';
+                  } else {
+                    lockEl.textContent = '🔒 آماده قفل خودکار با اولین /start';
+                    lockEl.style.color = 'var(--accent-indigo)';
+                  }
+                }
               }
             }
           }
