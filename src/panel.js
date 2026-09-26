@@ -1975,7 +1975,6 @@ export function panelHTML(env) {
     #studioPaneBio:not(.hidden),
     #studioPaneAfk:not(.hidden),
     #studioPaneMute:not(.hidden),
-    #studioPaneAntittl:not(.hidden),
     #studioPaneAutomation:not(.hidden),
     #studioPaneBot:not(.hidden),
     #adminTabContentStats:not(.hidden),
