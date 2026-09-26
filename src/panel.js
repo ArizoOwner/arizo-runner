@@ -10,12 +10,25 @@ export function panelHTML(env) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    // ⚡ Anti-FOUC Theme Initializer
+    // ⚡ Anti-FOUC Theme Initializer & Telegram WebApp SSO
     (function() {
       try {
         var savedTheme = localStorage.getItem('arizo_theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var ssoToken = urlParams.get('token');
+        if (ssoToken) {
+          localStorage.setItem('arizo_token', ssoToken);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+        }
       } catch(e) {}
     })();
   </script>
@@ -2404,6 +2417,9 @@ export function panelHTML(env) {
         <button id="studioTabAutomation" class="studio-tab-btn" onclick="switchStudioTab('automation')">
           <span>🌙</span> <span>حالت خواب</span>
         </button>
+        <button id="studioTabBot" class="studio-tab-btn" onclick="switchStudioTab('bot')">
+          <span>🤖</span> <span>ربات اختصاصی و لاگر</span>
+        </button>
       </div>
 
       <!-- 🕒 تب ۱: فونت و استایل ساعت -->
@@ -2615,6 +2631,101 @@ export function panelHTML(env) {
         <div class="form-group">
           <label class="form-label">متن نام خانوادگی در طول ساعات خواب</label>
           <input type="text" id="sleepTextInput" class="input-field" value="😴 Sleep" placeholder="مثلاً: 😴 Sleep یا 🌙 خوابیدم" maxlength="30" oninput="updateLiveClock()">
+        </div>
+      </div>
+
+      <!-- 🤖 تب ۷: ربات اختصاصی و لاگر پیشرفته تلگرام (Telegram Mini App & Loggers) -->
+      <div id="studioPaneBot" class="hidden">
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%); border: 1px solid var(--border-specular); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+          <div style="font-size: 0.98rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+            <span>🤖</span> <span>اتصال ربات دستیار اختصاصی تلگرام (BotFather API)</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.7;">
+            با اتصال ربات تلگرامی که در <b>@BotFather</b> می‌سازید، می‌توانید کنترل پنل سایت را مستقیماً داخل محیط تلگرام (Telegram Mini App) باز کنید و گزارش پیام‌های حذف شده، پیام‌های ویرایش شده و رسانه‌های زمان‌دار پیوی را در ربات دریافت کنید.
+          </div>
+        </div>
+
+        <!-- کارت وارد کردن توکن ربات -->
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>توکن ربات تلگرام (API Token از BotFather@)</span>
+            <a href="https://t.me/BotFather" target="_blank" style="color:var(--accent-blue); font-size:0.75rem; text-decoration:none; font-weight:700;">
+              ➕ دریافت توکن از @BotFather
+            </a>
+          </label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" id="botTokenInput" class="input-field mono" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ..." dir="ltr" style="flex:2; min-width:240px;">
+            <button class="btn btn-primary" id="btnVerifyBot" onclick="doVerifyBotToken()" style="flex:1; min-width:180px;">
+              <span>⚡ اتصال و فعال‌سازی وب‌هوک</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- کارت نمایش وضعیت ربات متصل -->
+        <div id="botInfoCard" class="hidden" style="background: var(--bg-surface-elevated); border: 1px solid var(--accent-green-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                🤖
+              </div>
+              <div>
+                <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);" id="botNameDisplay">ربات تلگرام</div>
+                <a id="botUsernameLink" href="#" target="_blank" style="font-size: 0.8rem; color: var(--accent-green); text-decoration: none; font-weight: 700;">@bot</a>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <a id="botDirectBtn" href="#" target="_blank" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-color: var(--accent-green-border); color: var(--accent-green);">
+                <span>🚀 باز کردن ربات در تلگرام</span>
+              </a>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.78rem;">
+            <div style="background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+              🟢 <b>وضعیت وب‌هوک:</b> متصل و فعال
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+              🎛️ <b>ورود به پنل (Mini App):</b> دکمه منو فعال شد
+            </div>
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
+            💡 <b>نکته:</b> پس از اتصال، یک‌بار وارد ربات تلگرام خود شده و دستور <code>/start</code> را بفرستید تا پنل گرافیکی را داخل تلگرام باز کنید و ربات آماده ارسال گزارش‌ها شود.
+          </div>
+        </div>
+
+        <!-- سوییچ ۱: ضد حذف پیام (Anti-Delete) -->
+        <div class="toggle-row" style="margin-bottom:14px;">
+          <div>
+            <div class="toggle-label">🗑️ سطل زباله و ضد حذف پیام‌های پیوی (Anti-Delete)</div>
+            <div class="toggle-desc">اگر شخصی در پیوی پیامی را پاک کند، متن یا رسانه ذخیره شده فوراً به ربات اختصاصی شما ارسال می‌شود</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="botAntiDeleteToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- سوییچ ۲: ضد ویرایش پیام (Anti-Edit) -->
+        <div class="toggle-row" style="margin-bottom:14px;">
+          <div>
+            <div class="toggle-label">✏️ مانیتور و ضد ویرایش پیام‌های پیوی (Anti-Edit)</div>
+            <div class="toggle-desc">اگر شخصی پیامی را تغییر دهد، متن قبل از ویرایش و متن جدید در ربات تلگرام به شما نمایش داده می‌شود</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="botAntiEditToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- سوییچ ۳: ارسال رسانه‌های خودتخریبی به ربات -->
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">📸 ارسال مدیاهای زمان‌دار به ربات تلگرام (بجای Saved Messages)</div>
+            <div class="toggle-desc">تصاویر و ویدیوهای تایمردار (Anti-TTL) مستقیماً به چت ربات تلگرام شما ارسال خواهند شد</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="botForwardTtlToggle" checked>
+            <span class="slider"></span>
+          </label>
         </div>
       </div>
 
@@ -3752,7 +3863,8 @@ export function panelHTML(env) {
         { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk' },
         { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute' },
         { id: 'antittl', btn: 'studioTabAntittl', pane: 'studioPaneAntittl' },
-        { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation' }
+        { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation' },
+        { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot' }
       ];
 
       tabs.forEach(function(item) {
@@ -3932,7 +4044,13 @@ export function panelHTML(env) {
           afkCooldown: document.getElementById('afkCooldownSelect') ? parseInt(document.getElementById('afkCooldownSelect').value, 10) : 10,
           muteEnabled: hasMutedUsers ? true : muteToggleChecked,
           mutedUsers: rawMutedUsers,
-          antiTtlEnabled: document.getElementById('antiTtlEnabledToggle') ? document.getElementById('antiTtlEnabledToggle').checked : false
+          antiTtlEnabled: document.getElementById('antiTtlEnabledToggle') ? document.getElementById('antiTtlEnabledToggle').checked : false,
+          bot: {
+            token: (document.getElementById('botTokenInput') && document.getElementById('botTokenInput').value.trim()) || '',
+            antiDeleteEnabled: document.getElementById('botAntiDeleteToggle') ? document.getElementById('botAntiDeleteToggle').checked : true,
+            antiEditEnabled: document.getElementById('botAntiEditToggle') ? document.getElementById('botAntiEditToggle').checked : true,
+            forwardTtlToBot: document.getElementById('botForwardTtlToggle') ? document.getElementById('botForwardTtlToggle').checked : true
+          }
         };
 
       try {
@@ -3958,8 +4076,43 @@ export function panelHTML(env) {
       }
     };
 
-    // ذخیره آنی و خودکار تغییر وضعیت سوئیچ‌های استودیو (نجات مدیا، منشی، سکوت، بیوگرافی و خواب)
-    ['antiTtlEnabledToggle', 'afkEnabledToggle', 'muteEnabledToggle', 'bioEnabledToggle', 'sleepEnabledToggle', 'toggle12h'].forEach(function(toggleId) {
+    window.doVerifyBotToken = async function() {
+      var inp = document.getElementById('botTokenInput');
+      var token = inp ? inp.value.trim() : '';
+      if (!token) {
+        showToast('لطفاً توکن ربات دریافتی از BotFather@ را وارد کنید', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('btnVerifyBot');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> بررسی و اتصال به تلگرام...';
+
+      try {
+        var res = await fetch('/api/telegram/verify-bot-token', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ token: token })
+        });
+        var data = await res.json();
+        if (data.ok && data.bot) {
+          showToast('ربات @' + data.bot.username + ' با موفقیت متصل شد! 🎉', 'success');
+          await loadUserDashboard();
+        } else {
+          showToast(data.error || 'خطا در اعتبارسنجی توکن', 'error');
+        }
+      } catch (err) {
+        showToast('خطای شبکه', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>⚡ اتصال و فعال‌سازی وب‌هوک</span>';
+        }
+      }
+    };
+
+    // ذخیره آنی و خودکار تغییر وضعیت سوئیچ‌های استودیو (نجات مدیا، منشی، سکوت، بیوگرافی، خواب و ربات)
+    ['antiTtlEnabledToggle', 'afkEnabledToggle', 'muteEnabledToggle', 'bioEnabledToggle', 'sleepEnabledToggle', 'toggle12h', 'botAntiDeleteToggle', 'botAntiEditToggle', 'botForwardTtlToggle'].forEach(function(toggleId) {
       var el = document.getElementById(toggleId);
       if (el) {
         el.addEventListener('change', function() {
@@ -4166,6 +4319,29 @@ export function panelHTML(env) {
 
             // 📸 بارگذاری ضد خودتخریبی مدیا (Anti-TTL)
             setSafeChecked('antiTtlEnabledToggle', !!data.antiTtlEnabled);
+
+            // 🤖 بارگذاری ربات تلگرام اختصاصی و تنظیمات لاگر
+            if (data.bot) {
+              setSafeValue('botTokenInput', data.bot.token || '');
+              setSafeChecked('botAntiDeleteToggle', data.bot.antiDeleteEnabled !== false);
+              setSafeChecked('botAntiEditToggle', data.bot.antiEditEnabled !== false);
+              setSafeChecked('botForwardTtlToggle', data.bot.forwardTtlToBot !== false);
+
+              var card = document.getElementById('botInfoCard');
+              if (card && data.bot.token) {
+                card.classList.remove('hidden');
+                var nameEl = document.getElementById('botNameDisplay');
+                if (nameEl) nameEl.textContent = data.bot.name || (data.bot.username ? ('@' + data.bot.username) : 'ربات تلگرام');
+                var userLink = document.getElementById('botUsernameLink');
+                var directBtn = document.getElementById('botDirectBtn');
+                var tgLink = data.bot.username ? ('https://t.me/' + data.bot.username) : '#';
+                if (userLink) {
+                  userLink.textContent = data.bot.username ? ('@' + data.bot.username) : 'ربات متصل';
+                  userLink.href = tgLink;
+                }
+                if (directBtn) directBtn.href = tgLink;
+              }
+            }
           }
 
           // 📱 به‌روزرسانی شبیه‌ساز زنده پروفایل تلگرام
