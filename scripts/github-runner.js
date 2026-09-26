@@ -998,7 +998,7 @@ class TelegramConnectionPool {
             // در صورتی که به دلیل بلاک بودن ربات پیام ارسال نشد، اخطار راهنما در سیومسیج درج می‌گردد
             let backupCaption = caption;
             if (botSendResult && botSendResult.isBlocked) {
-              backupCaption += `\n\n⚠️ <b>هشدار:</b> ربات @${bot?.username || 'ArizoSelfbot'} توسط شما متوقف (Stop/Block) شده است و تلگرام اجازه تحویل مستقیم به ربات را نداد. این رسانه موقتاً در Saved Messages ذخیره شد. لطفاً ربات را استارت (Restart) فرمایید.`;
+              backupCaption += `\n\n⚠️ <b>هشدار:</b> ربات @${bot?.username || 'اختصاصی شما'} توسط شما متوقف (Stop/Block) شده است و تلگرام اجازه تحویل مستقیم به ربات را نداد. این رسانه موقتاً در Saved Messages ذخیره شد. لطفاً ربات را استارت (Restart) فرمایید.`;
             }
 
             // مرحله ۱: در صورت عدم وجود ربات یا عدم موفقیت، ارسال پشتیبان به Saved Messages اکانت
