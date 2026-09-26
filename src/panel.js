@@ -843,6 +843,153 @@ export function panelHTML(env) {
       }
     }
 
+    /* 🧭 نوار پیمایش هوشمند بین قابلیت‌های استودیو Pro */
+    .studio-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-specular);
+      border-radius: var(--radius-lg);
+      padding: 12px 18px;
+      margin: 24px 0 16px 0;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+    }
+    .studio-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--btn-secondary-bg);
+      border: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-specular);
+      border-radius: 12px;
+      padding: 9px 14px;
+      cursor: pointer;
+      color: var(--text-main);
+      font-family: inherit;
+      transition: all 0.22s var(--smooth-physics);
+      user-select: none;
+      min-width: 140px;
+    }
+    .studio-nav-btn:hover:not(:disabled) {
+      background: var(--btn-secondary-hover);
+      border-color: rgba(168, 85, 247, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+    .studio-nav-btn:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+    .studio-nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .studio-nav-btn .nav-btn-text {
+      display: flex;
+      flex-direction: column;
+      text-align: right;
+      min-width: 0;
+    }
+    .studio-nav-btn.prev .nav-btn-text {
+      text-align: right;
+    }
+    .studio-nav-btn.next .nav-btn-text {
+      text-align: left;
+    }
+    .studio-nav-btn .nav-btn-sub {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .studio-nav-btn .nav-btn-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--accent-indigo);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 130px;
+    }
+    .studio-nav-btn .nav-arrow {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+    .studio-nav-btn:hover:not(:disabled) .nav-arrow {
+      color: var(--accent-purple);
+    }
+    .studio-nav-btn.prev:hover:not(:disabled) .nav-arrow {
+      transform: translateX(3px);
+    }
+    .studio-nav-btn.next:hover:not(:disabled) .nav-arrow {
+      transform: translateX(-3px);
+    }
+    .studio-nav-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .studio-nav-counter {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      direction: rtl;
+    }
+    .studio-nav-dots {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .studio-nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.25s var(--spring-physics);
+      position: relative;
+    }
+    .studio-nav-dot:hover {
+      background: rgba(168, 85, 247, 0.6);
+      transform: scale(1.3);
+    }
+    .studio-nav-dot.active {
+      width: 26px;
+      border-radius: 10px;
+      background: var(--gradient-brand);
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 0 12px var(--border-glow);
+    }
+    @media (max-width: 600px) {
+      .studio-nav-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 12px;
+        gap: 10px;
+      }
+      .studio-nav-btn {
+        flex: 1 1 calc(50% - 10px);
+        min-width: 110px;
+        padding: 8px 10px;
+      }
+      .studio-nav-btn .nav-btn-title {
+        max-width: 80px;
+        font-size: 0.76rem;
+      }
+      .studio-nav-center {
+        order: -1;
+        width: 100%;
+        margin-bottom: 4px;
+      }
+    }
+
     /* 📱 شبیه‌ساز زنده پروفایل تلگرام (Ultra-Realistic Live Mockup) */
     .tg-mockup-wrapper {
       background: var(--clock-box-bg);
@@ -2757,10 +2904,13 @@ export function panelHTML(env) {
                 <a id="botUsernameLink" href="#" target="_blank" style="font-size: 0.8rem; color: var(--accent-green); text-decoration: none; font-weight: 700;">@bot</a>
               </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <a id="botDirectBtn" href="#" target="_blank" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-color: var(--accent-green-border); color: var(--accent-green);">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <a id="botDirectBtn" href="#" target="_blank" class="btn btn-secondary" style="padding: 7px 14px; font-size: 0.8rem; border-color: var(--accent-green-border); color: var(--accent-green); width: auto;">
                 <span>🚀 باز کردن ربات در تلگرام</span>
               </a>
+              <button id="btnDisconnectBot" type="button" onclick="doDisconnectBotToken()" class="btn btn-secondary" style="padding: 7px 14px; font-size: 0.8rem; border-color: var(--accent-rose-border); color: var(--accent-rose); width: auto;">
+                <span>🔌 قطع اتصال ربات</span>
+              </button>
             </div>
           </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.78rem;">
@@ -2813,7 +2963,34 @@ export function panelHTML(env) {
         </div>
       </div>
 
-      <button class="btn btn-primary" id="saveBtn" onclick="saveFonts()" style="margin-top: 18px; margin-bottom: 22px;">
+      <!-- 🧭 نوار پیمایش هوشمند بین قابلیت‌های استودیو (Studio Feature Stepper & Navigator) -->
+      <div class="studio-nav-bar">
+        <button type="button" class="studio-nav-btn prev" id="studioNavPrev" onclick="navigateStudioStep(-1)">
+          <span class="nav-arrow">◀</span>
+          <div class="nav-btn-text">
+            <span class="nav-btn-sub">قابلیت قبلی</span>
+            <span class="nav-btn-title" id="studioNavPrevTitle">ساعت و استایل</span>
+          </div>
+        </button>
+
+        <div class="studio-nav-center">
+          <div class="studio-nav-counter">
+            <span id="studioNavCurrentTitle" style="color:var(--text-main); font-weight:800; font-size:0.83rem;">🕒 ساعت و استایل</span>
+            <span style="opacity:0.6; font-size:0.75rem;"> (<span id="studioNavCurrentStep">۱</span> از ۷)</span>
+          </div>
+          <div class="studio-nav-dots" id="studioNavDots"></div>
+        </div>
+
+        <button type="button" class="studio-nav-btn next" id="studioNavNext" onclick="navigateStudioStep(1)">
+          <div class="nav-btn-text">
+            <span class="nav-btn-sub">قابلیت بعدی</span>
+            <span class="nav-btn-title" id="studioNavNextTitle">بیوگرافی زنده</span>
+          </div>
+          <span class="nav-arrow">▶</span>
+        </button>
+      </div>
+
+      <button class="btn btn-primary" id="saveBtn" onclick="saveFonts()" style="margin-top: 10px; margin-bottom: 24px;">
         <span>💾 ذخیره و اعمال تغییرات استودیو</span>
       </button>
 
@@ -3938,26 +4115,107 @@ export function panelHTML(env) {
     }
 
     // ==========================================
-    // 🎨 کنترل تب‌های استودیوی شخصی‌سازی
+    // 🎨 کنترل تب‌های استودیوی شخصی‌سازی و ناوبری هوشمند
     // ==========================================
-    window.switchStudioTab = function(tab) {
-      var tabs = [
-        { id: 'clock', btn: 'studioTabClock', pane: 'studioPaneClock' },
-        { id: 'bio', btn: 'studioTabBio', pane: 'studioPaneBio' },
-        { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk' },
-        { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute' },
-        { id: 'antittl', btn: 'studioTabAntittl', pane: 'studioPaneAntittl' },
-        { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation' },
-        { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot' }
-      ];
+    var STUDIO_TABS = [
+      { id: 'clock', btn: 'studioTabClock', pane: 'studioPaneClock', title: 'ساعت و استایل', icon: '🕒' },
+      { id: 'bio', btn: 'studioTabBio', pane: 'studioPaneBio', title: 'بیوگرافی زنده', icon: '📝' },
+      { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk', title: 'منشی خودکار', icon: '🤖' },
+      { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute', title: 'فیلتر سکوت', icon: '🔇' },
+      { id: 'antittl', btn: 'studioTabAntittl', pane: 'studioPaneAntittl', title: 'ضد خودتخریبی', icon: '📸' },
+      { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation', title: 'حالت خواب', icon: '🌙' },
+      { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot', title: 'ربات و لاگر', icon: '⚡' }
+    ];
 
-      tabs.forEach(function(item) {
+    var currentStudioTabIndex = 0;
+
+    window.initStudioNavDots = function() {
+      var container = document.getElementById('studioNavDots');
+      if (!container) return;
+      container.innerHTML = '';
+      STUDIO_TABS.forEach(function(item, idx) {
+        var dot = document.createElement('div');
+        dot.className = 'studio-nav-dot' + (idx === currentStudioTabIndex ? ' active' : '');
+        dot.title = item.icon + ' ' + item.title;
+        dot.onclick = function() {
+          window.switchStudioTab(item.id, false);
+        };
+        container.appendChild(dot);
+      });
+    };
+
+    window.switchStudioTab = function(tab, shouldScroll) {
+      var index = STUDIO_TABS.findIndex(function(t) { return t.id === tab; });
+      if (index === -1) index = 0;
+      currentStudioTabIndex = index;
+
+      STUDIO_TABS.forEach(function(item, idx) {
         var btn = document.getElementById(item.btn);
         var pane = document.getElementById(item.pane);
-        var isActive = item.id === tab;
-        if (btn) btn.classList.toggle('active', isActive);
+        var isActive = idx === index;
+        if (btn) {
+          btn.classList.toggle('active', isActive);
+          if (isActive) {
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }
         if (pane) pane.classList.toggle('hidden', !isActive);
       });
+
+      // به‌روزرسانی نوار پیمایش پایینی
+      var prevBtn = document.getElementById('studioNavPrev');
+      var nextBtn = document.getElementById('studioNavNext');
+      var prevTitle = document.getElementById('studioNavPrevTitle');
+      var nextTitle = document.getElementById('studioNavNextTitle');
+      var currentTitle = document.getElementById('studioNavCurrentTitle');
+      var currentStep = document.getElementById('studioNavCurrentStep');
+
+      if (currentTitle) currentTitle.textContent = STUDIO_TABS[index].icon + ' ' + STUDIO_TABS[index].title;
+      if (currentStep) currentStep.textContent = String(index + 1);
+
+      if (prevBtn && prevTitle) {
+        if (index > 0) {
+          prevBtn.disabled = false;
+          prevTitle.textContent = STUDIO_TABS[index - 1].title;
+        } else {
+          prevBtn.disabled = true;
+          prevTitle.textContent = 'ابتدای استودیو';
+        }
+      }
+
+      if (nextBtn && nextTitle) {
+        if (index < STUDIO_TABS.length - 1) {
+          nextBtn.disabled = false;
+          nextTitle.textContent = STUDIO_TABS[index + 1].title;
+        } else {
+          nextBtn.disabled = true;
+          nextTitle.textContent = 'پایان استودیو';
+        }
+      }
+
+      // هایلایت دات‌ها
+      var dots = document.querySelectorAll('.studio-nav-dot');
+      if (dots && dots.length > 0) {
+        dots.forEach(function(dot, idx) {
+          dot.classList.toggle('active', idx === index);
+        });
+      } else {
+        window.initStudioNavDots();
+      }
+
+      if (shouldScroll) {
+        var bar = document.querySelector('.studio-tab-bar');
+        if (bar) {
+          bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    };
+
+    window.navigateStudioStep = function(step) {
+      var newIndex = currentStudioTabIndex + step;
+      if (newIndex >= 0 && newIndex < STUDIO_TABS.length) {
+        window.switchStudioTab(STUDIO_TABS[newIndex].id, false);
+      }
     };
 
     window.insertBioVar = function(tag) {
@@ -4191,6 +4449,43 @@ export function panelHTML(env) {
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = '<span>⚡ اتصال و فعال‌سازی وب‌هوک</span>';
+        }
+      }
+    };
+
+    window.doDisconnectBotToken = async function() {
+      if (!confirm('آیا از قطع اتصال ربات تلگرام اطمینان دارید؟ تمام وب‌هوک‌ها و دسترسی‌های مینی‌اپ لغو شده و حافظه کلادفلر فوراً آزاد می‌گردد.')) {
+        return;
+      }
+
+      var btn = document.getElementById('btnDisconnectBot');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> درحال قطع اتصال...';
+      }
+
+      try {
+        var res = await fetch('/api/telegram/disconnect-bot', {
+          method: 'POST',
+          headers: authHeaders()
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('اتصال ربات با موفقیت قطع شد و حافظه کلادفلر پاکسازی گردید ✨', 'success');
+          var card = document.getElementById('botInfoCard');
+          if (card) card.classList.add('hidden');
+          var tokenInp = document.getElementById('botTokenInput');
+          if (tokenInp) tokenInp.value = '';
+          await loadUserDashboard();
+        } else {
+          showToast(data.error || 'خطا در قطع اتصال ربات', 'error');
+        }
+      } catch (err) {
+        showToast('خطای شبکه در ارتباط با سرور', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>🔌 قطع اتصال ربات</span>';
         }
       }
     };
@@ -4490,6 +4785,7 @@ export function panelHTML(env) {
       });
     }
 
+    initStudioNavDots();
     loadUserDashboard();
   </script>
 </body>
