@@ -4724,31 +4724,35 @@ export function panelHTML(env) {
               setSafeChecked('botForwardTtlToggle', data.bot.forwardTtlToBot !== false);
 
               var card = document.getElementById('botInfoCard');
-              if (card && (data.bot.token || data.bot.username)) {
-                card.classList.remove('hidden');
-                var nameEl = document.getElementById('botNameDisplay');
-                if (nameEl) nameEl.textContent = data.bot.name || (data.bot.username ? ('@' + data.bot.username) : 'ربات تلگرام');
-                var userLink = document.getElementById('botUsernameLink');
-                var directBtn = document.getElementById('botDirectBtn');
-                var tgLink = data.bot.username ? ('https://t.me/' + data.bot.username) : '#';
-                if (userLink) {
-                  userLink.textContent = data.bot.username ? ('@' + data.bot.username) : 'ربات متصل';
-                  userLink.href = tgLink;
-                }
-                if (directBtn) directBtn.href = tgLink;
-
-                var lockEl = document.getElementById('botOwnerIdDisplay');
-                var lockStatusEl = document.getElementById('botLockStatusText');
-                var ownerId = data.bot.ownerId || data.userId || data.bot.chatId;
-                if (lockEl) {
-                  if (ownerId) {
-                    lockEl.textContent = '🔒 قفل روی شناسه: ' + ownerId;
-                    lockEl.style.color = 'var(--accent-green)';
-                    if (lockStatusEl) lockStatusEl.textContent = 'ربات به صورت ۱۰۰٪ انحصاری فقط به این شناسه عددی پاسخ می‌دهد و برای سایرین مسدود است.';
-                  } else {
-                    lockEl.textContent = '🔒 آماده قفل خودکار با اولین /start';
-                    lockEl.style.color = 'var(--accent-indigo)';
+              if (card) {
+                if (data.bot.token) {
+                  card.classList.remove('hidden');
+                  var nameEl = document.getElementById('botNameDisplay');
+                  if (nameEl) nameEl.textContent = data.bot.name || (data.bot.username ? ('@' + data.bot.username) : 'ربات تلگرام');
+                  var userLink = document.getElementById('botUsernameLink');
+                  var directBtn = document.getElementById('botDirectBtn');
+                  var tgLink = data.bot.username ? ('https://t.me/' + data.bot.username) : '#';
+                  if (userLink) {
+                    userLink.textContent = data.bot.username ? ('@' + data.bot.username) : 'ربات متصل';
+                    userLink.href = tgLink;
                   }
+                  if (directBtn) directBtn.href = tgLink;
+
+                  var lockEl = document.getElementById('botOwnerIdDisplay');
+                  var lockStatusEl = document.getElementById('botLockStatusText');
+                  var ownerId = data.bot.ownerId || data.userId || data.bot.chatId;
+                  if (lockEl) {
+                    if (ownerId) {
+                      lockEl.textContent = '🔒 قفل روی شناسه: ' + ownerId;
+                      lockEl.style.color = 'var(--accent-green)';
+                      if (lockStatusEl) lockStatusEl.textContent = 'ربات به صورت ۱۰۰٪ انحصاری فقط به این شناسه عددی پاسخ می‌دهد و برای سایرین مسدود است.';
+                    } else {
+                      lockEl.textContent = '🔒 آماده قفل خودکار با اولین /start';
+                      lockEl.style.color = 'var(--accent-indigo)';
+                    }
+                  }
+                } else {
+                  card.classList.add('hidden');
                 }
               }
             }
