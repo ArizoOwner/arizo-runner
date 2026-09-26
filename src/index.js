@@ -167,11 +167,14 @@ export default {
 
     const clientIP = getClientIP(request);
 
-    // ۱. سرو رابط کاربری پنل با تزریق هدرهای امنیتی
+    // ۱. سرو رابط کاربری پنل با تزریق هدرهای امنیتی و ضد کش (Anti-Cache)
     if (url.pathname === '/') {
       return new Response(panelHTML(env), {
         headers: {
           'Content-Type': 'text/html;charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
           ...SECURITY_HEADERS
         },
       });
