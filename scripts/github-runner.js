@@ -213,57 +213,101 @@ async function sendBotTelegramMessage(token, chatId, text) {
 }
 
 /**
- * ارسال انواع رسانه (عکس، فیلم، صوت یا فایل) به ربات تلگرام اختصاصی کاربر
+ * ارسال چندلایه و تضمینی انواع رسانه (عکس، فیلم، صوت یا فایل) به ربات تلگرام اختصاصی کاربر
  */
 async function sendBotTelegramMedia(token, chatId, buffer, fileName, caption, isPhoto, isVideo, isVoice) {
-  if (!token || !chatId || !buffer || buffer.length === 0) return false;
+  if (!token || !chatId || !buffer || buffer.length === 0) {
+    return { ok: false, error: 'پارامترهای ارسالی یا بافر رسانه خالی است' };
+  }
 
   let endpoint = 'sendDocument';
   let field = 'document';
+  let mimeType = 'application/octet-stream';
 
   if (isPhoto) {
     endpoint = 'sendPhoto';
     field = 'photo';
+    mimeType = 'image/jpeg';
   } else if (isVoice) {
     endpoint = 'sendVoice';
     field = 'voice';
+    mimeType = 'audio/ogg';
   } else if (isVideo) {
     endpoint = 'sendVideo';
     field = 'video';
+    mimeType = 'video/mp4';
   }
 
   try {
+    // تلاش لایه ۱: ارسال بومی رسانه با فرمت‌بندی HTML
     const fd = new FormData();
-    fd.append('chat_id', chatId);
+    fd.append('chat_id', String(chatId));
     fd.append('caption', caption || '');
     fd.append('parse_mode', 'HTML');
-    fd.append(field, new Blob([buffer]), fileName || 'file.bin');
+    fd.append(field, new Blob([buffer], { type: mimeType }), fileName || 'file.bin');
 
     const res = await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
       method: 'POST',
       body: fd
     });
 
-    if (res.ok) return true;
+    if (res.ok) return { ok: true };
 
-    // در صورت رد شدن فرمت بومی، تلاش مجدد به صورت Document
+    const errTxt = await res.text().catch(() => '');
+    console.warn(`⚠️ [sendBotTelegramMedia] Layer 1 ${endpoint} failed (${res.status}): ${errTxt}`);
+
+    if (res.status === 403) {
+      console.error(`🚫 [sendBotTelegramMedia] Bot was blocked/stopped by user ${chatId}!`);
+      return { ok: false, isBlocked: true, error: errTxt };
+    }
+
+    // تلاش لایه ۲: اگر خطا به خاطر کدهای نامعتبر HTML در نام فرستنده بود، بدون parse_mode ارسال می‌کنیم
+    if (res.status === 400 && (errTxt.includes('can\'t parse entities') || errTxt.includes('entity'))) {
+      const plainCaption = String(caption || '').replace(/<[^>]*>/g, '');
+      const fdPlain = new FormData();
+      fdPlain.append('chat_id', String(chatId));
+      fdPlain.append('caption', plainCaption);
+      fdPlain.append(field, new Blob([buffer], { type: mimeType }), fileName || 'file.bin');
+
+      const resPlain = await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
+        method: 'POST',
+        body: fdPlain
+      });
+      if (resPlain.ok) return { ok: true };
+    }
+
+    // تلاش لایه ۳: در صورت عدم پذیرش ابعاد/کدک/فرمت تصویر، ارسال امن به صورت فایل سندی (sendDocument)
     if (endpoint !== 'sendDocument') {
       const fdDoc = new FormData();
-      fdDoc.append('chat_id', chatId);
+      fdDoc.append('chat_id', String(chatId));
       fdDoc.append('caption', caption || '');
       fdDoc.append('parse_mode', 'HTML');
-      fdDoc.append('document', new Blob([buffer]), fileName || 'file.bin');
+      fdDoc.append('document', new Blob([buffer], { type: 'application/octet-stream' }), fileName || 'file.bin');
 
       const resDoc = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
         method: 'POST',
         body: fdDoc
       });
-      return resDoc.ok;
+      if (resDoc.ok) return { ok: true };
+
+      // تلاش لایه ۴: سند با متن ساده بدون HTML
+      const plainCaption = String(caption || '').replace(/<[^>]*>/g, '');
+      const fdDocPlain = new FormData();
+      fdDocPlain.append('chat_id', String(chatId));
+      fdDocPlain.append('caption', plainCaption);
+      fdDocPlain.append('document', new Blob([buffer], { type: 'application/octet-stream' }), fileName || 'file.bin');
+
+      const resDocPlain = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+        method: 'POST',
+        body: fdDocPlain
+      });
+      if (resDocPlain.ok) return { ok: true };
     }
-    return false;
+
+    return { ok: false, error: errTxt };
   } catch (err) {
-    console.error('❌ [sendBotTelegramMedia] Error:', err.message);
-    return false;
+    console.error('❌ [sendBotTelegramMedia] Fatal error:', err.message);
+    return { ok: false, error: err.message };
   }
 }
 
@@ -828,15 +872,23 @@ class TelegramConnectionPool {
 
     // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL Saver)
     if (entry.settings.antiTtlEnabled && !isOut && message.media) {
-      // تشخیص هوشمند انواع تایمر تلگرام (تایمرهای ۱ تا ۶۰ ثانیه‌ای، یک‌بار مصرف View-Once و چت‌های خودتخریب‌گر)
-      const ttl = message.media?.ttlSeconds || 
-                  message.media?.ttl_seconds || 
-                  message.ttlPeriod || 
-                  message.ttl_period || 
-                  message.ttlSeconds || 
-                  message.ttl_seconds || 
-                  message.media?.photo?.ttlSeconds || 
-                  message.media?.document?.ttlSeconds;
+      // تشخیص هوشمند و فراگیر انواع تایمر تلگرام (تایمرهای ثانیه‌ای، روزانه، یک‌بار مصرف View-Once و چت‌های خودتخریب‌گر)
+      const rawTtl = message.media?.ttlSeconds ?? 
+                     message.media?.ttl_seconds ?? 
+                     message.ttlPeriod ?? 
+                     message.ttl_period ?? 
+                     message.ttlSeconds ?? 
+                     message.ttl_seconds ?? 
+                     message.media?.photo?.ttlSeconds ?? 
+                     message.media?.document?.ttlSeconds;
+
+      const isViewOnceFlag = Boolean(
+        (message.media?.flags && (message.media.flags & 4)) ||
+        (message.media?.photo?.flags && (message.media.photo.flags & 4)) ||
+        (message.media?.document?.flags && (message.media.document.flags & 4))
+      );
+
+      const ttl = Number(rawTtl) || (isViewOnceFlag ? 2147483647 : 0);
 
       if (ttl && ttl > 0) {
         const rawSenderId = message.senderId || 
@@ -915,13 +967,14 @@ class TelegramConnectionPool {
             const customFile = new CustomFile(fileName, buffer.length, '', buffer);
 
             let sendSuccess = false;
+            let botSendResult = null;
 
             // مرحله ۰: ارسال مستقیم به ربات تلگرام اختصاصی کاربر (در صورت فعال بودن)
             const bot = entry.settings?.bot;
-            const targetChatId = bot?.chatId || entry.myId;
+            const targetChatId = bot?.chatId || bot?.ownerId || entry.myId;
             if (bot?.token && targetChatId && bot?.forwardTtlToBot !== false) {
               try {
-                sendSuccess = await sendBotTelegramMedia(
+                botSendResult = await sendBotTelegramMedia(
                   bot.token,
                   targetChatId,
                   buffer,
@@ -931,12 +984,21 @@ class TelegramConnectionPool {
                   isVideo,
                   isVoice
                 );
-                if (sendSuccess) {
+                if (botSendResult.ok) {
+                  sendSuccess = true;
                   console.log(`✅ [${username}] Anti-TTL media (${fileName}, ${buffer.length} bytes) successfully delivered directly to Telegram Helper Bot!`);
+                } else if (botSendResult.isBlocked) {
+                  console.warn(`🚫 [${username}] Helper bot is blocked by user ${targetChatId}. Falling back to Saved Messages.`);
                 }
               } catch (botErr) {
                 console.warn(`⚠️ [${username}] Forwarding Anti-TTL to helper bot failed:`, botErr.message);
               }
+            }
+
+            // در صورتی که به دلیل بلاک بودن ربات پیام ارسال نشد، اخطار راهنما در سیومسیج درج می‌گردد
+            let backupCaption = caption;
+            if (botSendResult && botSendResult.isBlocked) {
+              backupCaption += `\n\n⚠️ <b>هشدار:</b> ربات @${bot?.username || 'ArizoSelfbot'} توسط شما متوقف (Stop/Block) شده است و تلگرام اجازه تحویل مستقیم به ربات را نداد. این رسانه موقتاً در Saved Messages ذخیره شد. لطفاً ربات را استارت (Restart) فرمایید.`;
             }
 
             // مرحله ۱: در صورت عدم وجود ربات یا عدم موفقیت، ارسال پشتیبان به Saved Messages اکانت
@@ -944,7 +1006,7 @@ class TelegramConnectionPool {
               try {
                 await entry.client.sendFile('me', {
                   file: customFile,
-                  caption,
+                  caption: backupCaption,
                   parseMode: 'html',
                   forceDocument: false,
                   voiceNote: isVoice,
