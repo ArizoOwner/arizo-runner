@@ -2191,85 +2191,133 @@ export function panelHTML(env) {
        💎 Arizo Self — Executive Feature Introduction Modal (SaaS Grade)
        ========================================================================== */
     .features-modal-container {
-      max-width: 860px;
-      padding: 34px 32px;
+      width: 94%;
+      max-width: 780px;
+      padding: 24px 26px;
       background: #090d1a;
-      background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.14) 0%, rgba(9, 13, 26, 0.98) 75%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-top: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 24px;
-      box-shadow: 0 30px 100px -10px rgba(0, 0, 0, 0.9), 0 0 60px -15px rgba(139, 92, 246, 0.25);
+      background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.16) 0%, rgba(9, 13, 26, 0.98) 75%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 22px;
+      box-shadow: 0 30px 100px -10px rgba(0, 0, 0, 0.9), 0 0 50px -10px rgba(139, 92, 246, 0.25);
       position: relative;
-      overflow-y: auto;
-      max-height: 90vh;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
       color: #e2e8f0;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-    }
-    .features-modal-container::-webkit-scrollbar {
-      width: 6px;
-    }
-    .features-modal-container::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.18);
-      border-radius: 4px;
+      box-sizing: border-box;
     }
     .features-modal-header {
+      flex-shrink: 0;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 20px;
-      padding-bottom: 18px;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       position: relative;
+      gap: 12px;
     }
-    .features-header-meta {
-      display: inline-flex;
+    .features-header-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .features-header-top-row {
+      display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.76rem;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      color: #a78bfa;
-      background: rgba(167, 139, 250, 0.1);
-      border: 1px solid rgba(167, 139, 250, 0.25);
-      padding: 4px 12px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .features-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: #c4b5fd;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: 3px 10px;
       border-radius: 20px;
-      margin-bottom: 10px;
     }
     .features-header-title {
-      font-size: 1.35rem;
-      font-weight: 800;
+      font-size: 1.25rem;
+      font-weight: 900;
       letter-spacing: -0.4px;
       color: #ffffff;
-      line-height: 1.35;
-      margin-bottom: 8px;
+      line-height: 1.3;
+      margin-bottom: 6px;
     }
     .features-header-desc {
-      font-size: 0.86rem;
+      font-size: 0.82rem;
       color: #94a3b8;
-      line-height: 1.7;
-      max-width: 720px;
+      line-height: 1.6;
+      margin-bottom: 10px;
     }
-    .features-metrics-strip {
+    .features-chips-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 16px;
-      padding: 14px 20px;
-      margin-bottom: 24px;
-      gap: 16px;
+      gap: 8px;
+      flex-wrap: wrap;
     }
-    .metric-item {
-      display: flex;
+    .features-chip {
+      display: inline-flex;
       align-items: center;
-      gap: 12px;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 3px 9px;
+      border-radius: 8px;
+    }
+    .features-chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 6px #4ade80;
+    }
+    .features-modal-body {
       flex: 1;
+      overflow-y: auto;
+      padding-right: 2px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
     }
-    .metric-icon-wrap {
-      width: 38px;
-      height: 38px;
+    .features-modal-body::-webkit-scrollbar {
+      width: 5px;
+    }
+    .features-modal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+    }
+    .features-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .feature-card-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 13px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .feature-card-item:hover {
+      background: rgba(255, 255, 255, 0.045);
+      border-color: rgba(168, 85, 247, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+    }
+    .feature-item-icon {
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
       background: rgba(139, 92, 246, 0.12);
       border: 1px solid rgba(139, 92, 246, 0.25);
@@ -2278,70 +2326,7 @@ export function panelHTML(env) {
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-    }
-    .metric-text-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .metric-val {
-      font-size: 0.84rem;
-      font-weight: 800;
-      color: #f1f5f9;
-      letter-spacing: -0.2px;
-    }
-    .metric-label {
-      font-size: 0.72rem;
-      color: #94a3b8;
-      line-height: 1.4;
-    }
-    .metric-divider {
-      width: 1px;
-      height: 32px;
-      background: rgba(255, 255, 255, 0.08);
-      flex-shrink: 0;
-    }
-    .features-cards-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .feature-card-item {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 16px;
-      padding: 18px;
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
-    }
-    .feature-card-item:hover {
-      background: rgba(255, 255, 255, 0.045);
-      border-color: rgba(168, 85, 247, 0.35);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
-    }
-    .feature-item-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #a78bfa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.25s ease;
-    }
-    .feature-card-item:hover .feature-item-icon {
-      background: rgba(168, 85, 247, 0.15);
-      border-color: rgba(168, 85, 247, 0.4);
-      color: #c084fc;
-      transform: scale(1.05);
+      margin-top: 1px;
     }
     .feature-item-body {
       flex: 1;
@@ -2352,55 +2337,59 @@ export function panelHTML(env) {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 6px;
-      flex-wrap: wrap;
+      margin-bottom: 4px;
     }
     .feature-item-title {
-      font-size: 0.92rem;
-      font-weight: 700;
-      color: #f8fafc;
-      letter-spacing: -0.2px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .feature-item-badge {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 6px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #cbd5e1;
+      color: #a78bfa;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .feature-item-desc {
-      font-size: 0.79rem;
+      font-size: 0.77rem;
       color: #94a3b8;
-      line-height: 1.65;
+      line-height: 1.55;
     }
     .features-modal-action-bar {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 18px;
+      padding-top: 14px;
+      margin-top: 14px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      gap: 16px;
+      gap: 14px;
       flex-wrap: wrap;
     }
     .features-pref-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 9px;
-      font-size: 0.82rem;
+      gap: 8px;
+      font-size: 0.79rem;
       color: #94a3b8;
       cursor: pointer;
       user-select: none;
-      transition: color 0.2s ease;
     }
     .features-pref-toggle:hover {
       color: #e2e8f0;
     }
     .features-pref-toggle input[type="checkbox"] {
-      width: 17px;
-      height: 17px;
+      width: 16px;
+      height: 16px;
       accent-color: #8b5cf6;
       cursor: pointer;
     }
@@ -2413,9 +2402,9 @@ export function panelHTML(env) {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #cbd5e1;
-      padding: 10px 18px;
+      padding: 9px 16px;
       border-radius: 12px;
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
@@ -2430,9 +2419,9 @@ export function panelHTML(env) {
       background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #ffffff;
-      padding: 10px 24px;
+      padding: 9px 22px;
       border-radius: 12px;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       font-weight: 800;
       font-family: inherit;
       cursor: pointer;
@@ -2447,30 +2436,18 @@ export function panelHTML(env) {
       box-shadow: 0 6px 24px rgba(124, 58, 237, 0.5);
       transform: translateY(-1px);
     }
-    .btn-feature-start:active {
-      transform: scale(0.98);
-    }
 
-    @media (max-width: 768px) {
+    @media (max-width: 680px) {
       .features-modal-container {
-        padding: 24px 18px;
-        border-radius: 20px;
+        padding: 18px 14px;
+        border-radius: 18px;
       }
       .features-header-title {
-        font-size: 1.2rem;
-      }
-      .features-metrics-strip {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 14px 16px;
-      }
-      .metric-divider {
-        display: none;
+        font-size: 1.12rem;
       }
       .features-cards-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 8px;
       }
       .features-modal-action-bar {
         flex-direction: column;
@@ -3330,170 +3307,154 @@ export function panelHTML(env) {
 
   <!-- 💎 مودال رسمی و حرفه‌ای راهنما و معرفی امکانات سامانه Arizo Self -->
   <div id="featuresIntroModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeFeaturesModal();">
-    <div class="modal-container features-modal-container" onclick="event.stopPropagation();">
+    <div class="features-modal-container" onclick="event.stopPropagation();">
       
-      <!-- سربرگ رسمی و عنوان سامانه -->
+      <!-- سربرگ رسمی (ثابت در بالا) -->
       <div class="features-modal-header">
-        <div>
-          <div class="features-header-meta">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            <span>راهنمای خدمات و قابلیت‌های سامانه | نسخه رسمی ۳.۵ PRO</span>
+        <div class="features-header-content">
+          <div class="features-header-top-row">
+            <span class="features-header-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <span>معرفی امکانات و سرویس‌ها | Arizo Self v3.5 PRO</span>
+            </span>
           </div>
-          <div class="features-header-title">
-            <span>استودیوی هوشمند ابری Arizo Self</span>
-          </div>
+          <div class="features-header-title">استودیوی ابری سلف‌بات هوشمند تلگرام</div>
           <div class="features-header-desc">
-            سامانه Arizo Self یک زیرساخت رایانش ابری متمرکز جهت خودکارسازی، ارتقای نمایه و پایش هوشمند حساب‌های کاربری تلگرام است. این پلتفرم به‌صورت ۲۴ ساعته بر بستر سرورلس بین‌المللی مستقر بوده و بدون وابستگی به سخت‌افزار محلی، بالاترین پایداری و امنیت را ارائه می‌نماید.
+            پلتفرم متمرکز ابری جهت خودکارسازی و مدیریت نمایه تلگرام بر بستر سرورلس ۲۴ ساعته بدون نیاز به آنلاین بودن دستگاه.
+          </div>
+          <!-- تراشه‌های زیرساخت ابری (مینی‌مال و فوق‌العاده شکیل) -->
+          <div class="features-chips-row">
+            <span class="features-chip">
+              <span class="features-chip-dot"></span>
+              <span>واکنش زیر ۱۰۰ms</span>
+            </span>
+            <span class="features-chip">
+              <span class="features-chip-dot" style="background:#38bdf8; box-shadow:0 0 6px #38bdf8;"></span>
+              <span>۱۰۰٪ ابری ۲۴/۷</span>
+            </span>
+            <span class="features-chip">
+              <span class="features-chip-dot" style="background:#c084fc; box-shadow:0 0 6px #c084fc;"></span>
+              <span>رمزنگاری ایزوله KV</span>
+            </span>
           </div>
         </div>
-        <button class="btn-close" onclick="closeFeaturesModal()" title="بستن پنجره" style="margin-top:-2px;">&times;</button>
+        <button class="btn-close" onclick="closeFeaturesModal()" title="بستن پنجره">&times;</button>
       </div>
 
-      <!-- نوار شاخص‌های کلیدی زیرساخت ابری -->
-      <div class="features-metrics-strip">
-        <div class="metric-item">
-          <div class="metric-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      <!-- بدنه کارت‌های امکانات (اسکرول نرم و روان در صورت نیاز) -->
+      <div class="features-modal-body">
+        <div class="features-cards-grid">
+          <!-- ۱. ساعت زنده -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">ساعت زنده نام</span>
+                <span class="feature-item-badge">۳۰+ قلم نوشتاری</span>
+              </div>
+              <div class="feature-item-desc">
+                به‌روزرسانی خودکار زمان رسمی در نام حساب با قلم‌های فارسی و لاتین بدون افت سرعت.
+              </div>
+            </div>
           </div>
-          <div class="metric-text-wrap">
-            <div class="metric-val">تاخیر زیر ۱۰۰ میلی‌ثانیه</div>
-            <div class="metric-label">پاسخ‌دهی آنی و پردازش بلادرنگ وقایع</div>
-          </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-item">
-          <div class="metric-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-          </div>
-          <div class="metric-text-wrap">
-            <div class="metric-val">پایداری ۲۴ ساعته (۱۰۰٪ ابری)</div>
-            <div class="metric-label">فعالیت پیوسته بر بستر شبکه سرورلس</div>
-          </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-item">
-          <div class="metric-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          </div>
-          <div class="metric-text-wrap">
-            <div class="metric-val">ایزولاسیون کامل نشست‌ها</div>
-            <div class="metric-label">امنیت پایگاه داده با استاندارد رمزنگاری KV</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- شبکه کارت‌های تفکیک‌شده قابلیت‌های سامانه -->
-      <div class="features-cards-grid">
-        <!-- ۱. ساعت زنده -->
-        <div class="feature-card-item">
-          <div class="feature-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          </div>
-          <div class="feature-item-body">
-            <div class="feature-item-top">
-              <div class="feature-item-title">سیستم همگام‌سازی زمان واقعی در نام کاربری</div>
-              <span class="feature-item-badge">۳۰+ قلم استاندارد</span>
+          <!-- ۲. بیوگرافی پویا -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             </div>
-            <div class="feature-item-desc">
-              نمایش خودکار و دقیقه به دقیقه زمان رسمی بر روی نام حساب تلگرام با پشتیبانی از خطوط متنوع فارسی و لاتین، جداکننده‌های نگارشی و نشانگرهای پویا بدون بروز اختلال.
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">بیوگرافی هوشمند</span>
+                <span class="feature-item-badge">تقویم + باتری</span>
+              </div>
+              <div class="feature-item-desc">
+                درج پویای تقویم خورشیدی و میلادی، درصد شارژ دستگاه و عبارات سفارشی در نمایه.
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ۲. بیوگرافی پویا -->
-        <div class="feature-card-item">
-          <div class="feature-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          </div>
-          <div class="feature-item-body">
-            <div class="feature-item-top">
-              <div class="feature-item-title">سامانه به‌روزرسانی پویای نمایه (Dynamic Bio)</div>
-              <span class="feature-item-badge">تقویم رسمی + وضعیت</span>
+          <!-- ۳. منشی و پاسخگوی AFK -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </div>
-            <div class="feature-item-desc">
-              به‌روزرسانی خودکار بیوگرافی حساب کاربری متناسب با تقویم رسمی خورشیدی و میلادی، درصد شارژ دستگاه و متن‌های برگزیده متغیر بدون نیاز به تنظیم مداوم.
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">منشی خودکار (AFK)</span>
+                <span class="feature-item-badge">تایمر غیبت</span>
+              </div>
+              <div class="feature-item-desc">
+                پاسخگویی هوشمند به پیام‌ها در زمان غیبت با محاسبه دقیق مدت زمان و سیستم ضد اسپم.
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ۳. منشی و پاسخگوی AFK -->
-        <div class="feature-card-item">
-          <div class="feature-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-          </div>
-          <div class="feature-item-body">
-            <div class="feature-item-top">
-              <div class="feature-item-title">دستیار پاسخگوی هوشمند در غیاب کاربر (AFK)</div>
-              <span class="feature-item-badge">محاسبه دقیق مدت غیبت</span>
+          <!-- ۴. ربات دستیار و لاگر تلگرام -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </div>
-            <div class="feature-item-desc">
-              پاسخ‌دهی خودکار به گفت‌وگوهای خصوصی در زمان عدم حضور، همراه با محاسبه و اعلام دقیق مدت غیبت و فیلتر پیشرفته جلوگیری از ارسال پیام‌های تکراری.
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">لاگر و پایشگر وقایع</span>
+                <span class="feature-item-badge">حذف و ویرایش</span>
+              </div>
+              <div class="feature-item-desc">
+                ارسال آنی پیام‌های حذف‌شده (Anti-Delete) با فایل و پیام‌های ویرایش‌شده به ربات شما.
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ۴. ربات دستیار و لاگر تلگرام -->
-        <div class="feature-card-item">
-          <div class="feature-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          </div>
-          <div class="feature-item-body">
-            <div class="feature-item-top">
-              <div class="feature-item-title">سامانه پایش و ثبت رخدادهای حساب (Event Logger)</div>
-              <span class="feature-item-badge">ثبت حذف و ویرایش</span>
+          <!-- ۵. نجات رسانه‌های خودتخریبی Anti-TTL -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
             </div>
-            <div class="feature-item-desc">
-              انتقال آنی پیام‌های حذف‌شده (Anti-Delete) به همراه رسانه‌ها و لاگ متن ویرایش‌شده پیام‌های مخاطبان به چت خصوصی ربات تلگرام به همراه Mini App وب.
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">آرشیو رسانه‌ها (Anti-TTL)</span>
+                <span class="feature-item-badge">View-Once</span>
+              </div>
+              <div class="feature-item-desc">
+                ذخیره و فوروارد فوری عکس‌ها، ویدیوها و وویس‌های تایمردار به پیوی ربات با کیفیت اصلی.
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ۵. نجات رسانه‌های خودتخریبی Anti-TTL -->
-        <div class="feature-card-item">
-          <div class="feature-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-          </div>
-          <div class="feature-item-body">
-            <div class="feature-item-top">
-              <div class="feature-item-title">سامانه حفاظت و نگهداری رسانه‌های زمان‌دار (Anti-TTL)</div>
-              <span class="feature-item-badge">رسانه‌های View-Once</span>
+          <!-- ۶. مدیریت سکوت و فیلتر پیام‌ها -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
             </div>
-            <div class="feature-item-desc">
-              دریافت و ذخیره‌سازی فوری تصاویر، ویدیوها و فایل‌های صوتی خودتخریبی و انتقال بدون ردپای آن‌ها با کیفیت اصلی به محیط امن ربات پیش از انقضا.
-            </div>
-          </div>
-        </div>
-
-        <!-- ۶. مدیریت سکوت و فیلتر پیام‌ها -->
-        <div class="feature-card-item">
-          <div class="feature-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
-          </div>
-          <div class="feature-item-body">
-            <div class="feature-item-top">
-              <div class="feature-item-title">ماژول مدیریت و پالایش پیام‌های دریافتی (Mute)</div>
-              <span class="feature-item-badge">پالایش گفت‌وگوها</span>
-            </div>
-            <div class="feature-item-desc">
-              پالایش و کنترل هوشمند پیام‌های کاربران تعیین‌شده در گروه‌ها و گفت‌وگوها بر پایه شناسه یا نام کاربری، جهت سازماندهی محیط کاربری بدون مسدودسازی مستقیم.
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">مدیریت سکوت و فیلتر</span>
+                <span class="feature-item-badge">کنترل گفت‌وگوها</span>
+              </div>
+              <div class="feature-item-desc">
+                پالایش و بی‌صدا کردن خودکار پیام‌های کاربران موردنظر در گروه‌ها و چت‌ها بدون مسدودسازی.
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- نوار پایانی همراه با تنظیمات نمایش و دکمه ورود -->
+      <!-- نوار پایانی اکشن‌ها (همیشه ثابت در پایین و کاملاً نمایان) -->
       <div class="features-modal-action-bar">
         <label class="features-pref-toggle">
           <input type="checkbox" id="dontShowFeaturesAgain">
-          <span>عدم نمایش خودکار این راهنما در مراجعات بعدی</span>
+          <span>عدم نمایش خودکار در دفعات بعدی</span>
         </label>
         <div class="features-action-buttons">
           <button class="btn-feature-dismiss" onclick="closeFeaturesModal()">
-            <span>بستن پنجره</span>
+            <span>بستن</span>
           </button>
           <button class="btn-feature-start" onclick="closeFeaturesModal()">
-            <span>ورود به استودیو و پنل کاربری</span>
-            <span style="font-size: 1.1rem; line-height: 1;">←</span>
+            <span>ورود به استودیو</span>
+            <span style="font-size: 1rem; line-height: 1;">🚀</span>
           </button>
         </div>
       </div>
