@@ -1408,7 +1408,7 @@ async function fetchActiveUsers() {
     const res = await fetch(`${CLOUDFLARE_URL}/api/internal/active-users`, {
       headers: {
         'Authorization': `Bearer ${RUNNER_SECRET}`,
-        'User-Agent': 'Arizo-Sub100ms-Engine/3.0'
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
       }
     });
 
@@ -1438,7 +1438,7 @@ async function reportStatusErrors(updates) {
       headers: {
         'Authorization': `Bearer ${RUNNER_SECRET}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'Arizo-Sub100ms-Engine/3.0'
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
       },
       body: JSON.stringify({
         updates: errorUpdates.map(u => ({
@@ -1464,7 +1464,7 @@ async function syncUserMuteToCloudflare(username, mutedUsers) {
       headers: {
         'Authorization': `Bearer ${RUNNER_SECRET}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'Arizo-Sub100ms-Engine/3.0'
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
       },
       body: JSON.stringify({ username, mutedUsers })
     });
@@ -1482,7 +1482,7 @@ async function syncOwnerTgIdToCloudflare(username, tgUserId) {
       headers: {
         'Authorization': `Bearer ${RUNNER_SECRET}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'Arizo-Sub100ms-Engine/3.0'
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
       },
       body: JSON.stringify({ username, tgUserId })
     });
