@@ -1,6 +1,6 @@
 {
   "name": "arizo-self",
-  "version": "3.0.0",
+  "version": "3.5.0",
   "description": "⚡ Arizo Self — Cloudflare Workers Telegram Selfbot Studio",
   "main": "src/index.js",
   "type": "module",
