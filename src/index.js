@@ -1328,6 +1328,31 @@ export default {
       }
     }
 
+    // ۳.۱ به‌روزرسانی و ثبت شناسه عددی تلگرام کاربر از طریق رانر (جهت قفل امنیتی انحصاری ربات به مالک)
+    if (url.pathname === '/api/internal/set-user-tg-id' && request.method === 'POST') {
+      if (!isRunnerAuthorized(request, env)) {
+        return json({ error: 'unauthorized runner' }, 401);
+      }
+      try {
+        const { username, tgUserId } = await request.json();
+        if (username && tgUserId) {
+          const u = await env.KV.get('user:' + username, 'json');
+          if (u && u.telegram) {
+            const cleanId = String(tgUserId).trim();
+            u.telegram.userId = cleanId;
+            if (u.telegram.bot && !u.telegram.bot.ownerId) {
+              u.telegram.bot.ownerId = cleanId;
+              u.telegram.bot.chatId = cleanId;
+            }
+            await env.KV.put('user:' + username, JSON.stringify(u));
+          }
+        }
+        return json({ ok: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
     // ۴. اعتبارسنجی و ثبت وب‌هوک ربات تلگرام اختصاصی کاربر (Telegram BotFather API)
     if (url.pathname === '/api/telegram/verify-bot-token' && request.method === 'POST') {
       const auth = await getAuthUser(request, env);
@@ -1455,6 +1480,31 @@ export default {
       }
     }
 
+    // ۴.۲ قفل دستی یا تنظیم شناسه عددی تلگرام مالک ربات (امنیت انحصاری)
+    if (url.pathname === '/api/telegram/lock-owner-id' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'ابتدا وارد حساب کاربری خود شوید' }, 401);
+
+      try {
+        const { ownerId } = await request.json();
+        if (!auth.user.telegram?.bot) {
+          return json({ error: 'ابتدا ربات تلگرام خود را متصل کنید' }, 400);
+        }
+        const cleanId = String(ownerId || '').trim();
+        if (cleanId && !/^\d{5,15}$/.test(cleanId)) {
+          return json({ error: 'شناسه عددی تلگرام باید عددی بین ۵ تا ۱۵ رقم باشد' }, 400);
+        }
+        auth.user.telegram.bot.ownerId = cleanId || null;
+        if (cleanId) {
+          auth.user.telegram.bot.chatId = cleanId;
+        }
+        await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+        return json({ ok: true, ownerId: auth.user.telegram.bot.ownerId });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
     // ۵. وب‌هوک اختصاصی ربات تلگرام کاربر جهت ارسال دکمه‌های ورود به مینی‌اپ و کنترل پنل
     if (url.pathname.startsWith('/api/bot-webhook/')) {
       const targetUsername = decodeURIComponent(url.pathname.replace('/api/bot-webhook/', ''));
@@ -1472,6 +1522,9 @@ export default {
 
         const botToken = u.telegram.bot.token;
         const hostUrl = new URL(request.url).origin;
+
+        // تعیین شناسه عددی مجاز مالک جهت قفل انحصاری امنیتی
+        const allowedOwnerId = u.telegram?.bot?.ownerId || u.telegram?.userId;
 
         // تولید توکن ورود آنی و مستقیم بدون پسورد (Single-Sign-On) برای Mini App با بهینه‌سازی حافظه KV
         let appToken = await env.KV.get('miniapp_token:' + targetUsername);
@@ -1509,12 +1562,35 @@ export default {
         // پاسخ به پیام‌های متنی
         if (update.message) {
           const msg = update.message;
+          const senderId = String(msg.from?.id || msg.chat.id);
           const chatId = msg.chat.id;
           const text = (msg.text || '').trim();
 
-          // ذخیره قطعی شناسه عددی چت کاربر جهت دریافت اعلان‌ها و رسانه‌های Anti-TTL و ضد حذف/ویرایش
-          if (String(u.telegram.bot.chatId) !== String(chatId)) {
+          // 🔒 قفل انحصاری امنیتی: بررسی احراز هویت مالک ربات
+          if (allowedOwnerId) {
+            if (senderId !== String(allowedOwnerId)) {
+              console.warn(`[Security Alert] Unauthorized access to bot @${u.telegram?.bot?.username} by user ${senderId}`);
+              await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `⛔ <b>دسترسی غیرمجاز!</b>\n\nاین ربات یک دستیار اختصاصی شخصی برای کاربر <b>${targetUsername}</b> است و استفاده از آن منحصراً برای مالک حساب امکان‌پذیر می‌باشد.`,
+                  parse_mode: 'HTML'
+                })
+              });
+              return new Response('OK');
+            }
+          } else {
+            // در صورتی که هنوز شناسه مالک قفل نشده باشد، اولین استارت‌کننده به عنوان مالک انحصاری ثبت می‌شود
+            if (!u.telegram.bot) u.telegram.bot = {};
+            u.telegram.bot.ownerId = senderId;
+          }
+
+          // ذخیره قطعی شناسه عددی چت مالک جهت دریافت اعلان‌ها و رسانه‌های Anti-TTL و ضد حذف/ویرایش
+          if (String(u.telegram.bot.chatId) !== String(chatId) || !u.telegram.bot.ownerId) {
             u.telegram.bot.chatId = String(chatId);
+            u.telegram.bot.ownerId = senderId;
             await env.KV.put('user:' + targetUsername, JSON.stringify(u));
           }
 
@@ -1597,8 +1673,23 @@ export default {
         // پاسخ به کلیک دکمه‌های اینلاین شیشه‌ای
         if (update.callback_query) {
           const cb = update.callback_query;
+          const cbSenderId = String(cb.from?.id);
           const chatId = cb.message?.chat?.id || cb.from.id;
           const data = cb.data;
+
+          // 🔒 قفل انحصاری امنیتی دکمه‌های اینلاین شیشه‌ای برای غیرمالک
+          if (allowedOwnerId && cbSenderId !== String(allowedOwnerId)) {
+            await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: cb.id,
+                text: '⛔ دسترسی غیرمجاز! این ربات شخصی است و فقط به مالک حساب پاسخ می‌دهد.',
+                show_alert: true
+              })
+            });
+            return new Response('OK');
+          }
 
           if (data === 'bot_status') {
             const statusMsg = `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
