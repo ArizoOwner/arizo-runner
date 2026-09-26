@@ -19,7 +19,7 @@
 
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
-import { NewMessage } from 'telegram/events/index.js';
+import { NewMessage, Raw } from 'telegram/events/index.js';
 import { CustomFile } from 'telegram/client/uploads.js';
 import { strippedPhotoToJpg } from 'telegram/Utils.js';
 import { getStylizedTime, renderDynamicBio, isSleepTime } from '../src/clock.js';
@@ -182,6 +182,89 @@ async function deleteTelegramMessage(client, message, username = '') {
   }
 
   return deleted;
+}
+
+/**
+ * ارسال پیام متنی با فرمت HTML به ربات تلگرام اختصاصی کاربر
+ */
+async function sendBotTelegramMessage(token, chatId, text) {
+  if (!token || !chatId || !text) return false;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+      })
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn(`⚠️ [sendBotTelegramMessage] Telegram API non-200: ${err}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('❌ [sendBotTelegramMessage] Error:', err.message);
+    return false;
+  }
+}
+
+/**
+ * ارسال انواع رسانه (عکس، فیلم، صوت یا فایل) به ربات تلگرام اختصاصی کاربر
+ */
+async function sendBotTelegramMedia(token, chatId, buffer, fileName, caption, isPhoto, isVideo, isVoice) {
+  if (!token || !chatId || !buffer || buffer.length === 0) return false;
+
+  let endpoint = 'sendDocument';
+  let field = 'document';
+
+  if (isPhoto) {
+    endpoint = 'sendPhoto';
+    field = 'photo';
+  } else if (isVoice) {
+    endpoint = 'sendVoice';
+    field = 'voice';
+  } else if (isVideo) {
+    endpoint = 'sendVideo';
+    field = 'video';
+  }
+
+  try {
+    const fd = new FormData();
+    fd.append('chat_id', chatId);
+    fd.append('caption', caption || '');
+    fd.append('parse_mode', 'HTML');
+    fd.append(field, new Blob([buffer]), fileName || 'file.bin');
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
+      method: 'POST',
+      body: fd
+    });
+
+    if (res.ok) return true;
+
+    // در صورت رد شدن فرمت بومی، تلاش مجدد به صورت Document
+    if (endpoint !== 'sendDocument') {
+      const fdDoc = new FormData();
+      fdDoc.append('chat_id', chatId);
+      fdDoc.append('caption', caption || '');
+      fdDoc.append('parse_mode', 'HTML');
+      fdDoc.append('document', new Blob([buffer]), fileName || 'file.bin');
+
+      const resDoc = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+        method: 'POST',
+        body: fdDoc
+      });
+      return resDoc.ok;
+    }
+    return false;
+  } catch (err) {
+    console.error('❌ [sendBotTelegramMedia] Error:', err.message);
+    return false;
+  }
 }
 
 /**
@@ -416,6 +499,8 @@ class TelegramConnectionPool {
         },
         afkCooldownMap: new Map(),
         localMutedUsers: new Set(),
+        recentMessagesCache: new Map(),
+        selfbotDeletedIds: new Set(),
         myId: null,
         hasListeners: false
       };
@@ -427,7 +512,7 @@ class TelegramConnectionPool {
         if (me && me.id) entry.myId = me.id.toString();
       } catch (_) {}
 
-      // اتصال رویدادهای زنده سلف‌بات (AFK, Mute, Anti-TTL)
+      // اتصال رویدادهای زنده سلف‌بات (AFK, Mute, Anti-TTL, Anti-Delete, Anti-Edit)
       this.attachEventListeners(entry, username);
     } else if (!entry.client.connected) {
       console.log(`🔌 Reconnecting dropped socket for [${username}]...`);
@@ -448,7 +533,8 @@ class TelegramConnectionPool {
         afkCooldown: userSettings.afkCooldown ?? 10,
         muteEnabled: !!userSettings.muteEnabled || serverMuted.length > 0,
         mutedUsers: serverMuted,
-        antiTtlEnabled: !!userSettings.antiTtlEnabled
+        antiTtlEnabled: !!userSettings.antiTtlEnabled,
+        bot: userSettings.bot || null
       };
       resolveMutedUsernames(entry);
     }
@@ -460,6 +546,7 @@ class TelegramConnectionPool {
     if (entry.hasListeners) return;
     entry.hasListeners = true;
 
+    // ۱. رویداد پیام‌های جدید (AFK, Mute, Anti-TTL)
     entry.client.addEventHandler(async (event) => {
       try {
         await this.handleIncomingMessage(entry, username, event);
@@ -467,7 +554,17 @@ class TelegramConnectionPool {
         console.error(`⚠️ [${username}] Message event handler error:`, err.message);
       }
     }, new NewMessage({}));
-    console.log(`🛡️ [${username}] Event listeners attached (AFK, Mute, Anti-TTL active)!`);
+
+    // ۲. رویدادهای خام MTProto برای ضد حذف و ضد ویرایش پیام (Anti-Delete & Anti-Edit)
+    entry.client.addEventHandler(async (update) => {
+      try {
+        await this.handleRawUpdate(entry, username, update);
+      } catch (err) {
+        console.error(`⚠️ [${username}] Raw update handler error:`, err.message);
+      }
+    }, new Raw({}));
+
+    console.log(`🛡️ [${username}] Event listeners attached (AFK, Mute, Anti-TTL, Anti-Delete, Anti-Edit active)!`);
     resolveMutedUsernames(entry);
   }
 
@@ -566,6 +663,55 @@ class TelegramConnectionPool {
     // ثبت لاگ ورودی پیام‌ها جهت شفافیت عملکرد سلف‌بات
     if (isPrivateChat || !isOut) {
       console.log(`📩 [${username}] Message received: #${message.id} | from: ${message.senderId || 'unknown'} | isOut: ${isOut} | isPrivate: ${isPrivateChat}`);
+    }
+
+    // ذخیره پیام‌های ورودی چت خصوصی در کش جهت نظارت بر ضد حذف و ضد ویرایش (Anti-Delete & Anti-Edit)
+    if (isPrivateChat && !isOut && message.id && entry.recentMessagesCache) {
+      let sender = null;
+      try { sender = await message.getSender(); } catch (_) {}
+      const senderFullName = sender ? (
+        [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 
+        sender.title || 
+        (sender.username ? `@${sender.username}` : (peerIdStr || 'کاربر'))
+      ) : (peerIdStr || 'کاربر');
+
+      const isPhoto = message.media instanceof Api.MessageMediaPhoto || Boolean(message.photo);
+      const isVoice = Boolean(message.voice) || Boolean(message.media?.voice);
+      const isVideo = Boolean(message.video) || Boolean(message.media?.video);
+
+      let fileName = 'media.bin';
+      if (isPhoto) fileName = `photo_${Date.now()}.jpg`;
+      else if (isVoice) fileName = `voice_${Date.now()}.ogg`;
+      else if (isVideo) fileName = `video_${Date.now()}.mp4`;
+
+      const cacheObj = {
+        id: message.id,
+        senderId: peerIdStr || 'unknown',
+        senderName: senderFullName,
+        senderUsername: sender?.username || '',
+        text: message.text || message.message || '',
+        date: message.date || Math.floor(Date.now() / 1000),
+        hasMedia: Boolean(message.media),
+        isPhoto,
+        isVideo,
+        isVoice,
+        fileName
+      };
+
+      entry.recentMessagesCache.set(message.id, cacheObj);
+      if (entry.recentMessagesCache.size > 1200) {
+        const oldestKey = entry.recentMessagesCache.keys().next().value;
+        entry.recentMessagesCache.delete(oldestKey);
+      }
+
+      // دانلود پیش‌دستانه امن برای تصاویر و ویس‌های عادی زیر ۴ مگابایت جهت ارسال به ربات در صورت حذف
+      if ((isPhoto || isVoice) && !message.media?.ttlSeconds && !message.media?.ttl_seconds) {
+        downloadMediaSafely(entry.client, message, username).then(buf => {
+          if (buf && buf.length > 0 && buf.length < 4 * 1024 * 1024) {
+            cacheObj.mediaBuffer = buf;
+          }
+        }).catch(() => {});
+      }
     }
 
     // ۱. دستورات سریع تلگرامی خود کاربر (.mute و .unmute)
@@ -758,20 +904,45 @@ class TelegramConnectionPool {
 
             let sendSuccess = false;
 
-            // مرحله ۱: ارسال رسانه مستقیم با حالت بومی (Photo / Video / Voice)
-            try {
-              await entry.client.sendFile('me', {
-                file: customFile,
-                caption,
-                parseMode: 'html',
-                forceDocument: false,
-                voiceNote: isVoice,
-                videoNote: isVideoNote
-              });
-              sendSuccess = true;
-              console.log(`✅ [${username}] Anti-TTL media (${fileName}, ${buffer.length} bytes) successfully saved to Saved Messages as native media!`);
-            } catch (nativeErr) {
-              console.warn(`⚠️ [${username}] Native media send failed (${nativeErr.message}). Retrying as document...`);
+            // مرحله ۰: ارسال مستقیم به ربات تلگرام اختصاصی کاربر (در صورت فعال بودن)
+            const bot = entry.settings?.bot;
+            const targetChatId = bot?.chatId || entry.myId;
+            if (bot?.token && targetChatId && bot?.forwardTtlToBot !== false) {
+              try {
+                sendSuccess = await sendBotTelegramMedia(
+                  bot.token,
+                  targetChatId,
+                  buffer,
+                  fileName,
+                  caption,
+                  isPhoto,
+                  isVideo,
+                  isVoice
+                );
+                if (sendSuccess) {
+                  console.log(`✅ [${username}] Anti-TTL media (${fileName}, ${buffer.length} bytes) successfully delivered directly to Telegram Helper Bot!`);
+                }
+              } catch (botErr) {
+                console.warn(`⚠️ [${username}] Forwarding Anti-TTL to helper bot failed:`, botErr.message);
+              }
+            }
+
+            // مرحله ۱: در صورت عدم وجود ربات یا عدم موفقیت، ارسال پشتیبان به Saved Messages اکانت
+            if (!sendSuccess) {
+              try {
+                await entry.client.sendFile('me', {
+                  file: customFile,
+                  caption,
+                  parseMode: 'html',
+                  forceDocument: false,
+                  voiceNote: isVoice,
+                  videoNote: isVideoNote
+                });
+                sendSuccess = true;
+                console.log(`✅ [${username}] Anti-TTL media (${fileName}, ${buffer.length} bytes) successfully saved to Saved Messages as native media!`);
+              } catch (nativeErr) {
+                console.warn(`⚠️ [${username}] Native media send failed (${nativeErr.message}). Retrying as document...`);
+              }
             }
 
             // مرحله ۲: در صورت عدم پذیرش ابعاد/فرمت توسط تلگرام، ارسال امن به صورت Document
@@ -909,6 +1080,7 @@ class TelegramConnectionPool {
         const senderDisplay = sender?.username ? `@${sender.username}` : (Array.from(senderIds)[0] || 'ناشناس');
         console.log(`🔇 [${username}] Mute triggered for ${senderDisplay} (target: "${matchedTarget}"). Deleting message #${message.id}...`);
 
+        if (entry.selfbotDeletedIds) entry.selfbotDeletedIds.add(message.id);
         await deleteTelegramMessage(entry.client, message, username);
         return; // از ادامه اجرای سایر بخش‌ها (از جمله منشی خودکار) جلوگیری می‌شود
       }
@@ -952,6 +1124,102 @@ class TelegramConnectionPool {
         } else {
           const remainingSec = Math.round((cooldownMs - (now - lastReply)) / 1000);
           console.log(`⏳ [${username}] AFK cooldown active for ${senderIdStr} (${remainingSec}s remaining). Skipping reply.`);
+        }
+      }
+    }
+  }
+
+  async handleRawUpdate(entry, username, update) {
+    if (!update) return;
+
+    const bot = entry.settings?.bot;
+    if (!bot || !bot.token) return;
+
+    const targetChatId = bot.chatId || entry.myId;
+    if (!targetChatId) return;
+
+    // ۱. بررسی رویداد حذف پیام در پیوی (Anti-Delete)
+    const isDelete = update instanceof Api.UpdateDeleteMessages || 
+                     update instanceof Api.UpdateDeleteChannelMessages ||
+                     update.className === 'UpdateDeleteMessages' || 
+                     update.className === 'UpdateDeleteChannelMessages';
+
+    if (isDelete && Array.isArray(update.messages) && bot.antiDeleteEnabled !== false) {
+      for (const msgId of update.messages) {
+        // اگر این پیام توسط خود سلف‌بات حذف شده باشد (مثلاً فیلتر سکوت)، نادیده می‌گیریم
+        if (entry.selfbotDeletedIds && entry.selfbotDeletedIds.has(msgId)) {
+          entry.selfbotDeletedIds.delete(msgId);
+          continue;
+        }
+
+        if (entry.recentMessagesCache && entry.recentMessagesCache.has(msgId)) {
+          const cached = entry.recentMessagesCache.get(msgId);
+          entry.recentMessagesCache.delete(msgId);
+
+          const dateStr = cached.date 
+            ? new Date(cached.date * 1000).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' }) 
+            : 'لحظاتی پیش';
+          const senderUserStr = cached.senderUsername ? ` (@${cached.senderUsername})` : '';
+
+          const caption = `🗑️ <b>پیام حذف شده در پیوی!</b>\n\n` +
+            `👤 <b>فرستنده:</b> ${cached.senderName}${senderUserStr} (<code>${cached.senderId}</code>)\n` +
+            `🕒 <b>زمان ارسال پیام:</b> ${dateStr}\n\n` +
+            `📝 <b>متن پیام:</b>\n${cached.text ? cached.text : '<i>(پیام فاقد متن بود)</i>'}`;
+
+          console.log(`🗑️ [${username}] Anti-Delete triggered for message #${msgId} from ${cached.senderId}`);
+
+          if (cached.mediaBuffer && cached.mediaBuffer.length > 0) {
+            sendBotTelegramMedia(
+              bot.token,
+              targetChatId,
+              cached.mediaBuffer,
+              cached.fileName || 'deleted_media.jpg',
+              caption,
+              cached.isPhoto,
+              cached.isVideo,
+              cached.isVoice
+            ).catch(e => console.warn(`⚠️ [${username}] Anti-Delete media send error:`, e.message));
+          } else {
+            sendBotTelegramMessage(bot.token, targetChatId, caption)
+              .catch(e => console.warn(`⚠️ [${username}] Anti-Delete message send error:`, e.message));
+          }
+        }
+      }
+    }
+
+    // ۲. بررسی رویداد ویرایش پیام در پیوی (Anti-Edit)
+    const isEdit = update instanceof Api.UpdateEditMessage || 
+                   update instanceof Api.UpdateEditChannelMessage ||
+                   update.className === 'UpdateEditMessage' || 
+                   update.className === 'UpdateEditChannelMessage';
+
+    if (isEdit && update.message && bot.antiEditEnabled !== false) {
+      const editMsg = update.message;
+      const msgId = editMsg.id;
+
+      if (entry.recentMessagesCache && entry.recentMessagesCache.has(msgId)) {
+        const cached = entry.recentMessagesCache.get(msgId);
+        const oldText = (cached.text || '').trim();
+        const newText = (editMsg.message || editMsg.text || '').trim();
+
+        if (newText && oldText !== newText) {
+          const dateStr = editMsg.date 
+            ? new Date(editMsg.date * 1000).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' }) 
+            : 'اکنون';
+          const senderUserStr = cached.senderUsername ? ` (@${cached.senderUsername})` : '';
+
+          const alertText = `✏️ <b>پیام ویرایش شده در پیوی!</b>\n\n` +
+            `👤 <b>فرستنده:</b> ${cached.senderName}${senderUserStr} (<code>${cached.senderId}</code>)\n` +
+            `🕒 <b>زمان ویرایش:</b> ${dateStr}\n\n` +
+            `⏮️ <b>متن قبل از ویرایش:</b>\n<blockquote>${oldText || '(خالی)'}</blockquote>\n\n` +
+            `⏭️ <b>متن جدید:</b>\n<blockquote>${newText}</blockquote>`;
+
+          console.log(`✏️ [${username}] Anti-Edit triggered for message #${msgId} from ${cached.senderId}`);
+          sendBotTelegramMessage(bot.token, targetChatId, alertText)
+            .catch(e => console.warn(`⚠️ [${username}] Anti-Edit send error:`, e.message));
+
+          cached.text = newText;
+          entry.recentMessagesCache.set(msgId, cached);
         }
       }
     }
