@@ -365,11 +365,14 @@ export default {
             if (!u) return { username: uname, exists: false };
             const sub = checkUserSubscription(u);
             const isSuspended = !sub.active || u.isSuspended;
-            const isUserAdmin = u.role === 'admin' || uname === 'amirmaster' || uname === 'admin';
+            const cleanUname = uname.toLowerCase();
+            const isOwner = cleanUname === 'amirmaster' || cleanUname === 'admin' || (usersList.length > 0 && cleanUname === usersList[0].toLowerCase());
+            const isUserAdmin = isOwner || u.role === 'admin';
             return {
               username: uname,
               role: isUserAdmin ? 'admin' : 'user',
               isAdmin: isUserAdmin,
+              isOwner,
               createdAt: u.createdAt,
               hasTelegram: !!u.telegram?.sessionEncrypted,
               enabled: u.telegram?.enabled ?? false,
@@ -404,6 +407,14 @@ export default {
         const cleanUser = String(username || '').trim().toLowerCase();
         const userData = await env.KV.get('user:' + cleanUser, 'json');
         if (!userData) return json({ error: 'کاربر یافت نشد' }, 404);
+
+        const usersList = await env.KV.get('users_list', 'json') || [];
+        const isRootOwner = cleanUser === 'amirmaster' || cleanUser === 'admin' || (usersList.length > 0 && cleanUser === usersList[0].toLowerCase());
+
+        // 🛡️ گارد امنیتی غیرقابل نفوذ: جلوگیری از حذف، تعلیق یا تنزل ادمین اولیه / مالک اصلی
+        if (isRootOwner && (action === 'delete' || action === 'toggle_role' || action === 'toggle_suspend')) {
+          return json({ error: 'خطای امنیتی: حذف، تعلیق یا تغییر سطح دسترسی مدیر ارشد و مالک اصلی سامانه امکان‌پذیر نیست.' }, 403);
+        }
 
         if (action === 'toggle') {
           if (userData.telegram) {
