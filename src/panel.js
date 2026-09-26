@@ -302,13 +302,20 @@ export function panelHTML(env) {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: min(94vw, 880px);
+      max-width: min(94vw, 980px);
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: 24px;
       box-sizing: border-box;
       animation: pageFadeIn 0.5s var(--smooth-physics) both;
+    }
+
+    @media (min-width: 1200px) {
+      .container {
+        max-width: 1040px;
+        gap: 26px;
+      }
     }
 
     @keyframes pageFadeIn {
@@ -325,7 +332,7 @@ export function panelHTML(env) {
       border: 1px solid var(--border-subtle);
       border-top: 1px solid var(--border-specular);
       border-radius: var(--radius-xl);
-      padding: 28px;
+      padding: clamp(20px, 3.2vw, 32px);
       box-shadow: var(--card-shadow);
       transition: transform 0.35s var(--smooth-physics),
                   box-shadow 0.35s var(--smooth-physics),
@@ -763,44 +770,40 @@ export function panelHTML(env) {
       border-color: var(--border-specular);
     }
 
-    /* 📑 نوار تب‌های استودیوی سلف‌بات - کاملاً ریسپانسیو با حس نئومورفیک */
+    /* 📑 نوار تب‌های استودیوی سلف‌بات - کاملاً ریسپانسیو و منعطف برای موبایل، تبلت و کامپیوتر */
     .studio-tab-bar {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
       background: var(--segmented-bg);
       border-radius: 20px;
-      padding: 6px;
+      padding: 8px;
       margin-bottom: 24px;
       border: 1px solid var(--border-subtle);
       border-top: 1px solid var(--border-specular);
-      gap: 6px;
-      overflow-x: auto;
-      overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      scroll-snap-type: x mandatory;
+      gap: 8px;
       box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35);
     }
-    .studio-tab-bar::-webkit-scrollbar { display: none; }
     .studio-tab-btn {
-      flex: 0 0 auto;
-      padding: 11px 16px;
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 6px;
       border-radius: 14px;
       border: 1px solid transparent;
       background: transparent;
       color: var(--text-muted);
-      font-size: 0.84rem;
+      font-size: 0.81rem;
       font-weight: 800;
       font-family: inherit;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       user-select: none;
       white-space: nowrap;
-      scroll-snap-align: start;
       letter-spacing: -0.2px;
       transition: all 0.24s var(--smooth-physics);
+      text-align: center;
     }
     .studio-tab-btn:hover:not(.active) {
       color: var(--text-main);
@@ -818,26 +821,25 @@ export function panelHTML(env) {
       transform: translateY(-1px);
     }
 
-    @media (min-width: 760px) {
+    @media (max-width: 920px) {
       .studio-tab-bar {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        overflow-x: visible;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        scroll-snap-type: x mandatory;
+        padding: 6px;
+        gap: 6px;
       }
+      .studio-tab-bar::-webkit-scrollbar { display: none; }
       .studio-tab-btn {
-        flex: 1 1 auto;
-        padding: 12px 12px;
+        flex: 0 0 auto;
+        width: auto;
+        scroll-snap-align: start;
+        padding: 10px 16px;
         font-size: 0.82rem;
-      }
-    }
-    @media (min-width: 960px) {
-      .studio-tab-bar {
-        grid-template-columns: repeat(6, 1fr);
-      }
-      .studio-tab-btn {
-        padding: 11px 8px;
-        font-size: 0.79rem;
       }
     }
 
@@ -960,10 +962,17 @@ export function panelHTML(env) {
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 14px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
       box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+    @media (min-width: 680px) {
+      .tg-mockup-body {
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        align-items: center;
+      }
     }
     .tg-mockup-field {
       display: flex;
@@ -1207,14 +1216,14 @@ export function panelHTML(env) {
     }
     .input-field::placeholder {
       color: var(--text-dim);
-      opacity: 0.85;
-      font-size: 0.85rem;
-      font-family: 'Vazirmatn', sans-serif;
+      opacity: 0.75;
+      font-size: 0.84rem;
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
       direction: rtl;
       text-align: right;
     }
     .input-field:focus::placeholder {
-      opacity: 0.45;
+      opacity: 0.35;
     }
     .input-field:focus {
       border-color: var(--primary);
@@ -1236,6 +1245,8 @@ export function panelHTML(env) {
       text-align: left;
     }
     .input-field.mono::placeholder {
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 0.82rem;
       direction: rtl;
       text-align: right;
     }
@@ -1250,12 +1261,41 @@ export function panelHTML(env) {
       cursor: not-allowed;
     }
 
+    /* 📱 ردیف ورودی به همراه دکمه عملیاتی واکنش‌گرا (Input with Action Button) */
+    .input-action-row {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      width: 100%;
+    }
+    .input-action-row .input-field {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .input-action-row .btn {
+      flex: 0 0 auto;
+      width: auto;
+      white-space: nowrap;
+      padding: 12px 22px;
+    }
+    @media (max-width: 600px) {
+      .input-action-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .input-action-row .input-field,
+      .input-action-row .btn {
+        width: 100% !important;
+        flex: 1 1 100%;
+      }
+    }
+
     /* 🔘 استایل فوق پیشرفته دکمه‌ها با افکت نورانی و لرزش لمسی */
     .btn {
       width: 100%;
-      padding: 13px 22px;
+      padding: 13px 20px;
       border-radius: var(--radius-md);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 800;
       font-family: inherit;
       border: 1px solid transparent;
@@ -1269,12 +1309,17 @@ export function panelHTML(env) {
       overflow: hidden;
       white-space: nowrap;
       letter-spacing: -0.2px;
+      text-align: center;
       transition: transform 0.22s var(--spring-physics),
                   box-shadow 0.22s ease,
                   background-color 0.2s ease,
                   border-color 0.2s ease,
                   color 0.2s ease;
       will-change: transform;
+    }
+    .btn-auto {
+      width: auto !important;
+      display: inline-flex;
     }
     .btn::before {
       content: '';
@@ -1785,6 +1830,7 @@ export function panelHTML(env) {
     #studioPaneMute:not(.hidden),
     #studioPaneAntittl:not(.hidden),
     #studioPaneAutomation:not(.hidden),
+    #studioPaneBot:not(.hidden),
     #adminTabContentStats:not(.hidden),
     #adminTabContentCodes:not(.hidden),
     #adminTabContentUsers:not(.hidden),
@@ -1803,11 +1849,45 @@ export function panelHTML(env) {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
+      margin-top: 14px;
+      width: 100%;
+    }
+    .action-buttons-grid .btn {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      white-space: normal;
+      line-height: 1.35;
+      text-align: center;
     }
     .digits-row {
       display: flex;
       gap: 14px;
       margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    /* 👤 بهینه‌سازی فرم‌های ورود، اتصال تلگرام و دکمه ذخیره در کامپیوتر و گوشی */
+    #userAuthSection {
+      max-width: 490px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #telegramConnectSection {
+      max-width: 640px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #adminLoginBox {
+      max-width: 490px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #saveBtn {
+      max-width: 500px;
+      margin: 20px auto 24px auto;
+      display: flex;
     }
 
     .hidden { display: none !important; }
@@ -1819,6 +1899,10 @@ export function panelHTML(env) {
       }
       .admin-kpi-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .action-buttons-grid {
+        grid-template-columns: 1fr;
         gap: 10px;
       }
     }
@@ -2213,7 +2297,7 @@ export function panelHTML(env) {
             <span>🎟️ کد لایسنس / ردیم‌کد فعال‌سازی</span>
             <span style="font-size:0.75rem; color:var(--accent-amber);">الزامی جهت ساخت حساب</span>
           </label>
-          <input type="text" id="regLicenseCode" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس فعال‌سازی)" style="text-transform: uppercase; font-size:1.05rem; letter-spacing:1px; color:var(--accent-purple);">
+          <input type="text" id="regLicenseCode" class="input-field mono" placeholder="کد لایسنس فعال‌سازی (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase; font-size:1.05rem; letter-spacing:1px; color:var(--accent-purple);">
           <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
             💳 این کد را از فروشنده دریافت کرده و در اینجا وارد کنید (برای مدیر اول در دیتابیس تازه، نیازی به لایسنس نیست).
           </div>
@@ -2251,9 +2335,9 @@ export function panelHTML(env) {
           <div style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
             مدت زمان اشتراک شما به پایان رسیده و عملکرد سلف‌بات روی تلگرام متوقف شده است. جهت فعال‌سازی مجدد و خروج آنی از تعلیق، کد لایسنس جدید خود را وارد کنید:
           </div>
-          <div style="display: flex; gap: 10px; max-width: 540px; flex-wrap: wrap;">
-            <input type="text" id="quickRenewCodeInput" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس جدید جهت خروج از تعلیق)" style="flex: 2; min-width: 190px; text-transform: uppercase; font-weight: 700; color: var(--accent-purple);">
-            <button class="btn btn-primary" id="quickRenewBtn" onclick="doQuickRenew()" style="flex: 1; min-width: 160px; background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);">
+          <div class="input-action-row" style="max-width: 580px;">
+            <input type="text" id="quickRenewCodeInput" class="input-field mono" placeholder="کد لایسنس جدید جهت خروج از تعلیق (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase; font-weight: 700; color: var(--accent-purple);">
+            <button class="btn btn-primary" id="quickRenewBtn" onclick="doQuickRenew()" style="background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);">
               <span>🚀 خروج از تعلیق و شارژ</span>
             </button>
           </div>
@@ -2345,17 +2429,17 @@ export function panelHTML(env) {
       <div id="tgPhoneBox">
         <div class="form-group">
           <label class="form-label">شماره تلفن اکانت تلگرام</label>
-          <input type="tel" id="tgPhone" class="input-field mono" placeholder="+989123456789 (شماره همراه با کد کشور)" dir="ltr">
+          <input type="tel" id="tgPhone" class="input-field mono" placeholder="شماره همراه با پیش‌شماره کشور (مثال: 989123456789+)" dir="ltr">
         </div>
 
         <div id="tgCodeGroup" class="form-group hidden">
           <label class="form-label">کد ۵ رقمی ارسالی از سوی تلگرام</label>
-          <input type="text" id="tgCode" class="input-field mono" placeholder="کد ۵ رقمی ارسالی در تلگرام (مثال: 58291)" maxlength="8" dir="ltr">
+          <input type="text" id="tgCode" class="input-field mono" placeholder="کد ۵ رقمی ارسالی از تلگرام (مثال: 58291)" maxlength="8" dir="ltr">
         </div>
 
         <div id="tgPassGroup" class="form-group hidden">
           <label class="form-label">رمز تأیید دو مرحله‌ای اکانت (2FA)</label>
-          <input type="password" id="tgPass" class="input-field" placeholder="رمز تأیید دومرحله‌ای (Two-Step Verification)">
+          <input type="password" id="tgPass" class="input-field" placeholder="رمز تأیید دومرحله‌ای (در صورت فعال بودن 2FA)">
         </div>
 
         <button class="btn btn-primary" id="tgAuthBtn" onclick="doTelegramAuth()">
@@ -2367,7 +2451,7 @@ export function panelHTML(env) {
       <div id="tgSessBox" class="hidden">
         <div class="form-group">
           <label class="form-label">رشته سشن خام تلگرام (StringSession)</label>
-          <textarea id="tgSessionInput" class="input-field mono" rows="4" placeholder="رشته طولانی StringSession تلگرام خود را اینجا پیست کنید (Pyrogram یا Telethon/GramJS)..." dir="ltr"></textarea>
+          <textarea id="tgSessionInput" class="input-field mono" rows="4" placeholder="رشته طولانی StringSession تلگرام خود را اینجا وارد کنید (Pyrogram یا Telethon/GramJS)..." dir="ltr"></textarea>
         </div>
         <button class="btn btn-primary" id="tgSessBtn" onclick="doConnectDirectSession()">
           <span>اتصال و رمزنگاری فوری با AES-256</span>
@@ -2400,25 +2484,25 @@ export function panelHTML(env) {
       <!-- 📑 نوار تب‌های استودیو - کاملاً واکنش‌گرا و ریسپانسیو برای موبایل و کامپیوتر -->
       <div class="studio-tab-bar">
         <button id="studioTabClock" class="studio-tab-btn active" onclick="switchStudioTab('clock')">
-          <span>🕒</span> <span>ساعت و فونت</span>
+          <span>🕒</span> <span>ساعت و استایل</span>
         </button>
         <button id="studioTabBio" class="studio-tab-btn" onclick="switchStudioTab('bio')">
           <span>📝</span> <span>بیوگرافی زنده</span>
         </button>
         <button id="studioTabAfk" class="studio-tab-btn" onclick="switchStudioTab('afk')">
-          <span>🤖</span> <span>منشی پیوی (AFK)</span>
+          <span>🤖</span> <span>منشی خودکار</span>
         </button>
         <button id="studioTabMute" class="studio-tab-btn" onclick="switchStudioTab('mute')">
-          <span>🔇</span> <span>سکوت پیام (Mute)</span>
+          <span>🔇</span> <span>فیلتر سکوت</span>
         </button>
         <button id="studioTabAntittl" class="studio-tab-btn" onclick="switchStudioTab('antittl')">
-          <span>📸</span> <span>ضد خودتخریبی (Anti-TTL)</span>
+          <span>📸</span> <span>ضد خودتخریبی</span>
         </button>
         <button id="studioTabAutomation" class="studio-tab-btn" onclick="switchStudioTab('automation')">
           <span>🌙</span> <span>حالت خواب</span>
         </button>
         <button id="studioTabBot" class="studio-tab-btn" onclick="switchStudioTab('bot')">
-          <span>🤖</span> <span>ربات اختصاصی و لاگر</span>
+          <span>⚡</span> <span>ربات و لاگر</span>
         </button>
       </div>
 
@@ -2448,11 +2532,11 @@ export function panelHTML(env) {
         <div style="display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
           <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
             <label class="form-label">پیشوند ساعت (قبل از ساعت)</label>
-            <input type="text" id="prefixInput" class="input-field" placeholder="مثلاً: [ یا | یا ⚡ " maxlength="15" oninput="updateLiveClock()">
+            <input type="text" id="prefixInput" class="input-field" placeholder="پیشوند ساعت (مثلاً: [ یا | یا ⚡)" maxlength="15" oninput="updateLiveClock()">
           </div>
           <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
             <label class="form-label">پسوند ساعت (بعد از ساعت)</label>
-            <input type="text" id="suffixInput" class="input-field" placeholder="مثلاً: ] یا ⚡ یا VIP" maxlength="15" oninput="updateLiveClock()">
+            <input type="text" id="suffixInput" class="input-field" placeholder="پسوند ساعت (مثلاً: ] یا ⚡ یا VIP)" maxlength="15" oninput="updateLiveClock()">
           </div>
         </div>
 
@@ -2470,11 +2554,11 @@ export function panelHTML(env) {
 
         <!-- ارقام دستی -->
         <div class="digits-row" style="margin-top:16px;">
-          <div class="form-group" style="flex: 3; margin-bottom: 0;">
+          <div class="form-group" style="flex: 3; min-width: 180px; margin-bottom: 0;">
             <label class="form-label">ارقام دلخواه دستی (۱۰ کاراکتر ۰ تا ۹)</label>
             <input type="text" id="customDigits" class="input-field mono" placeholder="۱۰ رقم دلخواه از ۰ تا ۹ به ترتیب (مثال: ۰۱۲۳۴۵۶۷۸۹)" dir="ltr">
           </div>
-          <div class="form-group" style="flex: 1; min-width: 70px; margin-bottom: 0;">
+          <div class="form-group" style="flex: 1; min-width: 80px; margin-bottom: 0;">
             <label class="form-label">جداکننده</label>
             <input type="text" id="colonInput" class="input-field mono center-text" value=":" maxlength="4" placeholder=":" style="text-align:center;">
           </div>
@@ -2496,7 +2580,7 @@ export function panelHTML(env) {
 
         <div class="form-group">
           <label class="form-label">قالب متن بیوگرافی تلگرام (حداکثر ۷۰ کاراکتر)</label>
-          <input type="text" id="bioTemplateInput" class="input-field" placeholder="مثال: ⏳ {time} | 📅 {date} | ⚡ Arizo Pro" maxlength="70" oninput="updateLiveClock()">
+          <input type="text" id="bioTemplateInput" class="input-field" placeholder="قالب بیوگرافی (مثال: ⏳ {time} | 📅 {date} | ⚡ Arizo Pro)" maxlength="70" oninput="updateLiveClock()">
           <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; align-items:center;">
             <span style="font-size:0.75rem; color:var(--text-muted);">افزودن متغیر با کلیک:</span>
             <button type="button" class="var-chip" onclick="insertBioVar('{time}')">⏰ {time} (ساعت)</button>
@@ -2529,7 +2613,7 @@ export function panelHTML(env) {
 
         <div class="form-group">
           <label class="form-label">متن پاسخ خودکار منشی به مخاطبان در پیوی</label>
-          <textarea id="afkMessageInput" class="input-field" rows="3" placeholder="درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳"></textarea>
+          <textarea id="afkMessageInput" class="input-field" rows="3" placeholder="متن پاسخ خودکار منشی (مثال: درود! در حال حاضر امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ خواهم داد ⏳)"></textarea>
         </div>
 
         <div class="form-group">
@@ -2562,7 +2646,7 @@ export function panelHTML(env) {
 
         <div class="form-group">
           <label class="form-label">لیست آیدی‌های عددی یا یوزرنیم‌های تلگرام جهت سکوت (با کاما جدا کنید)</label>
-          <input type="text" id="mutedUsersInput" class="input-field mono" placeholder="مثلاً: 123456789, @spammer_user, 987654321" dir="ltr">
+          <input type="text" id="mutedUsersInput" class="input-field mono" placeholder="آیدی‌های عددی یا یوزرنیم‌های تلگرام با کاما (مثال: 123456789, @username, 987654321)" dir="ltr">
           <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
             💡 شما همچنین در محیط تلگرام می‌توانید با ریپلای روی پیام هر شخص و ارسال <code>.mute</code> او را اضافه کرده و با <code>.unmute</code> از سکوت خارج کنید.
           </div>
@@ -2630,7 +2714,7 @@ export function panelHTML(env) {
 
         <div class="form-group">
           <label class="form-label">متن نام خانوادگی در طول ساعات خواب</label>
-          <input type="text" id="sleepTextInput" class="input-field" value="😴 Sleep" placeholder="مثلاً: 😴 Sleep یا 🌙 خوابیدم" maxlength="30" oninput="updateLiveClock()">
+          <input type="text" id="sleepTextInput" class="input-field" value="😴 Sleep" placeholder="متن نام خانوادگی در خواب (مثال: 😴 Sleep یا 🌙 خوابیدم)" maxlength="30" oninput="updateLiveClock()">
         </div>
       </div>
 
@@ -2653,9 +2737,9 @@ export function panelHTML(env) {
               ➕ دریافت توکن از @BotFather
             </a>
           </label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <input type="text" id="botTokenInput" class="input-field mono" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ..." dir="ltr" style="flex:2; min-width:240px;">
-            <button class="btn btn-primary" id="btnVerifyBot" onclick="doVerifyBotToken()" style="flex:1; min-width:180px;">
+          <div class="input-action-row">
+            <input type="text" id="botTokenInput" class="input-field mono" placeholder="توکن ربات دریافتی از BotFather@ (مثال: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ)" dir="ltr">
+            <button class="btn btn-primary" id="btnVerifyBot" onclick="doVerifyBotToken()">
               <span>⚡ اتصال و فعال‌سازی وب‌هوک</span>
             </button>
           </div>
@@ -2789,13 +2873,13 @@ export function panelHTML(env) {
 
       <!-- تمدید اشتراک با ردیم‌کد -->
       <div style="background: var(--accent-purple-bg); border: 1px solid var(--accent-purple-border); border-radius: 14px; padding: 16px; margin-bottom: 20px;">
-        <div style="font-size:0.88rem; font-weight:700; color:var(--accent-purple); margin-bottom:8px;">🎟️ تمدید اعتبار با ردیم‌کد جدید Arizo</div>
-        <div class="form-group">
-          <input type="text" id="extendCodeInput" class="input-field mono" placeholder="ARIZO-XXXX-XXXX-XXXX (کد لایسنس تمدید اعتبار)" style="text-transform: uppercase;">
+        <div style="font-size:0.88rem; font-weight:700; color:var(--accent-purple); margin-bottom:10px;">🎟️ تمدید اعتبار با ردیم‌کد جدید Arizo</div>
+        <div class="input-action-row">
+          <input type="text" id="extendCodeInput" class="input-field mono" placeholder="کد لایسنس تمدید (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase;">
+          <button class="btn btn-secondary" onclick="doRedeemExtend()" style="color:var(--accent-purple); border-color:var(--accent-purple-border); white-space:nowrap;">
+            <span>تمدید و شارژ اشتراک</span>
+          </button>
         </div>
-        <button class="btn btn-secondary" onclick="doRedeemExtend()" style="color:var(--accent-purple); border-color:var(--accent-purple-border);">
-          <span>تمدید و شارژ اشتراک</span>
-        </button>
       </div>
 
       <!-- تغییر پسورد -->
