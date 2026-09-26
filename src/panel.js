@@ -4388,7 +4388,7 @@ export function panelHTML(env) {
           mutedUsers: rawMutedUsers,
           antiTtlEnabled: document.getElementById('antiTtlEnabledToggle') ? document.getElementById('antiTtlEnabledToggle').checked : false,
           bot: {
-            token: (document.getElementById('botTokenInput') && document.getElementById('botTokenInput').value.trim()) || '',
+            token: (document.getElementById('botTokenInput') && document.getElementById('botTokenInput').value.trim()) || (window.currentBotToken || ''),
             antiDeleteEnabled: document.getElementById('botAntiDeleteToggle') ? document.getElementById('botAntiDeleteToggle').checked : true,
             antiEditEnabled: document.getElementById('botAntiEditToggle') ? document.getElementById('botAntiEditToggle').checked : true,
             forwardTtlToBot: document.getElementById('botForwardTtlToggle') ? document.getElementById('botForwardTtlToggle').checked : true
@@ -4438,6 +4438,7 @@ export function panelHTML(env) {
         });
         var data = await res.json();
         if (data.ok && data.bot) {
+          if (data.bot.token) window.currentBotToken = data.bot.token;
           showToast('ربات @' + data.bot.username + ' با موفقیت متصل شد! 🎉', 'success');
           await loadUserDashboard();
         } else {
@@ -4471,6 +4472,7 @@ export function panelHTML(env) {
         });
         var data = await res.json();
         if (data.ok) {
+          window.currentBotToken = '';
           showToast('اتصال ربات با موفقیت قطع شد و حافظه کلادفلر پاکسازی گردید ✨', 'success');
           var card = document.getElementById('botInfoCard');
           if (card) card.classList.add('hidden');
@@ -4701,13 +4703,16 @@ export function panelHTML(env) {
 
             // 🤖 بارگذاری ربات تلگرام اختصاصی و تنظیمات لاگر
             if (data.bot) {
+              if (data.bot.token) {
+                window.currentBotToken = data.bot.token;
+              }
               setSafeValue('botTokenInput', data.bot.token || '');
               setSafeChecked('botAntiDeleteToggle', data.bot.antiDeleteEnabled !== false);
               setSafeChecked('botAntiEditToggle', data.bot.antiEditEnabled !== false);
               setSafeChecked('botForwardTtlToggle', data.bot.forwardTtlToBot !== false);
 
               var card = document.getElementById('botInfoCard');
-              if (card && data.bot.token) {
+              if (card && (data.bot.token || data.bot.username)) {
                 card.classList.remove('hidden');
                 var nameEl = document.getElementById('botNameDisplay');
                 if (nameEl) nameEl.textContent = data.bot.name || (data.bot.username ? ('@' + data.bot.username) : 'ربات تلگرام');
