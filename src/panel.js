@@ -3127,7 +3127,7 @@ export function panelHTML(env) {
             <span>🤖</span> <span>اتصال ربات دستیار اختصاصی تلگرام (BotFather API)</span>
           </div>
           <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.7;">
-            با اتصال ربات تلگرامی که در <b>@BotFather</b> می‌سازید، می‌توانید کنترل پنل سایت را مستقیماً داخل محیط تلگرام (Telegram Mini App) باز کنید و گزارش پیام‌های حذف شده، پیام‌های ویرایش شده و رسانه‌های زمان‌دار پیوی را در ربات دریافت کنید.
+            ⚠️ <b>قانون انحصار و امنیت:</b> هر کاربر باید در <b>@BotFather</b> ربات اختصاصی و مجزای خود را بسازد و توکن آن را وارد کند. به منظور حفظ کامل حریم خصوصی و امنیت حساب، این ربات منحصراً به مالک حساب پاسخ می‌دهد و دسترسی هر فرد دیگری به پیام‌ها یا دستورات ربات به طور کامل مسدود و غیرمجاز است.
           </div>
         </div>
 
@@ -3184,8 +3184,13 @@ export function panelHTML(env) {
                 <div style="font-size:0.75rem; color:var(--text-muted);" id="botLockStatusText">ربات منحصراً به شناسه تلگرام شما پاسخ می‌دهد و برای بقیه مسدود است.</div>
               </div>
             </div>
-            <div id="botOwnerIdDisplay" style="font-family:var(--font-mono); font-size:0.8rem; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:6px; color:var(--accent-indigo); font-weight:700;">
-              🔒 آماده قفل با اولین /start
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div id="botOwnerIdDisplay" style="font-family:var(--font-mono); font-size:0.8rem; background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:6px; color:var(--accent-indigo); font-weight:700;">
+                🔒 آماده قفل با اولین /start
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="promptSetBotOwnerId()" style="padding: 4px 8px; font-size: 0.72rem; border-color: var(--border-subtle); color: var(--text-muted); width: auto;" title="تنظیم یا تغییر دستی شناسه تلگرام مجاز">
+                ✏️ تنظیم شناسه
+              </button>
             </div>
           </div>
           <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
@@ -5009,6 +5014,38 @@ export function panelHTML(env) {
           btn.disabled = false;
           btn.innerHTML = '<span>🔌 قطع اتصال ربات</span>';
         }
+      }
+    };
+
+    window.promptSetBotOwnerId = async function() {
+      var currentId = '';
+      var lockEl = document.getElementById('botOwnerIdDisplay');
+      if (lockEl && lockEl.textContent) {
+        var m = lockEl.textContent.match(/\d{5,15}/);
+        if (m) currentId = m[0];
+      }
+      var id = prompt('شناسه عددی اکانت تلگرام خود را وارد کنید (فقط این شناسه اجازه ارسال دستور به ربات را خواهد داشت):', currentId);
+      if (id === null) return;
+      var cleanId = id.trim();
+      if (!cleanId || !/^\d{5,15}$/.test(cleanId)) {
+        showToast('شناسه عددی تلگرام باید شامل ۵ تا ۱۵ رقم باشد', 'error');
+        return;
+      }
+      try {
+        var res = await fetch('/api/telegram/lock-owner-id', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ ownerId: cleanId })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('ربات با موفقیت روی شناسه ' + cleanId + ' قفل شد! 🔒', 'success');
+          await loadUserDashboard();
+        } else {
+          showToast(data.error || 'خطا در ثبت شناسه مالک', 'error');
+        }
+      } catch (err) {
+        showToast('خطای شبکه در ارتباط با سرور', 'error');
       }
     };
 
