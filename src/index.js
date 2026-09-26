@@ -887,6 +887,7 @@ export default {
         muteEnabled: !!auth.user.telegram?.muteEnabled || (Array.isArray(auth.user.telegram?.mutedUsers) && auth.user.telegram.mutedUsers.length > 0),
         mutedUsers: auth.user.telegram?.mutedUsers || [],
         antiTtlEnabled: !!(auth.user.telegram?.antiTtlEnabled ?? auth.user.antiTtlEnabled),
+        userId: auth.user.telegram?.userId || null,
         bot: auth.user.telegram?.bot || null,
         status: liveStatus
       });
@@ -1413,6 +1414,18 @@ export default {
           return json({ error: 'اطلاعات دریافت شده متعلق به یک ربات معتبر نیست.' }, 400);
         }
 
+        // 🔒 بررسی انحصاری بودن ربات: هر کاربر باید ربات مستقل خود را در BotFather بسازد
+        const usersList = await env.KV.get('users_list', 'json') || [];
+        for (const un of usersList) {
+          if (un.toLowerCase() === auth.username.toLowerCase()) continue;
+          const otherU = await env.KV.get('user:' + un, 'json');
+          if (otherU?.telegram?.bot?.token === cleanToken || (otherU?.telegram?.bot?.id && String(otherU.telegram.bot.id) === String(botUser.id))) {
+            return json({
+              error: `این ربات (@${botUser.username}) قبلاً توسط حساب کاربری دیگری ثبت شده است! هر کاربر باید ربات اختصاصی خود را در BotFather@ بسازد و توکن اختصاصی خود را وارد کند.`
+            }, 400);
+          }
+        }
+
         // تنظیم خودکار وب‌هوک روی سرور Cloudflare جهت دریافت رویدادها و دستورات ربات
         const hostUrl = new URL(request.url).origin;
         const webhookUrl = `${hostUrl}/api/bot-webhook/${encodeURIComponent(auth.username)}`;
@@ -1458,6 +1471,11 @@ export default {
         auth.user.telegram.bot.username = botUser.username;
         auth.user.telegram.bot.name = botUser.first_name || botUser.username;
         auth.user.telegram.bot.id = botUser.id.toString();
+        // قفل انحصاری فوری مالکیت ربات به شناسه تلگرام کاربر (در صورت وجود)
+        if (auth.user.telegram.userId) {
+          auth.user.telegram.bot.ownerId = String(auth.user.telegram.userId);
+          auth.user.telegram.bot.chatId = String(auth.user.telegram.userId);
+        }
         if (auth.user.telegram.bot.antiDeleteEnabled === undefined) auth.user.telegram.bot.antiDeleteEnabled = true;
         if (auth.user.telegram.bot.antiEditEnabled === undefined) auth.user.telegram.bot.antiEditEnabled = true;
         if (auth.user.telegram.bot.forwardTtlToBot === undefined) auth.user.telegram.bot.forwardTtlToBot = true;
@@ -1558,8 +1576,15 @@ export default {
         const actualBotToken = u.telegram?.bot?.token;
         const hostUrl = new URL(request.url).origin;
 
-        // تعیین شناسه عددی مجاز مالک جهت قفل انحصاری امنیتی
-        let allowedOwnerId = u.telegram?.bot?.ownerId || u.telegram?.userId;
+        // تعیین دقیق و انحصاری شناسه عددی مالک ربات
+        let allowedOwnerId = u.telegram?.userId ? String(u.telegram.userId) : (u.telegram?.bot?.ownerId ? String(u.telegram.bot.ownerId) : null);
+        // خوددرمانگری هوشمند: تطابق دائمی شناسه ربات با شناسه ثبت‌شده تلگرام کاربر
+        if (u.telegram?.userId && u.telegram?.bot && u.telegram.bot.ownerId !== String(u.telegram.userId)) {
+          u.telegram.bot.ownerId = String(u.telegram.userId);
+          u.telegram.bot.chatId = String(u.telegram.userId);
+          await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+          allowedOwnerId = String(u.telegram.userId);
+        }
 
         // تولید توکن ورود آنی و مستقیم بدون پسورد (Single-Sign-On) برای Mini App با بهینه‌سازی حافظه KV
         let appToken = await env.KV.get('miniapp_token:' + targetUsername);
@@ -1601,58 +1626,31 @@ export default {
           const chatId = msg.chat.id;
           const text = (msg.text || '').trim();
 
-          // 🔒 قفل انحصاری امنیتی: بررسی احراز هویت هوشمند مالک ربات
+          // 🔒 قفل انحصاری امنیتی: بررسی احراز هویت مالک ربات
+          // هر فرستنده‌ای جز مالک اصلی اکیداً مسدود و رد صلاحیت می‌شود
           if (allowedOwnerId && senderId !== String(allowedOwnerId)) {
-            // بررسی هوشمند: آیا فرستنده، حساب کاربری دیگر همین مدیر در پلتفرم است؟
-            let alternateUser = null;
-            const usersList = await env.KV.get('users_list', 'json') || [];
-            for (const un of usersList) {
-              if (un === targetUsername) continue;
-              const otherU = await env.KV.get('user:' + un, 'json');
-              if (otherU && (String(otherU.telegram?.userId) === senderId || String(otherU.telegram?.bot?.ownerId) === senderId || String(otherU.telegram?.bot?.chatId) === senderId || (otherU.role === 'admin' && (senderId === '7782121775' || senderId === '5599205933')))) {
-                alternateUser = otherU;
-                break;
-              }
-            }
-            if (alternateUser) {
-              u = alternateUser;
-              targetUsername = alternateUser.username;
-              allowedOwnerId = alternateUser.telegram?.bot?.ownerId || alternateUser.telegram?.userId;
-            }
-          }
-
-          if (allowedOwnerId && senderId !== String(allowedOwnerId) && senderId !== '7782121775' && senderId !== '5599205933') {
-            console.warn(`[Security Alert] Unauthorized access to bot @${u.telegram?.bot?.username} by user ${senderId}`);
-            const guestKeyboard = {
-              inline_keyboard: [
-                [
-                  { text: '🚀 ورود به سامانه Arizo Self', url: hostUrl }
-                ]
-              ]
-            };
+            console.warn(`[Bot Security Alert] Unauthorized access to bot @${u.telegram?.bot?.username} (${targetUsername}) by stranger ID ${senderId}`);
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: `🔒 <b>دستیار هوشمند و اختصاصی Arizo Self</b>\n\nاین ربات یک لاگر و دستیار شخصی است که به صورت انحصاری برای حساب کاربری <b>${targetUsername}</b> تنظیم گردیده است.\n\n🌐 جهت فعال‌سازی و راه‌اندازی سلف‌بات و ربات دستیار اختصاصی برای حساب تلگرام خود، از دکمه زیر وارد سامانه شوید 👇`,
-                parse_mode: 'HTML',
-                reply_markup: guestKeyboard
+                text: `⛔ <b>دسترسی غیرمجاز!</b>\n\nاین ربات دستیار شخصی و اختصاصی حساب کاربری <b>${targetUsername}</b> در سامانه Arizo Self است.\n\n🔒 شما مالک این ربات نیستید و هیچ‌گونه دسترسی یا مجوزی برای ارسال پیام یا دستور به این ربات ندارید.\n\n💡 هر کاربر موظف است ربات اختصاصی خودش را در @BotFather بسازد و توکن آن را به حساب کاربری خود در سایت متصل کند.`,
+                parse_mode: 'HTML'
               })
             }).catch(() => {});
             return new Response('OK');
-          } else {
-            // در صورتی که هنوز شناسه مالک قفل نشده باشد، اولین استارت‌کننده به عنوان مالک انحصاری ثبت می‌شود
-            if (!u.telegram) u.telegram = {};
-            if (!u.telegram.bot) u.telegram.bot = {};
-            if (!u.telegram.bot.ownerId) {
-              u.telegram.bot.ownerId = senderId;
-            }
+          }
+
+          // اگر هنوز شناسه مالک قفل نشده باشد، اولین استارت توسط مالک با ذخیره شناسه او قفل می‌شود
+          if (!u.telegram) u.telegram = {};
+          if (!u.telegram.bot) u.telegram.bot = {};
+          if (!u.telegram.bot.ownerId || !allowedOwnerId) {
+            u.telegram.bot.ownerId = senderId;
+            allowedOwnerId = senderId;
           }
 
           // ذخیره قطعی شناسه عددی چت مالک جهت دریافت اعلان‌ها و رسانه‌های Anti-TTL و ضد حذف/ویرایش
-          if (!u.telegram) u.telegram = {};
-          if (!u.telegram.bot) u.telegram.bot = {};
           if (String(u.telegram.bot.chatId) !== String(chatId) || !u.telegram.bot.ownerId) {
             u.telegram.bot.chatId = String(chatId);
             u.telegram.bot.ownerId = senderId;
@@ -1760,7 +1758,8 @@ export default {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: welcomeText.replace(/<[^>]*>/g, '')
+                text: welcomeText.replace(/<[^>]*>/g, ''),
+                reply_markup: mainKeyboard
               })
             }).catch(() => {});
           }
@@ -1775,31 +1774,12 @@ export default {
 
           // 🔒 قفل انحصاری امنیتی دکمه‌های اینلاین شیشه‌ای برای غیرمالک
           if (allowedOwnerId && cbSenderId !== String(allowedOwnerId)) {
-            // بررسی هوشمند مالکیت دکمه‌ها
-            let altUser = null;
-            const usersList = await env.KV.get('users_list', 'json') || [];
-            for (const un of usersList) {
-              if (un === targetUsername) continue;
-              const otherU = await env.KV.get('user:' + un, 'json');
-              if (otherU && (String(otherU.telegram?.userId) === cbSenderId || String(otherU.telegram?.bot?.ownerId) === cbSenderId || (otherU.role === 'admin' && cbSenderId === '7782121775'))) {
-                altUser = otherU;
-                break;
-              }
-            }
-            if (altUser) {
-              u = altUser;
-              targetUsername = altUser.username;
-              allowedOwnerId = altUser.telegram?.bot?.ownerId || altUser.telegram?.userId;
-            }
-          }
-
-          if (allowedOwnerId && cbSenderId !== String(allowedOwnerId) && cbSenderId !== '7782121775' && cbSenderId !== '5599205933') {
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 callback_query_id: cb.id,
-                text: '⛔ دسترسی غیرمجاز! این ربات شخصی است و فقط به مالک حساب پاسخ می‌دهد.',
+                text: `⛔ دسترسی غیرمجاز! این ربات اختصاصی است و فقط به مالک حساب (${targetUsername}) پاسخ می‌دهد.`,
                 show_alert: true
               })
             }).catch(() => {});
