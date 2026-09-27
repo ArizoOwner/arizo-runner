@@ -5344,12 +5344,12 @@ export function panelHTML(env) {
     // به‌روزرسانی زنده شمارنده ثانیه‌های آخرین استعلام هر ۵ ثانیه
     setInterval(renderLiveLastUpdate, 5000);
 
-    // هماهنگ‌سازی خودکار وضعیت با سرور هر ۱۵ ثانیه تا زمان آپدیت همیشه بدون رفرش صفحه به‌روز بماند
+    // هماهنگ‌سازی خودکار وضعیت با سرور هر ۳۰ ثانیه تا زمان آپدیت بدون رفرش صفحه به‌روز بماند (بهینه‌سازی سهمیه KV)
     setInterval(function() {
       if (getAuthToken() && !document.hidden) {
         loadUserDashboard();
       }
-    }, 15000);
+    }, 30000);
 
     // اتصال هوشمند فیلد سکوت: فعال‌سازی خودکار سوییچ با ورود آیدی یا یوزرنیم
     var mutedInpEl = document.getElementById('mutedUsersInput');
