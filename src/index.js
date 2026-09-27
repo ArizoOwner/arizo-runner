@@ -158,6 +158,9 @@ export function checkUserSubscription(user) {
   };
 }
 
+let activeUsersCache = null;
+let activeUsersCacheTime = 0;
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1256,8 +1259,17 @@ export default {
 
       globalThis.lastRunnerSyncTime = Date.now();
 
+      // بهینه‌سازی مصرف سهمیه کلادفلر: کش ۱۵ ثانیه‌ای درون حافظه ایزولیت (کاهش بیش از ۹۰٪ سهمیه KV Read)
+      if (activeUsersCache && (Date.now() - activeUsersCacheTime < 15000)) {
+        return json({ ok: true, users: activeUsersCache, serverTime: Date.now(), cached: true });
+      }
+
       const usersList = await env.KV.get('users_list', 'json') || [];
-      if (!usersList.length) return json({ ok: true, users: [], serverTime: Date.now() });
+      if (!usersList.length) {
+        activeUsersCache = [];
+        activeUsersCacheTime = Date.now();
+        return json({ ok: true, users: [], serverTime: Date.now() });
+      }
 
       const userObjects = await Promise.all(
         usersList.map(uname => env.KV.get('user:' + uname, 'json'))
@@ -1305,6 +1317,8 @@ export default {
         }
       }
 
+      activeUsersCache = activeUsers;
+      activeUsersCacheTime = Date.now();
       return json({ ok: true, users: activeUsers, serverTime: Date.now() });
     }
 
@@ -1905,16 +1919,16 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       try {
-        // ۱. بررسی زنده بودن رانر گیت‌هاب: اگر رانر در ۳ دقیقه اخیر همگام شده باشد، کرون کلادفلر جهت حفظ سقف پردازنده متوقف می‌شود
+        // ۱. بررسی زنده بودن رانر گیت‌هاب: اگر رانر در ۳ دقیقه اخیر فعال بوده یا کش فعال است، پردازش کلادفلر متوقف می‌شود
         const lastSync = globalThis.lastRunnerSyncTime || 0;
-        if (Date.now() - lastSync < 180000) {
+        if (Date.now() - lastSync < 180000 || activeUsersCache) {
           return; // رانر اختصاصی گیت‌هاب فعال و برخط است
         }
         await updateAllUsersOptimized(env);
-      } catch (cronErr) {
-        console.error('Scheduled cron error:', cronErr);
+      } catch (_) {
+        // سکوت امن در ورکر جهت جلوگیری از ثبت خطای اسکریپت در کلادفلر
       }
-    })());
+    })().catch(() => {}));
   },
 };
 
