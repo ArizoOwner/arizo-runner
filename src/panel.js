@@ -3209,9 +3209,18 @@ export function panelHTML(env) {
 
         <div class="form-group">
           <label class="form-label">کلید API هوش مصنوعی (API Key)</label>
-          <input type="password" id="aiApiKeyInput" class="input-field mono" placeholder="کلید API خود را از پنل Gemini یا OpenAI دریافت و اینجا وارد کنید" dir="ltr">
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
-            💡 <b>Gemini:</b> از <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--accent-blue);">اینجا</a> رایگان دریافت کنید | <b>OpenAI:</b> از <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--accent-blue);">اینجا</a>
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="password" id="aiApiKeyInput" class="input-field mono" placeholder="کلید API خود را از پنل Gemini یا OpenAI دریافت و اینجا وارد کنید" dir="ltr" style="padding-left:40px;">
+            <button type="button" id="btnToggleAiKeyVisibility" style="position:absolute; left:10px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem; padding:4px;" title="نمایش / مخفی‌سازی کلید">👁️</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:8px;">
+            <button type="button" id="btnDeleteAiKey" class="btn btn-secondary btn-sm" style="color:#ef4444; border-color:rgba(239,68,68,0.3); font-size:0.8rem; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:rgba(239,68,68,0.08); border-radius:8px; transition:all 0.2s ease;">
+              <span>🗑️</span>
+              <span style="font-weight:600;">حذف کامل کلید API (رفع تداخل)</span>
+            </button>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+              💡 <b>Gemini:</b> از <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--accent-blue);">اینجا</a> رایگان دریافت کنید | <b>OpenAI:</b> از <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--accent-blue);">اینجا</a>
+            </div>
           </div>
         </div>
 
@@ -5221,6 +5230,36 @@ export function panelHTML(env) {
         });
       }
     });
+
+    // دکمه حذف کامل و ریشه‌ای کلید API هوش مصنوعی
+    var btnDelAi = document.getElementById('btnDeleteAiKey');
+    if (btnDelAi) {
+      btnDelAi.onclick = function() {
+        var keyInp = document.getElementById('aiApiKeyInput');
+        if (keyInp) keyInp.value = '';
+        var aiTgl = document.getElementById('aiReplyToggle');
+        if (aiTgl) aiTgl.checked = false;
+        window.isStudioDirty = true;
+        window.saveFonts();
+        showToast('🗑️ کلید API هوش مصنوعی به طور کامل پاکسازی شد و تداخل برطرف گردید!', 'success');
+      };
+    }
+
+    // دکمه نمایش یا مخفی‌سازی محتوای کلید API
+    var btnToggleKey = document.getElementById('btnToggleAiKeyVisibility');
+    if (btnToggleKey) {
+      btnToggleKey.onclick = function() {
+        var keyInp = document.getElementById('aiApiKeyInput');
+        if (!keyInp) return;
+        if (keyInp.type === 'password') {
+          keyInp.type = 'text';
+          btnToggleKey.textContent = '🔒';
+        } else {
+          keyInp.type = 'password';
+          btnToggleKey.textContent = '👁️';
+        }
+      };
+    }
 
     // فعال‌سازی و ذخیره خودکار هنگام تایپ یا تغییر لیست کاربران سکوت
     var mutedInput = document.getElementById('mutedUsersInput');
