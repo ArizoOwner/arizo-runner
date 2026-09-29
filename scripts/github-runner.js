@@ -450,6 +450,15 @@ async function downloadMediaSafely(client, message, username) {
 async function sendAfkReply(entry, message, afkText, username, senderIdStr) {
   let sent = false;
 
+  // ثبت پیش‌دستانه مشخصات پیام ربات در حافظه برای جلوگیری قطعی از خودسرکوب‌گری (Self-Suppression)
+  entry.botSentTexts = entry.botSentTexts || new Set();
+  entry.botSentTexts.add(afkText.trim());
+  entry.lastBotReplyMap = entry.lastBotReplyMap || new Map();
+  const nowStamp = Date.now();
+  if (senderIdStr) entry.lastBotReplyMap.set(senderIdStr, nowStamp);
+  const partnerId = getChatPartnerId(message, entry.myId);
+  if (partnerId) entry.lastBotReplyMap.set(partnerId, nowStamp);
+
   // دریافت تارگت معتبر با استفاده از sender یا getInputEntity
   let targetPeer = null;
   try {
@@ -555,11 +564,11 @@ async function callAIApi(provider, apiKey, systemPrompt, context, userMessage) {
     if (provider === 'gemini') {
       const geminiModels = [
         'gemini-flash-lite-latest',
-        'gemini-3.1-flash-lite',
-        'gemini-2.5-flash-lite',
         'gemini-3.5-flash-lite',
-        'gemini-flash-latest',
-        'gemini-3.8-flash'
+        'gemini-3.5-flash',
+        'gemini-3.7-flash',
+        'gemini-3-flash-preview',
+        'gemini-flash-latest'
       ];
 
       for (const model of geminiModels) {
@@ -586,8 +595,13 @@ async function callAIApi(provider, apiKey, systemPrompt, context, userMessage) {
             if (reply && reply.trim()) {
               return reply.trim().slice(0, 500);
             }
+          } else {
+            const errTxt = await res.text().catch(() => '');
+            console.warn(`⚠️ [AI-Gemini] Model ${model} returned ${res.status}: ${errTxt.slice(0, 100)}`);
           }
-        } catch (_) {}
+        } catch (mErr) {
+          console.warn(`⚠️ [AI-Gemini] Model ${model} error: ${mErr.message}`);
+        }
       }
 
       console.warn('⚠️ [AI-Gemini] All Gemini fallback models failed or timed out');
@@ -676,27 +690,32 @@ async function checkIsSelfOnline(entry, username) {
 }
 
 /**
- * تشخیص هوشمند ۴ لایه برای جلوگیری قطعی از ارسال منشی خودکار یا هوش مصنوعی در حین آنلاین بودن یا چت فعال کاربر
+ * تشخیص هوشمند برای جلوگیری از ارسال منشی خودکار یا هوش مصنوعی در حین چت فعال دوطرفه کاربر
  */
 async function isUserActiveOrOnline(entry, username, senderIdStr, message) {
   const now = Date.now();
+  const aiCooldown = entry.settings?.aiCooldown ?? 5;
+  const isZeroCooldown = aiCooldown === 0;
 
-  // ۱. بررسی چت دوطرفه و ارسال پیام به این مخاطب در ۱۰ دقیقه اخیر
+  // ۱. بررسی چت دوطرفه اخیر کاربر با این مخاطب خاص
+  // فرجه گفتگوی فعال: در صورت انتخاب "بدون محدودیت زمانی"، فقط ۴۵ ثانیه سکوت کافی است تا هوش مصنوعی پاسخ دهد. در سایر حالات حداکثر ۹۰ ثانیه.
+  const activeChatWindow = isZeroCooldown ? 45 * 1000 : Math.min(aiCooldown * 60 * 1000, 90 * 1000);
   const lastChatOut = entry.lastChatOutMap?.get(senderIdStr) || 0;
   const diffChat = now - lastChatOut;
-  if (lastChatOut > 0 && diffChat < 10 * 60 * 1000) {
+  if (lastChatOut > 0 && diffChat < activeChatWindow) {
     const passedSec = Math.round(diffChat / 1000);
-    const remainSec = Math.round((10 * 60 * 1000 - diffChat) / 1000);
+    const remainSec = Math.round((activeChatWindow - diffChat) / 1000);
     return {
       isBusyOrOnline: true,
-      reason: `شما در حال گفتگو با این مخاطب هستید (${passedSec} ثانیه پیش به او پیام داده‌اید — فرجه گفتگوی فعال: ${remainSec} ثانیه)`
+      reason: `شما در حال گفتگو با این مخاطب هستید (${passedSec} ثانیه پیش پیام دستی فرستاده‌اید — فرجه: ${remainSec} ثانیه)`
     };
   }
 
-  // ۲. بررسی خواندن پیام‌های این چت در تلگرام (باز بودن صفحه چت) در ۵ دقیقه اخیر
+  // ۲. بررسی خواندن پیام‌های این چت در تلگرام (باز بودن صفحه چت)
+  const readWindow = isZeroCooldown ? 20 * 1000 : 45 * 1000;
   const lastChatRead = entry.lastChatReadTimeMap?.get(senderIdStr) || 0;
   const diffRead = now - lastChatRead;
-  if (lastChatRead > 0 && diffRead < 5 * 60 * 1000) {
+  if (lastChatRead > 0 && diffRead < readWindow) {
     const passedSec = Math.round(diffRead / 1000);
     return {
       isBusyOrOnline: true,
@@ -704,25 +723,30 @@ async function isUserActiveOrOnline(entry, username, senderIdStr, message) {
     };
   }
 
-  // ۳. بررسی فعالیت عمومی در تلگرام در ۵ دقیقه اخیر (ارسال پیام در هر چت یا گروه)
+  // ۳. بررسی فعالیت عمومی بسیار تازه در تلگرام (ارسال پیام دستی در سایر چت‌ها یا گروه‌ها)
+  const globalWindow = isZeroCooldown ? 20 * 1000 : 60 * 1000;
   const lastGlobalOut = entry.lastGlobalOutTime || 0;
   const diffGlobal = now - lastGlobalOut;
-  if (lastGlobalOut > 0 && diffGlobal < 5 * 60 * 1000) {
+  if (lastGlobalOut > 0 && diffGlobal < globalWindow) {
     const passedSec = Math.round(diffGlobal / 1000);
-    const remainSec = Math.round((5 * 60 * 1000 - diffGlobal) / 1000);
+    const remainSec = Math.round((globalWindow - diffGlobal) / 1000);
     return {
       isBusyOrOnline: true,
-      reason: `شما در تلگرام آنلاین و فعال هستید (${passedSec} ثانیه پیش در تلگرام فعالیت داشته‌اید — فرجه: ${remainSec} ثانیه)`
+      reason: `شما در تلگرام در حال چت با دیگران هستید (${passedSec} ثانیه پیش پیام ارسال کرده‌اید — فرجه: ${remainSec} ثانیه)`
     };
   }
 
-  // ۴. بررسی وضعیت آنلاین بودن اکانت در سرورهای تلگرام
-  const isOnline = await checkIsSelfOnline(entry, username);
-  if (isOnline) {
-    return {
-      isBusyOrOnline: true,
-      reason: 'اکانت تلگرام شما آنلاین (Online) است'
-    };
+  // ۴. بررسی وضعیت آنلاین بودن اکانت در سرورهای تلگرام:
+  // فقط برای منشی ثابت (AFK) که ادعا می‌کند کاربر آفلاین است، آنلاین بودن اکانت ملاک توقف است.
+  // برای هوش مصنوعی (AI)، باز بودن تلگرام یا آنلاین بودن سشن نباید مانع فعالیت دستیار شود وقتی کاربر خودش پیام نمی‌دهد!
+  if (!entry.settings?.aiReplyEnabled && entry.settings?.afkEnabled) {
+    const isOnline = await checkIsSelfOnline(entry, username);
+    if (isOnline) {
+      return {
+        isBusyOrOnline: true,
+        reason: 'اکانت تلگرام شما آنلاین (Online) است'
+      };
+    }
   }
 
   return { isBusyOrOnline: false, reason: null };
@@ -1037,15 +1061,26 @@ class TelegramConnectionPool {
 
     // ثبت زنده فعالیت کاربر در تلگرام و در این چت در صورت ارسال پیام خروجی دستی توسط کاربر
     if (isOut) {
-      if (entry.botSentMessageIds && entry.botSentMessageIds.has(message.id)) {
-        entry.botSentMessageIds.delete(message.id);
+      const msgText = (message.text || message.message || '').trim();
+      const now = Date.now();
+      const isBotMsg = (entry.botSentMessageIds && entry.botSentMessageIds.has(message.id)) ||
+                       (entry.botSentTexts && entry.botSentTexts.has(msgText)) ||
+                       msgText.startsWith('🤖 ') ||
+                       (now - (entry.lastBotReplyMap?.get(partnerIdStr || '') || 0) < 6000) ||
+                       (now - (entry.lastBotReplyMap?.get(peerIdStr || '') || 0) < 6000);
+
+      if (isBotMsg) {
+        if (entry.botSentMessageIds) entry.botSentMessageIds.delete(message.id);
+        if (entry.botSentTexts) entry.botSentTexts.delete(msgText);
       } else {
-        const now = Date.now();
         entry.lastGlobalOutTime = now;
         if (partnerIdStr) {
           entry.lastChatOutMap = entry.lastChatOutMap || new Map();
           entry.lastChatOutMap.set(partnerIdStr, now);
-          console.log(`💬 [${username}] Active chat: user manually sent message to partner ${partnerIdStr}`);
+          // ریست شدن سقف پاسخ‌های هوش مصنوعی وقتی کاربر خودش به مخاطب پیام دستی می‌دهد
+          if (entry.aiReplyCountMap) entry.aiReplyCountMap.delete(partnerIdStr);
+          if (entry.afkCooldownMap) entry.afkCooldownMap.delete(partnerIdStr);
+          console.log(`💬 [${username}] Active chat: user manually sent message to partner ${partnerIdStr} (AI count reset)`);
         }
       }
     }
@@ -1712,10 +1747,15 @@ class TelegramConnectionPool {
           const lastAiReply = entry.aiCooldownMap?.get(senderIdStr) || 0;
           const now = Date.now();
 
+          // ریست خودکار سقف پاسخ در صورتی که بیش از ۳۰ دقیقه از آخرین پاسخ گذشته باشد (جلسه جدید گفتگو)
+          if (lastAiReply > 0 && (now - lastAiReply > 30 * 60 * 1000)) {
+            entry.aiReplyCountMap?.delete(senderIdStr);
+          }
+
           // بررسی سقف تعداد پاسخ و کول‌داون زمانی
           const maxReplies = entry.settings.aiMaxReplies ?? 3;
           const currentCount = entry.aiReplyCountMap?.get(senderIdStr) || 0;
-          const isRepliesAllowed = maxReplies === 0 || currentCount < maxReplies;
+          const isRepliesAllowed = maxReplies === 0 || maxReplies >= 20 || currentCount < maxReplies;
           const isCooldownPassed = aiCooldownMs === 0 || (now - lastAiReply >= aiCooldownMs);
 
           if (isRepliesAllowed && isCooldownPassed) {
