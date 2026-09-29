@@ -68,10 +68,18 @@ function cleanMuteTarget(raw) {
 }
 
 /**
+ * بررسی دقیق وضعیت اتصال کلاینت در سوکت‌های GramJS
+ */
+function isClientConnected(entry) {
+  if (!entry || !entry.client) return false;
+  return Boolean(entry.connected || entry.client.connected || entry.client._sender?.connected);
+}
+
+/**
  * تبدیل خودکار یوزرنیم‌های اضافه شده در لیست سکوت به آیدی عددی تلگرام در پس‌زمینه
  */
 function resolveMutedUsernames(entry) {
-  if (!entry || !entry.client || !entry.client.connected) return;
+  if (!entry || !entry.client || !isClientConnected(entry)) return;
   const list = entry.settings?.mutedUsers;
   if (!Array.isArray(list) || list.length === 0) return;
 
@@ -661,7 +669,7 @@ async function checkIsSelfOnline(entry, username) {
   entry.lastSelfStatusCheck = now;
 
   try {
-    if (!entry.client?.connected) return false;
+    if (!isClientConnected(entry)) return false;
     const users = await entry.client.invoke(new Api.users.GetUsers({
       id: [new Api.InputUserSelf()]
     }));
@@ -868,6 +876,7 @@ class TelegramConnectionPool {
 
       console.log(`🔌 Connecting warm socket for [${username}]...`);
       await client.connect();
+      client.connected = true;
       console.log(`✅ Warm socket connected for [${username}]!`);
 
       // ۱. ثبت رسمی نشست در تلگرام جهت اشتراک دائمی در دریافت بلادرنگ Push Updates
@@ -945,9 +954,10 @@ class TelegramConnectionPool {
 
       // اتصال رویدادهای زنده سلف‌بات (AFK, Mute, Anti-TTL, Anti-Delete, Anti-Edit)
       this.attachEventListeners(entry, username);
-    } else if (!entry.client.connected) {
+    } else if (!isClientConnected(entry)) {
       console.log(`🔌 Reconnecting dropped socket for [${username}]...`);
       await entry.client.connect();
+      entry.client.connected = true;
       entry.connected = true;
       try {
         await entry.client.invoke(new Api.updates.GetState());
@@ -1047,7 +1057,7 @@ class TelegramConnectionPool {
       }
     }
 
-    if (!entry.myId && entry.client.connected) {
+    if (!entry.myId && isClientConnected(entry)) {
       try {
         const me = await entry.client.getMe();
         if (me && me.id) entry.myId = me.id.toString();
@@ -2521,34 +2531,84 @@ async function resolveInputPeerSafely(client, peerId, entry = null, accessHash =
 async function fetchUserPrivateDialogs(client, entry = null) {
   if (!client) return [];
   try {
-    const privateDialogs = [];
-    const dialogs = await client.getDialogs({ limit: 50 }).catch(() => []);
-    for (const d of dialogs) {
-      const isUser = Boolean(d.isUser || (d.entity && (d.entity.className === 'User' || d.entity.className === 'PeerUser')));
-      const isBot = Boolean(d.entity?.bot);
-      const isSelf = Boolean(d.entity?.self || d.isSelf);
-      if (isUser && !isBot && !isSelf && d.id) {
-        const dName = d.title || d.name || [d.entity?.firstName, d.entity?.lastName].filter(Boolean).join(' ') || (d.entity?.username ? `@${d.entity.username}` : 'کاربر تلگرام');
-        privateDialogs.push({
-          id: d.id.toString(),
-          accessHash: d.entity?.accessHash?.toString() || null,
-          name: dName.slice(0, 30),
-          username: d.entity?.username || '',
-          unreadCount: Number(d.unreadCount) || 0
-        });
-        if (entry && d.entity) {
-          entry.peerCache = entry.peerCache || new Map();
-          entry.peerCache.set(d.id.toString(), {
-            userId: d.id,
-            accessHash: d.entity.accessHash,
-            firstName: d.entity.firstName,
-            lastName: d.entity.lastName,
-            username: d.entity.username
-          });
+    // روش فوق‌سریع ۱: درخواست مستقیم RPC با GetDialogs و تایم‌اوت محافظتی ۵ ثانیه‌ای
+    const fetchRpc = async () => {
+      const res = await client.invoke(new Api.messages.GetDialogs({
+        offsetDate: 0,
+        offsetId: 0,
+        offsetPeer: new Api.InputPeerEmpty(),
+        limit: 35,
+        hash: BigInt(0)
+      }));
+
+      const userMap = new Map();
+      if (Array.isArray(res.users)) {
+        for (const u of res.users) {
+          if (u && u.id) {
+            userMap.set(u.id.toString(), u);
+          }
         }
       }
-    }
-    return privateDialogs;
+
+      const pDialogs = [];
+      if (Array.isArray(res.dialogs)) {
+        for (const d of res.dialogs) {
+          const peerUserId = d.peer?.userId ? d.peer.userId.toString() : (d.peer?.className === 'PeerUser' ? d.peer.userId?.toString() : null);
+          if (!peerUserId) continue;
+          const u = userMap.get(peerUserId);
+          if (!u || u.bot || u.self) continue;
+          const dName = [u.firstName, u.lastName].filter(Boolean).join(' ') || (u.username ? `@${u.username}` : 'کاربر تلگرام');
+          const accessHashStr = u.accessHash ? u.accessHash.toString() : null;
+          pDialogs.push({
+            id: peerUserId,
+            accessHash: accessHashStr,
+            name: dName.slice(0, 30),
+            username: u.username || '',
+            unreadCount: Number(d.unreadCount) || 0
+          });
+          if (entry) {
+            entry.peerCache = entry.peerCache || new Map();
+            entry.peerCache.set(peerUserId, {
+              userId: u.id,
+              accessHash: u.accessHash,
+              firstName: u.firstName,
+              lastName: u.lastName,
+              username: u.username
+            });
+          }
+        }
+      }
+      return pDialogs;
+    };
+
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('RPC GetDialogs timeout')), 5000));
+    const result = await Promise.race([fetchRpc(), timeoutPromise]).catch(async (e) => {
+      console.warn('⚠️ [fetchUserPrivateDialogs] RPC failed, trying client.getDialogs fallback:', e.message);
+      const fallbackTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Fallback timeout')), 4000));
+      const fallbackFetch = async () => {
+        const dialogs = await client.getDialogs({ limit: 25 }).catch(() => []);
+        const privateDlgs = [];
+        for (const d of dialogs) {
+          const isUser = Boolean(d.isUser || (d.entity && (d.entity.className === 'User' || d.entity.className === 'PeerUser')));
+          const isBot = Boolean(d.entity?.bot);
+          const isSelf = Boolean(d.entity?.self || d.isSelf);
+          if (isUser && !isBot && !isSelf && d.id) {
+            const dName = d.title || d.name || [d.entity?.firstName, d.entity?.lastName].filter(Boolean).join(' ') || (d.entity?.username ? `@${d.entity.username}` : 'کاربر تلگرام');
+            privateDlgs.push({
+              id: d.id.toString(),
+              accessHash: d.entity?.accessHash?.toString() || null,
+              name: dName.slice(0, 30),
+              username: d.entity?.username || '',
+              unreadCount: Number(d.unreadCount) || 0
+            });
+          }
+        }
+        return privateDlgs;
+      };
+      return Promise.race([fallbackFetch(), fallbackTimeout]).catch(() => []);
+    });
+
+    return Array.isArray(result) ? result : [];
   } catch (err) {
     console.error('❌ [fetchUserPrivateDialogs] Error:', err.message);
     return [];
@@ -2638,7 +2698,7 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
  * دریافت پیام‌های چت بدون ثبت تیک آبی (Ghost Mode Reading via MTProto messages.getHistory)
  */
 async function fetchChatMessagesInGhostMode(client, peerId, limit = 15, entry = null, accessHash = null) {
-  if (!client || !client.connected) return [];
+  if (!client || (!client.connected && !client._sender?.connected && !entry?.connected)) return [];
   try {
     const inputPeer = await resolveInputPeerSafely(client, peerId, entry, accessHash);
 
@@ -2791,7 +2851,7 @@ async function pollAndProcessBotActions(pool) {
           botToken = entry.settings.bot.token;
         }
 
-        if (!entry || !entry.client || !entry.client.connected) {
+        if (!entry || !entry.client || !isClientConnected(entry)) {
           console.warn(`⚠️ [bot-actions] Client for [${action.username}] not connected yet.`);
           if (botToken && action.chatId && action.messageId) {
             await editBotTelegramMessage(botToken, action.chatId, action.messageId,
@@ -2983,7 +3043,7 @@ async function main() {
         }
         if (entry) {
           // فعال نگه‌داشتن مستمر ثبت نشست در سرور تلگرام برای دریافت آپدیت‌های زنده
-          if (entry.client && entry.client.connected) {
+          if (entry.client && isClientConnected(entry)) {
             entry.client.invoke(new Api.updates.GetState()).catch(() => {});
           }
 
@@ -3014,7 +3074,7 @@ async function main() {
 
           // همگام‌سازی دوره‌ای دیالوگ‌های خصوصی با ورکر کلادفلر (هر ۱ ساعت یکبار و همچنین هنگام درخواست فوری در ربات)
           const nowTs = Date.now();
-          if (entry.client && entry.client.connected && (!entry.lastDialogSync || (nowTs - entry.lastDialogSync > 3600000))) {
+          if (entry.client && isClientConnected(entry) && (!entry.lastDialogSync || (nowTs - entry.lastDialogSync > 3600000))) {
             entry.lastDialogSync = nowTs;
             fetchUserPrivateDialogs(entry.client, entry).then(dlgs => {
               if (dlgs.length > 0) syncDialogsToCloudflare(u.username, dlgs);
