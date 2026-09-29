@@ -1,7 +1,7 @@
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import { computeCheck } from 'telegram/Password.js';
-import { getStylizedTime, renderDynamicBio, isSleepTime } from './clock.js';
+import { FONT_PRESETS, getStylizedTime, renderDynamicBio, isSleepTime } from './clock.js';
 import { panelHTML } from './panel.js';
 import {
   hashPassword,
@@ -2052,11 +2052,45 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 { text: '⚙️ مدیریت هوش مصنوعی (AI)', callback_data: 'bot_ai_info', style: 'primary' }
               ],
               [
-                { text: '🧪 تست ارسال گزارش', callback_data: 'bot_test', style: 'primary' },
+                { text: '🎨 تغییر فونت ساعت', callback_data: 'bot_font_menu', style: 'primary' },
+                { text: '🧪 تست ارسال گزارش', callback_data: 'bot_test', style: 'primary' }
+              ],
+              [
                 { text: '🌐 باز کردن پنل در مرورگر', url: directAppUrl, style: 'primary' }
               ]
             ]
           };
+        };
+
+        // تولید کیبورد شیشه‌ای انتخاب فونت و استایل ساعت با پیش‌نمایش زنده
+        const renderFontKeyboard = (targetU) => {
+          const userDigitsStr = Array.isArray(targetU.telegram?.digits) ? targetU.telegram.digits.join('') : '';
+          const rows = [];
+          const entries = Object.entries(FONT_PRESETS);
+          for (let i = 0; i < entries.length; i += 2) {
+            const row = [];
+            const [k1, v1] = entries[i];
+            const isSel1 = v1.digits.join('') === userDigitsStr;
+            const p1 = `${v1.digits[1]}${v1.digits[2]}:${v1.digits[4]}${v1.digits[5]}`;
+            row.push({
+              text: `${isSel1 ? '✅ ' : ''}${v1.name} [${p1}]`,
+              callback_data: `set_font:${k1}`
+            });
+            if (i + 1 < entries.length) {
+              const [k2, v2] = entries[i + 1];
+              const isSel2 = v2.digits.join('') === userDigitsStr;
+              const p2 = `${v2.digits[1]}${v2.digits[2]}:${v2.digits[4]}${v2.digits[5]}`;
+              row.push({
+                text: `${isSel2 ? '✅ ' : ''}${v2.name} [${p2}]`,
+                callback_data: `set_font:${k2}`
+              });
+            }
+            rows.push(row);
+          }
+          rows.push([
+            { text: '🔙 بازگشت به منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
+          ]);
+          return { inline_keyboard: rows };
         };
 
         // تولید کیبورد اختصاصی مدیریت هوش مصنوعی با گزینه حذف کامل کلید
@@ -2408,11 +2442,39 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 body: JSON.stringify({
                   chat_id: chatId,
                   text: `🔄 <b>در حال استخراج لیست پیوی‌های خصوصی شما از تلگرام...</b>\n\nلطفاً چند ثانیه صبر کنید تا لیست استخراج و ارسال شود.`,
-                  parse_mode: 'HTML'
+                  parse_mode: 'HTML',
+                  reply_markup: {
+                    inline_keyboard: [
+                      [
+                        { text: '🔄 بررسی مجدد', callback_data: 'ghost_chats_refresh', style: 'primary' },
+                        { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
+                      ]
+                    ]
+                  }
                 })
               }).catch(() => {});
               return new Response('OK');
             }
+          }
+
+          // دستور ۰.۰۵: انتخاب و تغییر فونت ساعت (/font یا /fonts)
+          if (text === '/font' || text === '/fonts') {
+            const fontMsg = `🎨 <b>[انتخاب فونت و استایل ساعت تهران]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `یکی از فونت‌های زیر را انتخاب فرمایید تا استایل ساعت تلگرام شما فوراً تغییر کند:\n\n` +
+              `💡 <i>تغییرات بلافاصله ذخیره و روی ساعت سلف‌بات شما اعمال خواهند شد.</i>`;
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: fontMsg,
+                parse_mode: 'HTML',
+                reply_markup: renderFontKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
           }
 
           // دستور ۰.۱: ارسال مستقیم پاسخ متنی: /reply <آیدی/یوزرنیم> <متن>
@@ -2819,6 +2881,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               `🤖 <b>دستورات داخل این ربات:</b>\n` +
               `• <code>/start</code> — باز کردن منوی اصلی و استودیو\n` +
               `• <code>/chats</code> یا <code>/unread</code> — 👻 مشاهده چت‌های خصوصی و پیام‌های خوانده‌نشده در حالت شبح\n` +
+              `• <code>/font</code> — 🎨 تغییر فونت و استایل ساعت تهران\n` +
               `• <code>/reply آیدی متن</code> — ✍️ ارسال پاسخ مستقیم از اکانت شما به مخاطب\n` +
               `• <code>/read آیدی</code> — 👁️ ثبت تیک آبی برای چت مشخص\n` +
               `• <code>/cancel</code> — لغو عملیات پاسخ جاری\n` +
@@ -3015,6 +3078,14 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               });
 
               const waitMsg = `🔄 <b>در حال دریافت لیست پیوی‌های خصوصی شما از تلگرام...</b>\n\nلطفاً چند ثانیه صبر کنید تا لیست استخراج و در همین پیام نمایش داده شود.`;
+              const waitKeyboard = {
+                inline_keyboard: [
+                  [
+                    { text: '🔄 تلاش مجدد', callback_data: 'ghost_chats_refresh', style: 'primary' },
+                    { text: '🔙 بازگشت به منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
+                  ]
+                ]
+              };
 
               let waitEdited = false;
               if (messageId) {
@@ -3025,7 +3096,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                     chat_id: chatId,
                     message_id: messageId,
                     text: waitMsg,
-                    parse_mode: 'HTML'
+                    parse_mode: 'HTML',
+                    reply_markup: waitKeyboard
                   })
                 }).catch(() => null);
                 waitEdited = editRes && editRes.ok;
@@ -3037,7 +3109,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                   body: JSON.stringify({
                     chat_id: chatId,
                     text: waitMsg,
-                    parse_mode: 'HTML'
+                    parse_mode: 'HTML',
+                    reply_markup: waitKeyboard
                   })
                 }).catch(() => {});
               }
@@ -3513,6 +3586,93 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 parse_mode: 'HTML'
               })
             }).catch(() => {});
+
+          } else if (data === 'bot_font_menu') {
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: '🎨 منوی انتخاب فونت ساعت باز شد' })
+            }).catch(() => {});
+
+            const fontMsg = `🎨 <b>[انتخاب فونت و استایل ساعت تهران]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `یکی از فونت‌های زیر را انتخاب کنید تا ساعت اکانت شما با آن استایل نمایش داده شود:\n\n` +
+              `💡 <i>تغییرات بلافاصله ذخیره و روی ساعت سلف‌بات شما اعمال خواهند شد.</i>`;
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  text: fontMsg,
+                  parse_mode: 'HTML',
+                  reply_markup: renderFontKeyboard(u)
+                })
+              }).catch(() => {});
+            } else {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: fontMsg,
+                  parse_mode: 'HTML',
+                  reply_markup: renderFontKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+          } else if (data.startsWith('set_font:')) {
+            const fontKey = data.replace('set_font:', '');
+            const selectedPreset = FONT_PRESETS[fontKey];
+            if (selectedPreset) {
+              u.telegram = u.telegram || {};
+              u.telegram.digits = selectedPreset.digits;
+              await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+              if (targetUsername.toLowerCase() !== targetUsername) {
+                await env.KV.put('user:' + targetUsername.toLowerCase(), JSON.stringify(u));
+              }
+              if (env.DB) {
+                await env.DB.prepare('UPDATE users SET data = ? WHERE username = ?')
+                  .bind(JSON.stringify(u), targetUsername.toLowerCase()).run().catch(() => {});
+              }
+
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  callback_query_id: cb.id,
+                  text: `✅ فونت ساعت به "${selectedPreset.name}" تغییر یافت!`
+                })
+              }).catch(() => {});
+
+              const nowTimeStr = getStylizedTime(selectedPreset.digits, u.telegram?.colon || ':', new Date(), {
+                is12h: u.telegram?.is12h
+              });
+
+              const updatedFontMsg = `🎨 <b>[فونت ساعت با موفقیت تغییر کرد]</b>\n` +
+                `━━━━━━━━━━━━━━━━━━━━\n` +
+                `✨ <b>فونت انتخابی:</b> <b>${selectedPreset.name}</b>\n` +
+                `🕒 <b>پیش‌نمایش زمان فعلی:</b> <code>${nowTimeStr}</code>\n\n` +
+                `✅ تغییرات در سرور ذخیره شد و در به‌روزرسانی بعدی تلگرام درج خواهد شد.\n` +
+                `جهت انتخاب فونت دیگر روی گزینه‌های زیر کلیک فرمایید:`;
+
+              if (messageId) {
+                await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    message_id: messageId,
+                    text: updatedFontMsg,
+                    parse_mode: 'HTML',
+                    reply_markup: renderFontKeyboard(u)
+                  })
+                }).catch(() => {});
+              }
+            }
 
           } else if (data === 'bot_test') {
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
