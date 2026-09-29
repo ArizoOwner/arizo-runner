@@ -748,12 +748,12 @@ async function forwardGhostMessage(botToken, chatId, senderName, senderUsername,
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${encodeURIComponent(senderName)}`, style: 'primary' },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}:${encodeURIComponent(senderName)}`, style: 'success' }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}` },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}` }
       ],
       [
-        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}:${encodeURIComponent(senderName)}`, style: 'primary' },
-        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
+        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}` },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
       ]
     ]
   };
@@ -1431,8 +1431,8 @@ class TelegramConnectionPool {
                 const ttlKeyboard = {
                   inline_keyboard: [
                     [
-                      { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${encodeURIComponent(cleanSenderName)}`, style: 'primary' },
-                      { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}:${encodeURIComponent(cleanSenderName)}`, style: 'primary' }
+                      { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}` },
+                      { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}` }
                     ]
                   ]
                 };
@@ -1937,8 +1937,8 @@ class TelegramConnectionPool {
           const deleteActionKeyboard = {
             inline_keyboard: [
               [
-                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' },
-                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' }
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}` },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}` }
               ]
             ]
           };
@@ -2003,8 +2003,8 @@ class TelegramConnectionPool {
           const editActionKeyboard = {
             inline_keyboard: [
               [
-                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' },
-                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' }
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}` },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}` }
               ]
             ]
           };
@@ -2340,97 +2340,35 @@ async function resolveInputPeerSafely(client, peerId, entry = null) {
  * استخراج چت‌های خصوصی کاربر (پیوی‌های افراد واقعی) جهت نمایش در ربات با RPC خالص MTProto
  */
 async function fetchUserPrivateDialogs(client, entry = null) {
-  if (!client || !client.connected) return [];
+  if (!client) return [];
   try {
-    // فراخوانی مستقیم و استاندارد MTProto برای جلوگیری قطعی از خطای Entity not found
-    const res = await client.invoke(new Api.messages.GetDialogs({
-      offsetDate: 0,
-      offsetId: 0,
-      offsetPeer: new Api.InputPeerEmpty(),
-      limit: 60,
-      hash: BigInt(0)
-    }));
-
-    if (!res) return [];
-
-    const userMap = new Map();
-    if (Array.isArray(res.users)) {
-      for (const u of res.users) {
-        userMap.set(u.id.toString(), u);
-        if (entry) {
+    const privateDialogs = [];
+    const dialogs = await client.getDialogs({ limit: 50 }).catch(() => []);
+    for (const d of dialogs) {
+      const isUser = Boolean(d.isUser || (d.entity && (d.entity.className === 'User' || d.entity.className === 'PeerUser')));
+      const isBot = Boolean(d.entity?.bot);
+      const isSelf = Boolean(d.entity?.self || d.isSelf);
+      if (isUser && !isBot && !isSelf && d.id) {
+        const dName = d.title || d.name || [d.entity?.firstName, d.entity?.lastName].filter(Boolean).join(' ') || (d.entity?.username ? `@${d.entity.username}` : 'کاربر تلگرام');
+        privateDialogs.push({
+          id: d.id.toString(),
+          accessHash: d.entity?.accessHash?.toString() || null,
+          name: dName.slice(0, 30),
+          username: d.entity?.username || '',
+          unreadCount: Number(d.unreadCount) || 0
+        });
+        if (entry && d.entity) {
           entry.peerCache = entry.peerCache || new Map();
-          entry.peerCache.set(u.id.toString(), {
-            userId: u.id,
-            accessHash: u.accessHash,
-            firstName: u.firstName,
-            lastName: u.lastName,
-            username: u.username
+          entry.peerCache.set(d.id.toString(), {
+            userId: d.id,
+            accessHash: d.entity.accessHash,
+            firstName: d.entity.firstName,
+            lastName: d.entity.lastName,
+            username: d.entity.username
           });
         }
-        try {
-          client._entityCache.add(u);
-          client.session.processEntities(u);
-        } catch (_) {}
       }
     }
-
-    const privateDialogs = [];
-    const dialogs = res.dialogs || [];
-
-    for (const d of dialogs) {
-      let peerUserId = null;
-      if (d.peer) {
-        if (d.peer.userId) {
-          peerUserId = d.peer.userId.toString();
-        } else if (d.peer.className === 'PeerUser') {
-          peerUserId = d.peer.userId?.toString();
-        }
-      }
-
-      if (!peerUserId) continue;
-
-      const user = userMap.get(peerUserId);
-      if (!user) continue;
-
-      // فیلتر کردن ربات‌ها، حساب خود کاربر (Saved Messages) و اکانت‌های حذف شده
-      if (user.bot || user.isSelf) continue;
-
-      const firstName = user.firstName || '';
-      const lastName = user.lastName || '';
-      const fullName = [firstName, lastName].filter(Boolean).join(' ') || (user.username ? `@${user.username}` : 'کاربر تلگرام');
-      const unreadCount = Number(d.unreadCount) || 0;
-
-      privateDialogs.push({
-        id: peerUserId,
-        accessHash: user.accessHash?.toString() || null,
-        name: fullName,
-        username: user.username || '',
-        unreadCount: unreadCount,
-        topMessageId: d.topMessage || null
-      });
-    }
-
-    // در صورتی که روش RPC چتی نیافت، تلاش فال‌بک با getDialogs بومی
-    if (privateDialogs.length === 0) {
-      try {
-        const fallbackDlgs = await client.getDialogs({ limit: 30 });
-        for (const fd of fallbackDlgs) {
-          const isUser = Boolean(fd.isUser || (fd.entity && (fd.entity.className === 'User' || fd.entity instanceof Api.User)));
-          const isBot = Boolean(fd.entity?.bot);
-          const isSelf = Boolean(fd.entity?.isSelf || fd.isSelf);
-          if (isUser && !isBot && !isSelf && fd.id) {
-            privateDialogs.push({
-              id: fd.id.toString(),
-              accessHash: fd.entity?.accessHash?.toString() || null,
-              name: fd.title || fd.name || 'کاربر',
-              username: fd.entity?.username || '',
-              unreadCount: Number(fd.unreadCount) || 0
-            });
-          }
-        }
-      } catch (_) {}
-    }
-
     return privateDialogs;
   } catch (err) {
     console.error('❌ [fetchUserPrivateDialogs] Error:', err.message);
@@ -2489,14 +2427,13 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
     const safeName = (d.name || 'کاربر').slice(0, 18);
     return [{
       text: `👤 ${safeName}${badge}`,
-      callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`,
-      style: d.unreadCount > 0 ? 'success' : 'primary'
+      callback_data: `ghost_view:${d.id}`
     }];
   });
 
   buttons.push([
-    { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
-    { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
+    { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
+    { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
   ]);
 
   const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2506,11 +2443,14 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
 
   const keyboard = { inline_keyboard: buttons };
 
+  let edited = false;
   if (botMessageId) {
-    const edited = await editBotTelegramMessage(botToken, chatId, botMessageId, listMsg, keyboard);
-    if (edited) return true;
+    edited = await editBotTelegramMessage(botToken, chatId, botMessageId, listMsg, keyboard);
   }
-  return sendBotTelegramMessage(botToken, chatId, listMsg, keyboard);
+  if (!edited) {
+    await sendBotTelegramMessage(botToken, chatId, listMsg, keyboard);
+  }
+  return true;
 }
 
 /**
@@ -2592,21 +2532,24 @@ async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, mess
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}:${encodeURIComponent(targetName || '')}`, style: 'primary' },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}:${encodeURIComponent(targetName || '')}`, style: 'success' }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}` },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}` }
       ],
       [
-        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}:${encodeURIComponent(targetName || '')}`, style: 'primary' },
-        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
+        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}` },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
       ]
     ]
   };
 
+  let viewEdited = false;
   if (botMessageId) {
-    const edited = await editBotTelegramMessage(botToken, chatId, botMessageId, body, keyboard);
-    if (edited) return true;
+    viewEdited = await editBotTelegramMessage(botToken, chatId, botMessageId, body, keyboard);
   }
-  return sendBotTelegramMessage(botToken, chatId, body, keyboard);
+  if (!viewEdited) {
+    await sendBotTelegramMessage(botToken, chatId, body, keyboard);
+  }
+  return true;
 }
 
 /**
@@ -2707,8 +2650,8 @@ async function pollAndProcessBotActions(pool) {
             const keyboard = {
               inline_keyboard: [
                 [
-                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}:${encodeURIComponent(action.targetName || '')}`, style: 'primary' },
-                  { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
+                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}` },
+                  { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
                 ]
               ]
             };
