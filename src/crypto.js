@@ -19,6 +19,24 @@ export function timingSafeEqualHex(a, b) {
 }
 
 /**
+ * مقایسه دو رشته در زمان ثابت جهت جلوگیری قطعی از حملات Timing Attack
+ * با هش کردن هر دو رشته با SHA-256 و مقایسه هگز زمان‌ثابت
+ * @param {string} a
+ * @param {string} b
+ * @returns {Promise<boolean>}
+ */
+export async function timingSafeStringCompare(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (!a || !b) return false;
+  const enc = new TextEncoder();
+  const hashA = await crypto.subtle.digest('SHA-256', enc.encode(a));
+  const hashB = await crypto.subtle.digest('SHA-256', enc.encode(b));
+  const hexA = Array.from(new Uint8Array(hashA)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+  const hexB = Array.from(new Uint8Array(hashB)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return timingSafeEqualHex(hexA, hexB);
+}
+
+/**
  * بررسی استحکام پسورد
  * @param {string} password 
  * @returns {{ valid: boolean, error?: string }}
