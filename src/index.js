@@ -2215,13 +2215,14 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 const safeName = (d.name || 'کاربر').slice(0, 18);
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}`
+                  callback_data: `ghost_view:${d.id}`,
+                  style: d.unreadCount > 0 ? 'success' : 'primary'
                 }];
               });
 
               buttons.push([
-                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
-                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
               ]);
 
               const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2332,37 +2333,55 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
 
           // دستور ۱: تست ارسال پیام‌ها و رسانه‌ها
           if (text === '/test') {
-            const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n\n` +
+            const testActionKb = {
+              inline_keyboard: [
+                [
+                  { text: '✍️ ارسال پاسخ', callback_data: 'ghost_reply:12345678', style: 'primary' },
+                  { text: '👻 چت در حالت شبح', callback_data: 'ghost_view:12345678', style: 'success' }
+                ]
+              ]
+            };
+
+            const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ارسال پیام:</b> همین حالا\n\n` +
               `📝 <b>متن پیام حذف شده:</b>\n` +
-              `<blockquote>این یک پیام آزمایشی برای بررسی دریافت پیام‌های پاک‌شده پیوی است. اتصال به ربات شما کاملاً فعال و پایدار است! ✅</blockquote>`;
+              `<blockquote>این یک پیام آزمایشی برای بررسی دریافت پیام‌های پاک‌شده پیوی است. اتصال به ربات شما کاملاً فعال و پایدار است! ✅</blockquote>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML' })
+              body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML', reply_markup: testActionKb })
             }).catch(() => {});
 
-            const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n\n` +
+            const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ویرایش:</b> همین حالا\n\n` +
               `⏮️ <b>متن قبل از ویرایش:</b>\n` +
               `<blockquote>سلام داداش، ساعت ۵ عصر می‌بینمت.</blockquote>\n\n` +
               `⏭️ <b>متن جدید و ویرایش‌شده:</b>\n` +
-              `<blockquote>سلام، برنامه تغییر کرد، فردا ساعت ۸ صبح تماس می‌گیرم!</blockquote>`;
+              `<blockquote>سلام، برنامه تغییر کرد، فردا ساعت ۸ صبح تماس می‌گیرم!</blockquote>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML' })
+              body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML', reply_markup: testActionKb })
             }).catch(() => {});
 
-            const testTtlMsg = `📸 <b>[تست سامانه نجات رسانه — Anti-TTL]</b>\n\n` +
+            const testTtlMsg = `📸 <b>[تست سامانه نجات رسانه — Anti-TTL]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
-              `⏳ <b>مدت زمان تایمر:</b> یک‌بار مصرف (View-Once)\n` +
-              `💾 <b>حجم:</b> 28.4 KB\n\n` +
-              `<blockquote>این یک تصویر آزمایشی از رسانه زمان‌دار نجات‌یافته در سلف‌بات شما است. تمامی رسانه‌های تایمردار بلافاصله پس از دریافت در پیوی به اینجا فوروارد خواهند شد! ✅</blockquote>`;
+              `⏳ <b>مدت زمان تایمر:</b> <code>یک‌بار مصرف (View-Once)</code>\n` +
+              `💾 <b>حجم فایل:</b> <code>28.4 KB</code>\n\n` +
+              `<blockquote>این یک تصویر آزمایشی از رسانه زمان‌دار نجات‌یافته در سلف‌بات شما است. تمامی رسانه‌های تایمردار بلافاصله پس از دریافت در پیوی به اینجا فوروارد خواهند شد! ✅</blockquote>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendPhoto`, {
               method: 'POST',
@@ -2371,7 +2390,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 chat_id: chatId,
                 photo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
                 caption: testTtlMsg,
-                parse_mode: 'HTML'
+                parse_mode: 'HTML',
+                reply_markup: testActionKb
               })
             }).catch(() => {});
 
@@ -2774,13 +2794,14 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 const safeName = (d.name || 'کاربر').slice(0, 18);
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}`
+                  callback_data: `ghost_view:${d.id}`,
+                  style: d.unreadCount > 0 ? 'success' : 'primary'
                 }];
               });
 
               buttons.push([
-                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
-                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
               ]);
 
               const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -3316,37 +3337,55 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               body: JSON.stringify({ callback_query_id: cb.id, text: 'در حال ارسال پیام‌های تستی...' })
             }).catch(() => {});
 
-            const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n\n` +
+            const testActionKb = {
+              inline_keyboard: [
+                [
+                  { text: '✍️ ارسال پاسخ', callback_data: 'ghost_reply:12345678', style: 'primary' },
+                  { text: '👻 چت در حالت شبح', callback_data: 'ghost_view:12345678', style: 'success' }
+                ]
+              ]
+            };
+
+            const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ارسال پیام:</b> همین حالا\n\n` +
               `📝 <b>متن پیام حذف شده:</b>\n` +
-              `<blockquote>این یک پیام آزمایشی برای بررسی دریافت پیام‌های پاک‌شده پیوی است. اتصال به ربات شما کاملاً فعال و پایدار است! ✅</blockquote>`;
+              `<blockquote>این یک پیام آزمایشی برای بررسی دریافت پیام‌های پاک‌شده پیوی است. اتصال به ربات شما کاملاً فعال و پایدار است! ✅</blockquote>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML' })
+              body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML', reply_markup: testActionKb })
             }).catch(() => {});
 
-            const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n\n` +
+            const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ویرایش:</b> همین حالا\n\n` +
               `⏮️ <b>متن قبل از ویرایش:</b>\n` +
               `<blockquote>سلام داداش، ساعت ۵ عصر می‌بینمت.</blockquote>\n\n` +
               `⏭️ <b>متن جدید و ویرایش‌شده:</b>\n` +
-              `<blockquote>سلام، برنامه تغییر کرد، فردا ساعت ۸ صبح تماس می‌گیرم!</blockquote>`;
+              `<blockquote>سلام، برنامه تغییر کرد، فردا ساعت ۸ صبح تماس می‌گیرم!</blockquote>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML' })
+              body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML', reply_markup: testActionKb })
             }).catch(() => {});
 
-            const testTtlMsg = `📸 <b>[تست سامانه نجات رسانه — Anti-TTL]</b>\n\n` +
+            const testTtlMsg = `📸 <b>[تست سامانه نجات رسانه — Anti-TTL]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
-              `⏳ <b>مدت زمان تایمر:</b> یک‌بار مصرف (View-Once)\n` +
-              `💾 <b>حجم:</b> 28.4 KB\n\n` +
-              `<blockquote>این یک تصویر آزمایشی از رسانه زمان‌دار نجات‌یافته در سلف‌بات شما است. تمامی رسانه‌های تایمردار بلافاصله پس از دریافت در پیوی به اینجا فوروارد خواهند شد! ✅</blockquote>`;
+              `⏳ <b>مدت زمان تایمر:</b> <code>یک‌بار مصرف (View-Once)</code>\n` +
+              `💾 <b>حجم فایل:</b> <code>28.4 KB</code>\n\n` +
+              `<blockquote>این یک تصویر آزمایشی از رسانه زمان‌دار نجات‌یافته در سلف‌بات شما است. تمامی رسانه‌های تایمردار بلافاصله پس از دریافت در پیوی به اینجا فوروارد خواهند شد! ✅</blockquote>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendPhoto`, {
               method: 'POST',
@@ -3355,7 +3394,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 chat_id: chatId,
                 photo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
                 caption: testTtlMsg,
-                parse_mode: 'HTML'
+                parse_mode: 'HTML',
+                reply_markup: testActionKb
               })
             }).catch(() => {});
           }
