@@ -2210,14 +2210,13 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 const safeName = (d.name || 'کاربر').slice(0, 18);
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`,
-                  style: d.unreadCount > 0 ? 'success' : 'primary'
+                  callback_data: `ghost_view:${d.id}`
                 }];
               });
 
               buttons.push([
-                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
-                { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
               ]);
 
               const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2770,14 +2769,13 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 const safeName = (d.name || 'کاربر').slice(0, 18);
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`,
-                  style: d.unreadCount > 0 ? 'success' : 'primary'
+                  callback_data: `ghost_view:${d.id}`
                 }];
               });
 
               buttons.push([
-                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
-                { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
               ]);
 
               const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2785,8 +2783,9 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 `📊 <b>کل پیام‌های خوانده‌نشده:</b> <b>${unreadTotal} پیام</b>\n\n` +
                 `💡 روی نام هر مخاطب کلیک کنید تا آخرین پیام‌های او را <b>بدون ارسال تیک آبی (شبح)</b> بخوانید یا به او پاسخ دهید:`;
 
+              let edited = false;
               if (messageId) {
-                await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                const editRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -2796,8 +2795,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                     parse_mode: 'HTML',
                     reply_markup: { inline_keyboard: buttons }
                   })
-                }).catch(() => {});
-              } else {
+                }).catch(() => null);
+                edited = editRes && editRes.ok;
+              }
+              if (!edited) {
                 await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -2820,8 +2821,9 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
 
               const waitMsg = `🔄 <b>در حال دریافت لیست پیوی‌های خصوصی شما از تلگرام...</b>\n\nلطفاً چند ثانیه صبر کنید تا لیست استخراج و در همین پیام نمایش داده شود.`;
 
+              let waitEdited = false;
               if (messageId) {
-                await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                const editRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -2830,8 +2832,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                     text: waitMsg,
                     parse_mode: 'HTML'
                   })
-                }).catch(() => {});
-              } else {
+                }).catch(() => null);
+                waitEdited = editRes && editRes.ok;
+              }
+              if (!waitEdited) {
                 await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -2847,7 +2851,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           } else if (data.startsWith('ghost_view:')) {
             const parts = data.split(':');
             const targetPeerId = parts[1];
-            const targetName = decodeURIComponent(parts[2] || 'مخاطب');
+            const lowerTarget = targetUsername.toLowerCase();
+            const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+            const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(targetPeerId)) : null;
+            const targetName = foundChat?.name || (parts[2] ? decodeURIComponent(parts[2]) : 'مخاطب');
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
@@ -2865,14 +2872,28 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               botToken: actualBotToken
             });
 
+            const loadingMsg = `⏳ <b>در حال دریافت پیام‌های چت ${targetName} در حالت شبح...</b>\n\n🔒 <i>تیک آبی برای مخاطب ارسال نخواهد شد.</i>`;
+            let viewEdited = false;
             if (messageId) {
-              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+              const editRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   chat_id: chatId,
                   message_id: messageId,
-                  text: `⏳ <b>در حال دریافت پیام‌های چت ${targetName} در حالت شبح...</b>\n\n🔒 <i>تیک آبی برای مخاطب ارسال نخواهد شد.</i>`,
+                  text: loadingMsg,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => null);
+              viewEdited = editRes && editRes.ok;
+            }
+            if (!viewEdited) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: loadingMsg,
                   parse_mode: 'HTML'
                 })
               }).catch(() => {});
@@ -2881,7 +2902,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           } else if (data.startsWith('ghost_reply:')) {
             const parts = data.split(':');
             const targetPeerId = parts[1];
-            const targetName = decodeURIComponent(parts[2] || 'مخاطب');
+            const lowerTarget = targetUsername.toLowerCase();
+            const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+            const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(targetPeerId)) : null;
+            const targetName = foundChat?.name || (parts[2] ? decodeURIComponent(parts[2]) : 'مخاطب');
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
@@ -2923,7 +2947,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           } else if (data.startsWith('ghost_read:')) {
             const parts = data.split(':');
             const targetPeerId = parts[1];
-            const targetName = decodeURIComponent(parts[2] || 'مخاطب');
+            const lowerTarget = targetUsername.toLowerCase();
+            const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+            const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(targetPeerId)) : null;
+            const targetName = foundChat?.name || (parts[2] ? decodeURIComponent(parts[2]) : 'مخاطب');
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
