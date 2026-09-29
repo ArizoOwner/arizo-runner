@@ -681,44 +681,47 @@ async function checkIsSelfOnline(entry, username) {
 async function isUserActiveOrOnline(entry, username, senderIdStr, message) {
   const now = Date.now();
 
-  // ۱. بررسی باز بودن مستقیم چت روی صفحه کاربر (Telegram read-on-screen)
-  if (message.unread === false) {
-    return {
-      isBusyOrOnline: true,
-      reason: 'صفحه چت در تلگرام شما باز است و پیام مستقیم روی صفحه شما خوانده شده است'
-    };
-  }
-
-  // ۲. بررسی گفتگوی زنده با همین شخص در ۵ دقیقه اخیر
+  // ۱. بررسی چت دوطرفه و ارسال پیام به این مخاطب در ۱۰ دقیقه اخیر
   const lastChatOut = entry.lastChatOutMap?.get(senderIdStr) || 0;
   const diffChat = now - lastChatOut;
-  if (lastChatOut > 0 && diffChat < 5 * 60 * 1000) {
+  if (lastChatOut > 0 && diffChat < 10 * 60 * 1000) {
     const passedSec = Math.round(diffChat / 1000);
-    const remainSec = Math.round((5 * 60 * 1000 - diffChat) / 1000);
+    const remainSec = Math.round((10 * 60 * 1000 - diffChat) / 1000);
     return {
       isBusyOrOnline: true,
-      reason: `شما در حال چت دوطرفه با این مخاطب هستید (${passedSec} ثانیه پیش به او پیام داده‌اید - فرجه آرامش: ${remainSec} ثانیه)`
+      reason: `شما در حال گفتگو با این مخاطب هستید (${passedSec} ثانیه پیش به او پیام داده‌اید — فرجه گفتگوی فعال: ${remainSec} ثانیه)`
     };
   }
 
-  // ۳. بررسی فعالیت عمومی در تلگرام در ۲.۵ دقیقه اخیر (کاربر در حال کار با تلگرام است)
+  // ۲. بررسی خواندن پیام‌های این چت در تلگرام (باز بودن صفحه چت) در ۵ دقیقه اخیر
+  const lastChatRead = entry.lastChatReadTimeMap?.get(senderIdStr) || 0;
+  const diffRead = now - lastChatRead;
+  if (lastChatRead > 0 && diffRead < 5 * 60 * 1000) {
+    const passedSec = Math.round(diffRead / 1000);
+    return {
+      isBusyOrOnline: true,
+      reason: `صفحه چت با این مخاطب در تلگرام شما باز بوده و ${passedSec} ثانیه پیش پیام‌ها خوانده شده‌اند`
+    };
+  }
+
+  // ۳. بررسی فعالیت عمومی در تلگرام در ۵ دقیقه اخیر (ارسال پیام در هر چت یا گروه)
   const lastGlobalOut = entry.lastGlobalOutTime || 0;
   const diffGlobal = now - lastGlobalOut;
-  if (lastGlobalOut > 0 && diffGlobal < 150 * 1000) {
+  if (lastGlobalOut > 0 && diffGlobal < 5 * 60 * 1000) {
     const passedSec = Math.round(diffGlobal / 1000);
-    const remainSec = Math.round((150 * 1000 - diffGlobal) / 1000);
+    const remainSec = Math.round((5 * 60 * 1000 - diffGlobal) / 1000);
     return {
       isBusyOrOnline: true,
-      reason: `شما در تلگرام فعال هستید (${passedSec} ثانیه پیش پیام ارسال کرده‌اید - فرجه: ${remainSec} ثانیه)`
+      reason: `شما در تلگرام آنلاین و فعال هستید (${passedSec} ثانیه پیش در تلگرام فعالیت داشته‌اید — فرجه: ${remainSec} ثانیه)`
     };
   }
 
-  // ۴. بررسی آنلاین بودن حساب در سرورهای تلگرام (UserStatusOnline)
+  // ۴. بررسی وضعیت آنلاین بودن اکانت در سرورهای تلگرام
   const isOnline = await checkIsSelfOnline(entry, username);
   if (isOnline) {
     return {
       isBusyOrOnline: true,
-      reason: 'اکانت تلگرام شما در حال حاضر آنلاین (Online) است'
+      reason: 'اکانت تلگرام شما آنلاین (Online) است'
     };
   }
 
@@ -756,6 +759,45 @@ async function forwardGhostMessage(botToken, chatId, senderName, senderUsername,
   };
 
   return sendBotTelegramMessage(botToken, chatId, text, keyboard);
+}
+
+/**
+ * تشخیص دقیق شناسه عددی مخاطب گفتگو (تفکیک دقیق فرستنده و گیرنده بر اساس جهت پیام)
+ */
+function getChatPartnerId(message, myId) {
+  if (!message) return null;
+  const myIdStr = myId ? myId.toString() : null;
+
+  if (message.out) {
+    // پیام خروجی است: مخاطب در peerId یا chatId قرار دارد (نه senderId که خودمان هستیم)
+    const pUserId = message.peerId?.userId ? message.peerId.userId.toString() : null;
+    if (pUserId && pUserId !== myIdStr) return pUserId;
+    if (message.chatId) {
+      const c = message.chatId.toString();
+      if (c !== myIdStr) return c;
+    }
+    const pId = message.peerId ? (message.peerId.chatId || message.peerId.channelId)?.toString() : null;
+    if (pId && pId !== myIdStr) return pId;
+  } else {
+    // پیام ورودی است: فرستنده در senderId یا fromId قرار دارد
+    if (message.senderId) {
+      const s = message.senderId.toString();
+      if (s !== myIdStr) return s;
+    }
+    if (message.fromId?.userId) {
+      const f = message.fromId.userId.toString();
+      if (f !== myIdStr) return f;
+    }
+    if (message.peerId?.userId) {
+      const p = message.peerId.userId.toString();
+      if (p !== myIdStr) return p;
+    }
+    if (message.chatId) {
+      const c = message.chatId.toString();
+      if (c !== myIdStr) return c;
+    }
+  }
+  return null;
 }
 
 /**
@@ -817,6 +859,7 @@ class TelegramConnectionPool {
         peerCache: new Map(),
         lastGlobalOutTime: 0,
         lastChatOutMap: new Map(),
+        lastChatReadTimeMap: new Map(),
         isSelfOnline: false,
         selfOnlineExpires: 0,
         lastSelfStatusCheck: 0,
@@ -988,12 +1031,9 @@ class TelegramConnectionPool {
     const isOut = Boolean(message.out || (myId && message.senderId && message.senderId.toString() === myId));
     const isPrivateChat = Boolean(message.isPrivate || (message.peerId instanceof Api.PeerUser) || (!message.isGroup && !message.isChannel));
 
-    // ۲. بررسی کش بودن مخاطب در اولین پیام افراد ناشناس و واکشی خودکار دیالوگ و اطلاعات پیام
-    const rawPeerId = message.senderId || 
-                      message.fromId?.userId || 
-                      (message.peerId?.userId ? message.peerId.userId : null) || 
-                      message.chatId;
-    const peerIdStr = rawPeerId ? rawPeerId.toString() : null;
+    // ۲. شناسایی دقیق مخاطب چت و ثبت زنده فعالیت کاربر در صورت ارسال پیام دستی
+    const partnerIdStr = getChatPartnerId(message, myId);
+    const peerIdStr = partnerIdStr || (message.senderId ? message.senderId.toString() : null) || (message.chatId ? message.chatId.toString() : null);
 
     // ثبت زنده فعالیت کاربر در تلگرام و در این چت در صورت ارسال پیام خروجی دستی توسط کاربر
     if (isOut) {
@@ -1002,9 +1042,10 @@ class TelegramConnectionPool {
       } else {
         const now = Date.now();
         entry.lastGlobalOutTime = now;
-        if (peerIdStr) {
+        if (partnerIdStr) {
           entry.lastChatOutMap = entry.lastChatOutMap || new Map();
-          entry.lastChatOutMap.set(peerIdStr, now);
+          entry.lastChatOutMap.set(partnerIdStr, now);
+          console.log(`💬 [${username}] Active chat: user manually sent message to partner ${partnerIdStr}`);
         }
       }
     }
@@ -1797,15 +1838,32 @@ class TelegramConnectionPool {
         }
       }
 
+      // بررسی ارسال پیام در چت خصوصی از کلاینت‌های دیگر (UpdateShortMessage)
+      if (u instanceof Api.UpdateShortMessage || u.className === 'UpdateShortMessage') {
+        const now = Date.now();
+        entry.lastGlobalOutTime = now;
+        if (u.out && u.userId) {
+          const partnerStr = u.userId.toString();
+          if (partnerStr !== myIdStr) {
+            entry.lastChatOutMap = entry.lastChatOutMap || new Map();
+            entry.lastChatOutMap.set(partnerStr, now);
+            console.log(`💬 [${username}] UpdateShortMessage: user sent message to ${partnerStr}`);
+          }
+        }
+      }
+
       // ۲. بررسی خواندن پیام در دستگاه دیگر توسط کاربر (UpdateReadHistoryInbox)
       if (u instanceof Api.UpdateReadHistoryInbox || u.className === 'UpdateReadHistoryInbox') {
         const rawPeer = u.peer?.userId || (u.peer instanceof Api.PeerUser ? u.peer.userId : null) || u.peer?.chatId;
         const peerStr = rawPeer ? rawPeer.toString() : null;
         const now = Date.now();
         entry.lastGlobalOutTime = now;
-        if (peerStr) {
+        if (peerStr && peerStr !== myIdStr) {
           entry.lastChatOutMap = entry.lastChatOutMap || new Map();
           entry.lastChatOutMap.set(peerStr, now);
+          entry.lastChatReadTimeMap = entry.lastChatReadTimeMap || new Map();
+          entry.lastChatReadTimeMap.set(peerStr, now);
+          console.log(`👁️ [${username}] User read chat ${peerStr} on active device.`);
         }
       }
 
