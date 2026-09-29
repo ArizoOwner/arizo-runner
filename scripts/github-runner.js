@@ -761,23 +761,25 @@ async function forwardGhostMessage(botToken, chatId, senderName, senderUsername,
   const cleanSender = String(senderName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const cleanText = String(messageText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  const mediaLabel = hasMedia ? `\n📎 <b>نوع رسانه:</b> ${mediaType || 'فایل'}` : '';
-  const text = `👻 <b>[Ghost Mode — پیام خوانده‌نشده]</b>\n\n` +
+  const mediaLabel = hasMedia ? `\n📎 <b>نوع رسانه:</b> <code>${mediaType || 'فایل'}</code>` : '';
+  const text = `👻 <b>[پیام جدید در حالت شبح — Ghost Mode]</b>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
     `👤 <b>فرستنده:</b> ${cleanSender}${senderUserStr} (<code>${senderIdStr}</code>)\n` +
-    `🕒 <b>زمان:</b> ${new Date().toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' })}\n` +
+    `🕒 <b>زمان:</b> <code>${new Date().toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' })}</code>\n` +
     `${mediaLabel}\n` +
-    `📝 <b>متن پیام:</b>\n<blockquote>${cleanText || '<i>(پیام فاقد متن)</i>'}</blockquote>\n\n` +
+    `📝 <b>متن پیام:</b>\n<blockquote>${cleanText || '<i>(پیام فاقد متن)</i>'}</blockquote>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
     `💡 <i>برای ارسال پاسخ مستقیم از اکانت خود یا ثبت تیک آبی، دکمه‌های زیر را انتخاب کنید:</i>`;
 
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}` },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}` }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}`, style: 'success' }
       ],
       [
-        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}` },
-        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}`, style: 'primary' },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
       ]
     ]
   };
@@ -1448,10 +1450,13 @@ class TelegramConnectionPool {
               fileName = `file_${Date.now()}.${ext}`;
             }
 
-            const caption = `📸 <b>[Arizo Anti-TTL] ${typeLabel} زمان‌دار نجات یافت!</b>\n` +
+            const caption = `📸 <b>[سیستم نجات رسانه — Anti-TTL]</b>\n` +
+                            `━━━━━━━━━━━━━━━━━━━━\n` +
                             `👤 <b>فرستنده:</b> ${cleanSenderName}${senderUsernameStr} (<code>${senderIdStr}</code>)\n` +
-                            `⏳ <b>مدت زمان تایمر:</b> ${timerLabel}\n` +
-                            `💾 <b>حجم:</b> ${(buffer.length / 1024).toFixed(1)} KB`;
+                            `⏳ <b>مدت زمان تایمر:</b> <code>${timerLabel}</code>\n` +
+                            `💾 <b>حجم فایل:</b> <code>${(buffer.length / 1024).toFixed(1)} KB</code>\n` +
+                            `━━━━━━━━━━━━━━━━━━━━\n` +
+                            `💡 <i>این رسانه زمان‌دار قبل از انقضا به صورت خودکار نجات یافت.</i>`;
 
             const customFile = new CustomFile(fileName, buffer.length, '', buffer);
 
@@ -1466,8 +1471,8 @@ class TelegramConnectionPool {
                 const ttlKeyboard = {
                   inline_keyboard: [
                     [
-                      { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}` },
-                      { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}` }
+                      { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
+                      { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}`, style: 'success' }
                     ]
                   ]
                 };
@@ -1711,11 +1716,28 @@ class TelegramConnectionPool {
             if (message.media && !message.media?.ttlSeconds) {
               downloadMediaSafely(entry.client, message, username).then(buf => {
                 if (buf && buf.length > 0 && buf.length < 4 * 1024 * 1024) {
+                  const ghostMediaCaption = `👻 <b>[رسانه دریافتی در حالت شبح]</b>\n` +
+                    `━━━━━━━━━━━━━━━━━━━━\n` +
+                    `👤 <b>فرستنده:</b> ${escapeHtml(senderFullName)} (<code>${senderIdStr}</code>)\n` +
+                    `📎 <b>نوع رسانه:</b> <code>${mediaType}</code>\n` +
+                    `━━━━━━━━━━━━━━━━━━━━\n` +
+                    `💡 <i>جهت پاسخ مستقیم یا مشاهده گفتگو از دکمه‌های زیر استفاده فرمایید.</i>`;
+
+                  const ghostMediaKeyboard = {
+                    inline_keyboard: [
+                      [
+                        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
+                        { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}`, style: 'success' }
+                      ]
+                    ]
+                  };
+
                   sendBotTelegramMedia(
                     bot.token, targetChatId, buf,
                     `ghost_${Date.now()}.${isPhoto ? 'jpg' : (isVoice ? 'ogg' : 'mp4')}`,
-                    `👻 رسانه از ${senderFullName}`,
-                    isPhoto, isVideo, isVoice
+                    ghostMediaCaption,
+                    isPhoto, isVideo, isVoice,
+                    ghostMediaKeyboard
                   ).catch(() => {});
                 }
               }).catch(() => {});
@@ -1787,13 +1809,25 @@ class TelegramConnectionPool {
                     const senderUserStr = sender?.username ? ` (@${sender.username})` : '';
                     const cleanUserMsg = String(messageText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 300);
                     const cleanReply = String(aiResponse).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 500);
-                    const logText = `🤖 <b>[پاسخ خودکار هوش مصنوعی — AI Reply]</b>\n\n` +
+                    const logText = `🤖 <b>[پاسخ خودکار هوش مصنوعی — AI Reply]</b>\n` +
+                      `━━━━━━━━━━━━━━━━━━━━\n` +
                       `👤 <b>مخاطب:</b> ${cleanSender}${senderUserStr} (<code>${senderIdStr}</code>)\n` +
-                      `🕒 <b>زمان:</b> ${new Date().toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' })}\n\n` +
+                      `🕒 <b>زمان ارسال:</b> <code>${new Date().toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' })}</code>\n` +
+                      `📊 <b>شمارنده:</b> <code>${currentCount + 1} از ${maxReplies} پاسخ مجاز</code>\n\n` +
                       `📩 <b>پیام مخاطب:</b>\n<blockquote>${cleanUserMsg}</blockquote>\n\n` +
-                      `💬 <b>پاسخ ارسالی هوش مصنوعی:</b>\n<blockquote>${cleanReply}</blockquote>\n\n` +
-                      `📊 <b>شمارنده:</b> ${currentCount + 1} از ${maxReplies} پاسخ مجاز`;
-                    sendBotTelegramMessage(bot.token, targetChatId, logText).catch(() => {});
+                      `💬 <b>پاسخ هوش مصنوعی:</b>\n<blockquote>${cleanReply}</blockquote>\n` +
+                      `━━━━━━━━━━━━━━━━━━━━\n` +
+                      `💡 <i>جهت پاسخ مستقیم یا مشاهده گفتگو در حالت شبح، از دکمه‌های زیر استفاده فرمایید:</i>`;
+
+                    const logKeyboard = {
+                      inline_keyboard: [
+                        [
+                          { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
+                          { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}`, style: 'success' }
+                        ]
+                      ]
+                    };
+                    sendBotTelegramMessage(bot.token, targetChatId, logText, logKeyboard).catch(() => {});
                   }
                 }
               } else {
@@ -1969,18 +2003,21 @@ class TelegramConnectionPool {
             : 'لحظاتی پیش';
           const senderUserStr = cached.senderUsername ? ` (@${cached.senderUsername})` : '';
 
-          const caption = `🗑️ <b>پیام حذف شده در پیوی!</b>\n\n` +
+          const caption = `🗑️ <b>[سامانه ضد حذف — Anti-Delete]</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
             `👤 <b>فرستنده:</b> ${cached.senderName}${senderUserStr} (<code>${cached.senderId}</code>)\n` +
-            `🕒 <b>زمان ارسال پیام:</b> ${dateStr}\n\n` +
-            `📝 <b>متن پیام حذف شده:</b>\n<blockquote>${cached.text ? cached.text : '<i>(پیام فاقد متن بود)</i>'}</blockquote>`;
+            `🕒 <b>زمان ارسال پیام:</b> <code>${dateStr}</code>\n\n` +
+            `📝 <b>متن پیام حذف شده:</b>\n<blockquote>${cached.text ? cached.text : '<i>(پیام فاقد متن بود)</i>'}</blockquote>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
           console.log(`🗑️ [${username}] Anti-Delete triggered for message #${msgId} from ${cached.senderId}`);
 
           const deleteActionKeyboard = {
             inline_keyboard: [
               [
-                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}` },
-                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}` }
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}`, style: 'primary' },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}`, style: 'success' }
               ]
             ]
           };
@@ -2035,18 +2072,21 @@ class TelegramConnectionPool {
             : 'اکنون';
           const senderUserStr = cached.senderUsername ? ` (@${cached.senderUsername})` : '';
 
-          const alertText = `✏️ <b>پیام ویرایش شده در پیوی!</b>\n\n` +
+          const alertText = `✏️ <b>[سامانه ضد ویرایش — Anti-Edit]</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
             `👤 <b>فرستنده:</b> ${cached.senderName}${senderUserStr} (<code>${cached.senderId}</code>)\n` +
-            `🕒 <b>زمان ویرایش:</b> ${dateStr}\n\n` +
+            `🕒 <b>زمان ویرایش:</b> <code>${dateStr}</code>\n\n` +
             `⏮️ <b>متن قبل از ویرایش:</b>\n<blockquote>${oldText || '(خالی)'}</blockquote>\n\n` +
-            `⏭️ <b>متن جدید:</b>\n<blockquote>${newText || '(خالی)'}</blockquote>`;
+            `⏭️ <b>متن جدید و ویرایش‌شده:</b>\n<blockquote>${newText || '(خالی)'}</blockquote>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
           console.log(`✏️ [${username}] Anti-Edit triggered for message #${msgId} from ${cached.senderId}`);
           const editActionKeyboard = {
             inline_keyboard: [
               [
-                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}` },
-                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}` }
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}`, style: 'primary' },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}`, style: 'success' }
               ]
             ]
           };
@@ -2469,13 +2509,14 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
     const safeName = (d.name || 'کاربر').slice(0, 18);
     return [{
       text: `👤 ${safeName}${badge}`,
-      callback_data: `ghost_view:${d.id}`
+      callback_data: `ghost_view:${d.id}`,
+      style: d.unreadCount > 0 ? 'success' : 'primary'
     }];
   });
 
   buttons.push([
-    { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
-    { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+    { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
+    { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
   ]);
 
   const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2574,12 +2615,12 @@ async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, mess
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}` },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}` }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}`, style: 'primary' },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}`, style: 'success' }
       ],
       [
-        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}` },
-        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}`, style: 'primary' },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
       ]
     ]
   };
@@ -2685,15 +2726,17 @@ async function pollAndProcessBotActions(pool) {
           if (botToken && action.chatId) {
             const cleanText = escapeHtml(action.text || '');
             const cleanTarget = escapeHtml(action.targetName || action.peerId);
-            const confirmText = `✅ <b>پاسخ شما با موفقیت ارسال شد!</b>\n\n` +
+            const confirmText = `✅ <b>[ارسال موفق پاسخ — Reply Sent]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>به مخاطب:</b> ${cleanTarget} (<code>${action.peerId}</code>)\n` +
-              `💬 <b>متن ارسال‌شده:</b>\n<blockquote>${cleanText}</blockquote>\n\n` +
-              `<i>پیام مستقیماً از اکانت رسمی تلگرام شما ارسال شد.</i>`;
+              `💬 <b>متن ارسال‌شده:</b>\n<blockquote>${cleanText}</blockquote>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `⚡ <i>پیام مستقیماً از اکانت رسمی تلگرام شما ارسال شد.</i>`;
             const keyboard = {
               inline_keyboard: [
                 [
-                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}` },
-                  { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}`, style: 'primary' },
+                  { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
                 ]
               ]
             };
@@ -2722,12 +2765,17 @@ async function pollAndProcessBotActions(pool) {
 
           if (botToken && action.chatId) {
             const cleanTarget = escapeHtml(action.targetName || action.peerId);
-            const markText = `👁️ <b>تیک آبی با موفقیت ثبت شد!</b>\n\n` +
-              `پیام‌های چت <b>${cleanTarget}</b> در تلگرام به عنوان خوانده‌شده علامت‌گذاری شدند. ✅`;
+            const markText = `👁️ <b>[ثبت تیک آبی — Marked Read]</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `👤 <b>مخاطب:</b> <b>${cleanTarget}</b> (<code>${action.peerId}</code>)\n` +
+              `✅ پیام‌های این گفتگو در تلگرام به عنوان خوانده‌شده علامت‌گذاری شدند.\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `💡 <i>حالت شبح برای پیام‌های بعدی همچنان فعال باقی می‌ماند.</i>`;
             const keyboard = {
               inline_keyboard: [
                 [
-                  { text: '👻 بازگشت به چت‌های خصوصی', callback_data: 'ghost_chats', style: 'primary' }
+                  { text: '👻 بازگشت به چت‌های خصوصی', callback_data: 'ghost_chats', style: 'primary' },
+                  { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
                 ]
               ]
             };
