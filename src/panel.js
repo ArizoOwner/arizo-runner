@@ -4127,11 +4127,12 @@ export function panelHTML(env) {
 
     function renderUsersTable(users) {
       var tbody = document.getElementById('usersTableBody');
-      if (!users || !users.length) {
+      var validUsers = (users || []).filter(function(u) { return u && u.exists !== false; });
+      if (!validUsers.length) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:18px;">کاربری یافت نشد.</td></tr>';
         return;
       }
-      tbody.innerHTML = users.map(function(u) {
+      tbody.innerHTML = validUsers.map(function(u) {
         var tgStatus = u.hasTelegram 
           ? (u.enabled ? '<span style="color:var(--accent-green);">🟢 فعال</span>' : '<span style="color:var(--accent-amber);">⏸️ متوقف</span>')
           : '<span style="color:var(--text-muted);">قطع</span>';
