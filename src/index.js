@@ -1744,41 +1744,47 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
   ].filter(Boolean).join('\n');
 
   if (provider === 'gemini') {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-    let res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(12000),
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: fullSystemPrompt }] },
-        contents: [{ parts: [{ text: userMessage }] }],
-        generationConfig: { maxOutputTokens: 250, temperature: 0.7, topP: 0.9 }
-      })
-    }).catch(() => null);
+    const geminiModels = [
+      'gemini-flash-lite-latest',
+      'gemini-3.1-flash-lite',
+      'gemini-2.5-flash-lite',
+      'gemini-3.5-flash-lite',
+      'gemini-flash-latest',
+      'gemini-3.8-flash'
+    ];
 
-    // در صورت خطا یا 404 در مدل 2.0، تلاش مجدد با 1.5-flash
-    if (!res || !res.ok) {
-      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      res = await fetch(fallbackUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(12000),
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: fullSystemPrompt }] },
-          contents: [{ parts: [{ text: userMessage }] }],
-          generationConfig: { maxOutputTokens: 250, temperature: 0.7, topP: 0.9 }
-        })
-      }).catch(() => null);
+    let lastError = null;
+    for (const model of geminiModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(9000),
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: fullSystemPrompt }] },
+            contents: [{ parts: [{ text: userMessage }] }],
+            generationConfig: { maxOutputTokens: 250, temperature: 0.7, topP: 0.9 }
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (reply && reply.trim()) {
+            return reply.trim().slice(0, 500);
+          }
+        } else {
+          const errText = await res.text().catch(() => '');
+          lastError = `${model} (${res.status}): ${errText.slice(0, 120)}`;
+        }
+      } catch (err) {
+        lastError = `${model}: ${err.message}`;
+      }
     }
 
-    if (!res || !res.ok) {
-      const errText = res ? await res.text().catch(() => '') : 'اتصال برقرار نشد';
-      const safeErr = String(errText || '').replaceAll(apiKey, '[REDACTED_KEY]');
-      throw new Error(`خطای Gemini: ${safeErr.slice(0, 150)}`);
-    }
-    const data = await res.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return reply ? reply.trim().slice(0, 500) : null;
+    const safeErr = String(lastError || 'اتصال برقرار نشد').replaceAll(apiKey, '[REDACTED_KEY]');
+    throw new Error(`خطای Gemini: ${safeErr}`);
 
   } else if (provider === 'openai') {
     const url = 'https://api.openai.com/v1/chat/completions';
