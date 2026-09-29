@@ -275,7 +275,7 @@ async function editBotTelegramMessage(token, chatId, messageId, text, replyMarku
 /**
  * ارسال چندلایه و تضمینی انواع رسانه (عکس، فیلم، صوت یا فایل) به ربات تلگرام اختصاصی کاربر
  */
-async function sendBotTelegramMedia(token, chatId, buffer, fileName, caption, isPhoto, isVideo, isVoice) {
+async function sendBotTelegramMedia(token, chatId, buffer, fileName, caption, isPhoto, isVideo, isVoice, replyMarkup = null) {
   if (!token || !chatId || !buffer || buffer.length === 0) {
     return { ok: false, error: 'پارامترهای ارسالی یا بافر رسانه خالی است' };
   }
@@ -304,6 +304,7 @@ async function sendBotTelegramMedia(token, chatId, buffer, fileName, caption, is
     fd.append('chat_id', String(chatId));
     fd.append('caption', caption || '');
     fd.append('parse_mode', 'HTML');
+    if (replyMarkup) fd.append('reply_markup', JSON.stringify(replyMarkup));
     fd.append(field, new Blob([buffer], { type: mimeType }), fileName || 'file.bin');
 
     const res = await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
@@ -744,12 +745,12 @@ async function forwardGhostMessage(botToken, chatId, senderName, senderUsername,
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${encodeURIComponent(senderName)}` },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}:${encodeURIComponent(senderName)}` }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${encodeURIComponent(senderName)}`, style: 'primary' },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}:${encodeURIComponent(senderName)}`, style: 'success' }
       ],
       [
-        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}:${encodeURIComponent(senderName)}` },
-        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}:${encodeURIComponent(senderName)}`, style: 'primary' },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
       ]
     ]
   };
@@ -1372,6 +1373,14 @@ class TelegramConnectionPool {
             const targetChatId = bot?.chatId || bot?.ownerId || entry.myId;
             if (bot?.token && targetChatId && bot?.forwardTtlToBot !== false) {
               try {
+                const ttlKeyboard = {
+                  inline_keyboard: [
+                    [
+                      { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${encodeURIComponent(cleanSenderName)}`, style: 'primary' },
+                      { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}:${encodeURIComponent(cleanSenderName)}`, style: 'primary' }
+                    ]
+                  ]
+                };
                 botSendResult = await sendBotTelegramMedia(
                   bot.token,
                   targetChatId,
@@ -1380,7 +1389,8 @@ class TelegramConnectionPool {
                   caption,
                   isPhoto,
                   isVideo,
-                  isVoice
+                  isVoice,
+                  ttlKeyboard
                 );
                 if (botSendResult.ok) {
                   sendSuccess = true;
@@ -1844,6 +1854,15 @@ class TelegramConnectionPool {
 
           console.log(`🗑️ [${username}] Anti-Delete triggered for message #${msgId} from ${cached.senderId}`);
 
+          const deleteActionKeyboard = {
+            inline_keyboard: [
+              [
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' }
+              ]
+            ]
+          };
+
           if (cached.mediaBuffer && cached.mediaBuffer.length > 0) {
             sendBotTelegramMedia(
               bot.token,
@@ -1853,10 +1872,11 @@ class TelegramConnectionPool {
               caption,
               cached.isPhoto,
               cached.isVideo,
-              cached.isVoice
+              cached.isVoice,
+              deleteActionKeyboard
             ).catch(e => console.warn(`⚠️ [${username}] Anti-Delete media send error:`, e.message));
           } else {
-            sendBotTelegramMessage(bot.token, targetChatId, caption)
+            sendBotTelegramMessage(bot.token, targetChatId, caption, deleteActionKeyboard)
               .catch(e => console.warn(`⚠️ [${username}] Anti-Delete message send error:`, e.message));
           }
         }
@@ -1891,7 +1911,15 @@ class TelegramConnectionPool {
             `⏭️ <b>متن جدید:</b>\n<blockquote>${newText || '(خالی)'}</blockquote>`;
 
           console.log(`✏️ [${username}] Anti-Edit triggered for message #${msgId} from ${cached.senderId}`);
-          sendBotTelegramMessage(bot.token, targetChatId, alertText)
+          const editActionKeyboard = {
+            inline_keyboard: [
+              [
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}:${encodeURIComponent(cached.senderName || '')}`, style: 'primary' }
+              ]
+            ]
+          };
+          sendBotTelegramMessage(bot.token, targetChatId, alertText, editActionKeyboard)
             .catch(e => console.warn(`⚠️ [${username}] Anti-Edit send error:`, e.message));
 
           cached.text = newText;
@@ -2352,8 +2380,8 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
     const emptyKeyboard = {
       inline_keyboard: [
         [
-          { text: '🔄 بررسی مجدد', callback_data: 'ghost_chats_refresh' },
-          { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+          { text: '🔄 بررسی مجدد', callback_data: 'ghost_chats_refresh', style: 'primary' },
+          { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
         ]
       ]
     };
@@ -2372,13 +2400,14 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
     const safeName = (d.name || 'کاربر').slice(0, 18);
     return [{
       text: `👤 ${safeName}${badge}`,
-      callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`
+      callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`,
+      style: d.unreadCount > 0 ? 'success' : 'primary'
     }];
   });
 
   buttons.push([
-    { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
-    { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+    { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
+    { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
   ]);
 
   const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2474,12 +2503,12 @@ async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, mess
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}:${encodeURIComponent(targetName || '')}` },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}:${encodeURIComponent(targetName || '')}` }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}:${encodeURIComponent(targetName || '')}`, style: 'primary' },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}:${encodeURIComponent(targetName || '')}`, style: 'success' }
       ],
       [
-        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}:${encodeURIComponent(targetName || '')}` },
-        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}:${encodeURIComponent(targetName || '')}`, style: 'primary' },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
       ]
     ]
   };
@@ -2532,7 +2561,7 @@ async function pollAndProcessBotActions(pool) {
           if (botToken && action.chatId && action.messageId) {
             await editBotTelegramMessage(botToken, action.chatId, action.messageId,
               `⚠️ <b>سلف‌بات در حال اتصال به تلگرام است...</b>\n\nرانر در حال حاضر در حال برقراری اتصال امن نشست تلگرام شما می‌باشد. لطفاً چند لحظه بعد مجدداً روی دکمه کلیک کنید.`,
-              { inline_keyboard: [[{ text: '🔄 تلاش مجدد', callback_data: 'ghost_chats_refresh' }, { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }]] }
+              { inline_keyboard: [[{ text: '🔄 تلاش مجدد', callback_data: 'ghost_chats_refresh', style: 'primary' }, { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }]] }
             ).catch(() => {});
           }
           continue;
@@ -2589,8 +2618,8 @@ async function pollAndProcessBotActions(pool) {
             const keyboard = {
               inline_keyboard: [
                 [
-                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}:${encodeURIComponent(action.targetName || '')}` },
-                  { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}:${encodeURIComponent(action.targetName || '')}`, style: 'primary' },
+                  { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
                 ]
               ]
             };
@@ -2624,7 +2653,7 @@ async function pollAndProcessBotActions(pool) {
             const keyboard = {
               inline_keyboard: [
                 [
-                  { text: '👻 بازگشت به چت‌های خصوصی', callback_data: 'ghost_chats' }
+                  { text: '👻 بازگشت به چت‌های خصوصی', callback_data: 'ghost_chats', style: 'primary' }
                 ]
               ]
             };
@@ -2636,7 +2665,7 @@ async function pollAndProcessBotActions(pool) {
         if (botToken && action.chatId && action.messageId) {
           await editBotTelegramMessage(botToken, action.chatId, action.messageId,
             `❌ <b>خطا در انجام عملیات:</b>\n<code>${escapeHtml(actErr.message)}</code>`,
-            { inline_keyboard: [[{ text: '🔄 تلاش مجدد', callback_data: 'ghost_chats_refresh' }, { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }]] }
+            { inline_keyboard: [[{ text: '🔄 تلاش مجدد', callback_data: 'ghost_chats_refresh', style: 'primary' }, { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }]] }
           ).catch(() => {});
         }
       }
