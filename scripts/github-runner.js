@@ -185,20 +185,23 @@ async function deleteTelegramMessage(client, message, username = '') {
 }
 
 /**
- * ارسال پیام متنی با فرمت HTML به ربات تلگرام اختصاصی کاربر
+ * ارسال پیام متنی با فرمت HTML به ربات تلگرام اختصاصی کاربر (با پشتیبانی از کیبورد شیشه‌ای)
  */
-async function sendBotTelegramMessage(token, chatId, text) {
+async function sendBotTelegramMessage(token, chatId, text, replyMarkup = null) {
   if (!token || !chatId || !text) return false;
   try {
+    const payload = {
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      })
+      body: JSON.stringify(payload)
     });
     if (!res.ok) {
       const err = await res.text();
@@ -462,6 +465,138 @@ async function sendAfkReply(entry, message, afkText, username, senderIdStr) {
 }
 
 /**
+ * فراخوانی API هوش مصنوعی برای تولید پاسخ هوشمند (Gemini / OpenAI)
+ * @param {string} provider - 'gemini' یا 'openai' یا 'custom'
+ * @param {string} apiKey - کلید API کاربر
+ * @param {string} systemPrompt - دستورالعمل شخصیت AI
+ * @param {string} context - اطلاعات پایه درباره کاربر
+ * @param {string} userMessage - پیام دریافتی مخاطب
+ * @returns {Promise<string|null>}
+ */
+async function callAIApi(provider, apiKey, systemPrompt, context, userMessage) {
+  if (!apiKey || !userMessage) return null;
+
+  const defaultSystemPrompt = `تو یک دستیار شخصی هوشمند هستی که به جای مالک این حساب تلگرام پاسخ می‌دهی. مالک حساب الان آفلاین است. پاسخ‌هایت باید کوتاه (حداکثر ۳ جمله)، مودبانه و به زبان فارسی باشد. اگر سوال تخصصی بود بگو مالک حساب به محض آنلاین شدن پاسخ خواهد داد.`;
+
+  const fullSystemPrompt = [
+    systemPrompt || defaultSystemPrompt,
+    context ? `\nاطلاعات پایه درباره مالک حساب: ${context}` : '',
+    '\nقوانین: پاسخ کوتاه و مختصر بده. از اطلاعات محرمانه صحبت نکن. حتماً اشاره کن که مالک حساب الان آفلاین است و این پاسخ توسط دستیار هوشمند ارسال شده.'
+  ].filter(Boolean).join('\n');
+
+  try {
+    if (provider === 'gemini') {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      let res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(12000),
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: fullSystemPrompt }] },
+          contents: [{ parts: [{ text: userMessage }] }],
+          generationConfig: {
+            maxOutputTokens: 250,
+            temperature: 0.7,
+            topP: 0.9
+          }
+        })
+      }).catch(() => null);
+
+      if (!res || !res.ok) {
+        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        res = await fetch(fallbackUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(12000),
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: fullSystemPrompt }] },
+            contents: [{ parts: [{ text: userMessage }] }],
+            generationConfig: {
+              maxOutputTokens: 250,
+              temperature: 0.7,
+              topP: 0.9
+            }
+          })
+        }).catch(() => null);
+      }
+
+      if (!res || !res.ok) {
+        const errText = res ? await res.text().catch(() => '') : 'اتصال ناموفق';
+        console.warn(`⚠️ [AI-Gemini] API error: ${errText.slice(0, 150)}`);
+        return null;
+      }
+      const data = await res.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      return reply ? reply.trim().slice(0, 500) : null;
+
+    } else if (provider === 'openai') {
+      const url = 'https://api.openai.com/v1/chat/completions';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        signal: AbortSignal.timeout(12000),
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: fullSystemPrompt },
+            { role: 'user', content: userMessage }
+          ],
+          max_tokens: 250,
+          temperature: 0.7
+        })
+      }).catch(() => null);
+
+      if (!res || !res.ok) {
+        const errText = res ? await res.text().catch(() => '') : 'اتصال ناموفق';
+        console.warn(`⚠️ [AI-OpenAI] API error: ${errText.slice(0, 150)}`);
+        return null;
+      }
+      const data = await res.json();
+      const reply = data?.choices?.[0]?.message?.content;
+      return reply ? reply.trim().slice(0, 500) : null;
+
+    } else {
+      console.warn('⚠️ [AI] Provider not supported:', provider);
+      return null;
+    }
+  } catch (err) {
+    console.error(`❌ [AI-${provider}] API call failed:`, err.message);
+    return null;
+  }
+}
+
+/**
+ * فوروارد پیام ورودی پیوی به ربات اختصاصی کاربر در حالت شبح (Ghost Mode)
+ */
+async function forwardGhostMessage(botToken, chatId, senderName, senderUsername, senderIdStr, messageText, hasMedia, mediaType) {
+  if (!botToken || !chatId) return false;
+  const senderUserStr = senderUsername ? ` (@${senderUsername})` : '';
+  const cleanSender = String(senderName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cleanText = String(messageText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const mediaLabel = hasMedia ? `\n📎 <b>نوع رسانه:</b> ${mediaType || 'فایل'}` : '';
+  const text = `👻 <b>[Ghost Mode — پیام خوانده‌نشده]</b>\n\n` +
+    `👤 <b>فرستنده:</b> ${cleanSender}${senderUserStr} (<code>${senderIdStr}</code>)\n` +
+    `🕒 <b>زمان:</b> ${new Date().toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' })}\n` +
+    `${mediaLabel}\n` +
+    `📝 <b>متن پیام:</b>\n<blockquote>${cleanText || '<i>(پیام فاقد متن)</i>'}</blockquote>\n\n` +
+    `💡 <i>برای زدن تیک آبی در تلگرام بنویسید:</i> <code>.read</code>`;
+
+  const keyboard = {
+    inline_keyboard: [
+      [
+        { text: '💡 راهنما: ثبت تیک آبی با دستور .read', callback_data: 'ghost_help' }
+      ]
+    ]
+  };
+
+  return sendBotTelegramMessage(botToken, chatId, text, keyboard);
+}
+
+/**
  * مدیریت استخر کلاینت‌های زنده تلگرام (Persistent Connection Pool)
  */
 class TelegramConnectionPool {
@@ -539,9 +674,20 @@ class TelegramConnectionPool {
           afkCooldown: 10,
           muteEnabled: false,
           mutedUsers: [],
-          antiTtlEnabled: false
+          antiTtlEnabled: false,
+          ghostMode: false,
+          ghostExcludeList: [],
+          aiReplyEnabled: false,
+          aiProvider: 'gemini',
+          aiApiKey: '',
+          aiSystemPrompt: '',
+          aiContext: '',
+          aiMaxReplies: 3,
+          aiCooldown: 5
         },
         afkCooldownMap: new Map(),
+        aiReplyCountMap: new Map(),
+        aiCooldownMap: new Map(),
         localMutedUsers: new Set(),
         recentMessagesCache: new Map(),
         selfbotDeletedIds: new Set(),
@@ -590,7 +736,18 @@ class TelegramConnectionPool {
         muteEnabled: !!userSettings.muteEnabled || serverMuted.length > 0,
         mutedUsers: serverMuted,
         antiTtlEnabled: !!userSettings.antiTtlEnabled,
-        bot: userSettings.bot || null
+        bot: userSettings.bot || null,
+        // 👻 Ghost Mode
+        ghostMode: !!userSettings.ghostMode,
+        ghostExcludeList: Array.isArray(userSettings.ghostExcludeList) ? userSettings.ghostExcludeList : [],
+        // 🤖 AI Smart Reply
+        aiReplyEnabled: !!userSettings.aiReplyEnabled,
+        aiProvider: userSettings.aiProvider || 'gemini',
+        aiApiKey: userSettings.aiApiKey || '',
+        aiSystemPrompt: userSettings.aiSystemPrompt || '',
+        aiContext: userSettings.aiContext || '',
+        aiMaxReplies: userSettings.aiMaxReplies ?? 3,
+        aiCooldown: userSettings.aiCooldown ?? 5
       };
       resolveMutedUsernames(entry);
     }
@@ -867,6 +1024,66 @@ class TelegramConnectionPool {
           setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
           return;
         }
+      }
+    }
+
+    // ۱.۱ دستورات سریع حالت شبح (.read و .ghost)
+    if (isOut && message.text) {
+      const text = message.text.trim();
+
+      // دستور .read — زدن تیک آبی دستی
+      const readMatch = text.match(/^\.read(?:\s+(.+))?$/i);
+      if (readMatch) {
+        const arg = (readMatch[1] || '').trim().toLowerCase();
+        try {
+          if (arg === 'all') {
+            // خواندن تمام چت‌ها
+            const dialogs = await entry.client.getDialogs({ limit: 50 });
+            let readCount = 0;
+            for (const d of dialogs) {
+              if (d.unreadCount > 0 && d.entity) {
+                try {
+                  await entry.client.markAsRead(d.entity);
+                  readCount++;
+                } catch (_) {}
+              }
+            }
+            await message.edit({ text: `📖 تیک آبی برای ${readCount} چت زده شد ✅` }).catch(() => {});
+          } else {
+            // خواندن چت فعلی
+            const peer = message.peerId || message.chatId;
+            if (peer) {
+              await entry.client.markAsRead(peer);
+              await message.edit({ text: '📖 تیک آبی برای این چت زده شد ✅' }).catch(() => {});
+            }
+          }
+        } catch (readErr) {
+          await message.edit({ text: `❌ خطا: ${readErr.message}` }).catch(() => {});
+        }
+        setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3000);
+        return;
+      }
+
+      // دستور .ghost on/off — فعال/غیرفعال حالت شبح
+      const ghostMatch = text.match(/^\.ghost\s+(on|off)$/i);
+      if (ghostMatch) {
+        const newState = ghostMatch[1].toLowerCase() === 'on';
+        entry.settings.ghostMode = newState;
+        syncUserFeatureToCloudflare(username, { ghostMode: newState });
+        await message.edit({ text: newState ? '👻 حالت شبح فعال شد — تیک آبی مسدود است 🟢' : '👁️ حالت شبح غیرفعال شد — تیک آبی عادی ⚪' }).catch(() => {});
+        setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
+        return;
+      }
+
+      // دستور .ai on/off — فعال/غیرفعال پاسخ هوشمند هوش مصنوعی
+      const aiMatch = text.match(/^\.ai\s+(on|off)$/i);
+      if (aiMatch) {
+        const newState = aiMatch[1].toLowerCase() === 'on';
+        entry.settings.aiReplyEnabled = newState;
+        syncUserFeatureToCloudflare(username, { aiReplyEnabled: newState });
+        await message.edit({ text: newState ? '🤖 پاسخ هوشمند AI فعال شد 🟢' : '🤖 پاسخ هوشمند AI غیرفعال شد ⚪' }).catch(() => {});
+        setTimeout(() => message.delete({ revoke: true }).catch(() => {}), 3500);
+        return;
       }
     }
 
@@ -1160,8 +1377,8 @@ class TelegramConnectionPool {
       }
     }
 
-    // ۴. 🤖 منشی خودکار پیوی (AFK Auto-Secretary)
-    if (entry.settings.afkEnabled && !isOut && isPrivateChat) {
+    // ۴. 🤖 منشی خودکار پیوی + 👻 حالت شبح + 🤖 پاسخ هوشمند AI
+    if (!isOut && isPrivateChat) {
       const rawSenderId = message.senderId || message.fromId?.userId || (message.peerId instanceof Api.PeerUser ? message.peerId.userId : null) || message.chatId;
       const senderIdStr = rawSenderId ? rawSenderId.toString() : null;
 
@@ -1173,31 +1390,157 @@ class TelegramConnectionPool {
         const sender = await message.getSender().catch(() => null);
         if (sender && (sender.bot || sender.isBot)) return;
 
-        const cooldownMinutes = entry.settings.afkCooldown ?? 10;
-        const cooldownMs = cooldownMinutes * 60 * 1000;
-        const lastReply = entry.afkCooldownMap.get(senderIdStr) || 0;
-        const now = Date.now();
+        const senderFullName = sender ? (
+          [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 
+          sender.title || 
+          (sender.username ? `@${sender.username}` : senderIdStr)
+        ) : senderIdStr;
 
-        if (now - lastReply >= cooldownMs) {
-          // جلوگیری از انباشت حافظه در اجرای طولانی‌مدت
-          if (entry.afkCooldownMap.size > 1000) {
-            const cutoff = now - (24 * 60 * 60 * 1000);
-            for (const [k, v] of entry.afkCooldownMap.entries()) {
-              if (v < cutoff) entry.afkCooldownMap.delete(k);
+        // ——— ۴.A 👻 Ghost Mode: فوروارد پیام به ربات بدون زدن تیک آبی ———
+        if (entry.settings.ghostMode) {
+          const bot = entry.settings?.bot;
+          const targetChatId = bot?.chatId || bot?.ownerId || entry.myId;
+
+          // بررسی لیست استثنا
+          const excludeList = entry.settings.ghostExcludeList || [];
+          const isExcluded = excludeList.some(ex => {
+            const clean = cleanMuteTarget(ex);
+            return clean === senderIdStr || clean === (sender?.username || '').toLowerCase();
+          });
+
+          if (!isExcluded && bot?.token && targetChatId) {
+            const isPhoto = message.media instanceof Api.MessageMediaPhoto || Boolean(message.photo);
+            const isVoice = Boolean(message.voice) || Boolean(message.media?.voice);
+            const isVideo = Boolean(message.video) || Boolean(message.media?.video);
+            const mediaType = isPhoto ? 'تصویر' : (isVoice ? 'ویس' : (isVideo ? 'ویدیو' : 'فایل'));
+
+            // فوروارد متن پیام به ربات
+            forwardGhostMessage(
+              bot.token,
+              targetChatId,
+              senderFullName,
+              sender?.username || '',
+              senderIdStr,
+              message.text || message.message || '',
+              Boolean(message.media),
+              mediaType
+            ).catch(e => console.warn(`⚠️ [${username}] Ghost forward error:`, e.message));
+
+            // فوروارد مدیا به ربات (اگر وجود داشت)
+            if (message.media && !message.media?.ttlSeconds) {
+              downloadMediaSafely(entry.client, message, username).then(buf => {
+                if (buf && buf.length > 0 && buf.length < 4 * 1024 * 1024) {
+                  sendBotTelegramMedia(
+                    bot.token, targetChatId, buf,
+                    `ghost_${Date.now()}.${isPhoto ? 'jpg' : (isVoice ? 'ogg' : 'mp4')}`,
+                    `👻 رسانه از ${senderFullName}`,
+                    isPhoto, isVideo, isVoice
+                  ).catch(() => {});
+                }
+              }).catch(() => {});
             }
-            if (entry.afkCooldownMap.size > 2000) entry.afkCooldownMap.clear();
+
+            console.log(`👻 [${username}] Ghost Mode: forwarded message from ${senderIdStr} to bot (no read receipt)`);
+          } else if (isExcluded) {
+            // برای افراد استثنا، تیک آبی عادی زده شود
+            try {
+              await entry.client.markAsRead(message.peerId || message.chatId);
+              console.log(`👁️ [${username}] Ghost exclude: marked as read for ${senderIdStr}`);
+            } catch (_) {}
+          }
+        }
+
+        // ——— ۴.B 🤖 پاسخ هوشمند AI (اولویت بالاتر از AFK ثابت) ———
+        if (entry.settings.aiReplyEnabled && entry.settings.aiApiKey) {
+          const aiCooldownMin = entry.settings.aiCooldown ?? 5;
+          const aiCooldownMs = aiCooldownMin * 60 * 1000;
+          const lastAiReply = entry.aiCooldownMap?.get(senderIdStr) || 0;
+          const now = Date.now();
+
+          // بررسی سقف تعداد پاسخ
+          const maxReplies = entry.settings.aiMaxReplies ?? 3;
+          const currentCount = entry.aiReplyCountMap?.get(senderIdStr) || 0;
+
+          if (currentCount < maxReplies && (now - lastAiReply >= aiCooldownMs)) {
+            const messageText = (message.text || message.message || '').trim();
+            if (messageText.length > 0) {
+              console.log(`🤖 [${username}] AI Smart Reply: processing message from ${senderIdStr}...`);
+
+              const aiResponse = await callAIApi(
+                entry.settings.aiProvider,
+                entry.settings.aiApiKey,
+                entry.settings.aiSystemPrompt,
+                entry.settings.aiContext,
+                messageText
+              );
+
+              if (aiResponse) {
+                const aiText = `🤖 ${aiResponse}`;
+                const sent = await sendAfkReply(entry, message, aiText, username, senderIdStr);
+                if (sent) {
+                  entry.aiCooldownMap.set(senderIdStr, now);
+                  entry.aiReplyCountMap.set(senderIdStr, currentCount + 1);
+                  console.log(`✅ [${username}] AI replied to ${senderIdStr} (${currentCount + 1}/${maxReplies})`);
+
+                  // ارسال گزارش پاسخ هوش مصنوعی به ربات اختصاصی کاربر
+                  const bot = entry.settings?.bot;
+                  const targetChatId = bot?.chatId || bot?.ownerId || entry.myId;
+                  if (bot?.token && targetChatId) {
+                    const cleanSender = String(senderFullName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const senderUserStr = sender?.username ? ` (@${sender.username})` : '';
+                    const cleanUserMsg = String(messageText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 300);
+                    const cleanReply = String(aiResponse).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 500);
+                    const logText = `🤖 <b>[پاسخ خودکار هوش مصنوعی — AI Reply]</b>\n\n` +
+                      `👤 <b>مخاطب:</b> ${cleanSender}${senderUserStr} (<code>${senderIdStr}</code>)\n` +
+                      `🕒 <b>زمان:</b> ${new Date().toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' })}\n\n` +
+                      `📩 <b>پیام مخاطب:</b>\n<blockquote>${cleanUserMsg}</blockquote>\n\n` +
+                      `💬 <b>پاسخ ارسالی هوش مصنوعی:</b>\n<blockquote>${cleanReply}</blockquote>\n\n` +
+                      `📊 <b>شمارنده:</b> ${currentCount + 1} از ${maxReplies} پاسخ مجاز`;
+                    sendBotTelegramMessage(bot.token, targetChatId, logText).catch(() => {});
+                  }
+                }
+              } else {
+                console.warn(`⚠️ [${username}] AI returned null, falling back to AFK if enabled`);
+                // Fallback به AFK ثابت اگر AI جواب نداد
+                if (entry.settings.afkEnabled) {
+                  const afkText = (entry.settings.afkMessage && entry.settings.afkMessage.trim()) || 'درود! در حال حاضر آفلاین هستم. به محض آنلاین شدن پاسخ خواهم داد ⏳';
+                  const sent = await sendAfkReply(entry, message, afkText, username, senderIdStr);
+                  if (sent) entry.afkCooldownMap.set(senderIdStr, now);
+                }
+              }
+            }
+          } else if (currentCount >= maxReplies) {
+            console.log(`🔒 [${username}] AI max replies reached for ${senderIdStr} (${currentCount}/${maxReplies})`);
           }
 
-          const afkText = (entry.settings.afkMessage && entry.settings.afkMessage.trim()) || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
-          console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}: "${afkText.slice(0, 30)}..."`);
-          
-          const sent = await sendAfkReply(entry, message, afkText, username, senderIdStr);
-          if (sent) {
-            entry.afkCooldownMap.set(senderIdStr, now);
+        // ——— ۴.C 🤖 منشی خودکار پیوی ثابت (AFK — فقط اگر AI غیرفعال باشد) ———
+        } else if (entry.settings.afkEnabled) {
+          const cooldownMinutes = entry.settings.afkCooldown ?? 10;
+          const cooldownMs = cooldownMinutes * 60 * 1000;
+          const lastReply = entry.afkCooldownMap.get(senderIdStr) || 0;
+          const now = Date.now();
+
+          if (now - lastReply >= cooldownMs) {
+            // جلوگیری از انباشت حافظه در اجرای طولانی‌مدت
+            if (entry.afkCooldownMap.size > 1000) {
+              const cutoff = now - (24 * 60 * 60 * 1000);
+              for (const [k, v] of entry.afkCooldownMap.entries()) {
+                if (v < cutoff) entry.afkCooldownMap.delete(k);
+              }
+              if (entry.afkCooldownMap.size > 2000) entry.afkCooldownMap.clear();
+            }
+
+            const afkText = (entry.settings.afkMessage && entry.settings.afkMessage.trim()) || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
+            console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}: "${afkText.slice(0, 30)}..."`);
+            
+            const sent = await sendAfkReply(entry, message, afkText, username, senderIdStr);
+            if (sent) {
+              entry.afkCooldownMap.set(senderIdStr, now);
+            }
+          } else {
+            const remainingSec = Math.round((cooldownMs - (now - lastReply)) / 1000);
+            console.log(`⏳ [${username}] AFK cooldown active for ${senderIdStr} (${remainingSec}s remaining). Skipping reply.`);
           }
-        } else {
-          const remainingSec = Math.round((cooldownMs - (now - lastReply)) / 1000);
-          console.log(`⏳ [${username}] AFK cooldown active for ${senderIdStr} (${remainingSec}s remaining). Skipping reply.`);
         }
       }
     }
@@ -1472,6 +1815,24 @@ async function syncUserMuteToCloudflare(username, mutedUsers) {
 }
 
 /**
+ * همگام‌سازی آنی تغییر وضعیت قابلیت‌ها (مانند .ghost و .ai) در ورکر کلادفلر
+ */
+async function syncUserFeatureToCloudflare(username, features) {
+  if (!username || !CLOUDFLARE_URL) return;
+  try {
+    await fetch(`${CLOUDFLARE_URL}/api/internal/update-user-feature`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RUNNER_SECRET}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
+      },
+      body: JSON.stringify({ username, ...features })
+    });
+  } catch (_) {}
+}
+
+/**
  * همگام‌سازی فوری شناسه عددی تلگرام کاربر با ورکر جهت قفل انحصاری امنیتی ربات به مالک
  */
 async function syncOwnerTgIdToCloudflare(username, tgUserId) {
@@ -1614,7 +1975,18 @@ async function main() {
             muteEnabled: !!u.muteEnabled || serverMuted.length > 0,
             mutedUsers: serverMuted,
             antiTtlEnabled: !!u.antiTtlEnabled,
-            bot: u.bot || null
+            bot: u.bot || null,
+            // 👻 Ghost Mode
+            ghostMode: !!u.ghostMode,
+            ghostExcludeList: Array.isArray(u.ghostExcludeList) ? u.ghostExcludeList : [],
+            // 🤖 AI Smart Reply
+            aiReplyEnabled: !!u.aiReplyEnabled,
+            aiProvider: u.aiProvider || 'gemini',
+            aiApiKey: u.aiApiKey || '',
+            aiSystemPrompt: u.aiSystemPrompt || '',
+            aiContext: u.aiContext || '',
+            aiMaxReplies: u.aiMaxReplies ?? 3,
+            aiCooldown: u.aiCooldown ?? 5
           };
           resolveMutedUsernames(entry);
         }
