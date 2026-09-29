@@ -522,7 +522,8 @@ async function callAIApi(provider, apiKey, systemPrompt, context, userMessage) {
 
       if (!res || !res.ok) {
         const errText = res ? await res.text().catch(() => '') : 'اتصال ناموفق';
-        console.warn(`⚠️ [AI-Gemini] API error: ${errText.slice(0, 150)}`);
+        const safeErr = String(errText || '').replaceAll(apiKey, '[REDACTED_KEY]');
+        console.warn(`⚠️ [AI-Gemini] API error: ${safeErr.slice(0, 150)}`);
         return null;
       }
       const data = await res.json();
@@ -551,7 +552,8 @@ async function callAIApi(provider, apiKey, systemPrompt, context, userMessage) {
 
       if (!res || !res.ok) {
         const errText = res ? await res.text().catch(() => '') : 'اتصال ناموفق';
-        console.warn(`⚠️ [AI-OpenAI] API error: ${errText.slice(0, 150)}`);
+        const safeErr = String(errText || '').replaceAll(apiKey, '[REDACTED_KEY]');
+        console.warn(`⚠️ [AI-OpenAI] API error: ${safeErr.slice(0, 150)}`);
         return null;
       }
       const data = await res.json();
@@ -1531,7 +1533,7 @@ class TelegramConnectionPool {
             }
 
             const afkText = (entry.settings.afkMessage && entry.settings.afkMessage.trim()) || 'درود! در حال حاضر آفلاین هستم یا امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ شما را خواهم داد ⏳';
-            console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}: "${afkText.slice(0, 30)}..."`);
+            console.log(`🤖 [${username}] AFK auto-replying to ${senderIdStr}`);
             
             const sent = await sendAfkReply(entry, message, afkText, username, senderIdStr);
             if (sent) {
