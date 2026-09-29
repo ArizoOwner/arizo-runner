@@ -8,6 +8,7 @@ import { panelHTML } from './panel.js';
 import {
   hashPassword,
   verifyPassword,
+  timingSafeStringCompare,
   generateRandomHex,
   generateRedeemCode,
   encryptSession,
@@ -17,9 +18,8 @@ import {
 
 // هدرهای امنیتی درجه سازمانی (Enterprise Security & CSP)
 const SECURITY_HEADERS = {
-  'Content-Security-Policy': "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:;",
+  'Content-Security-Policy': "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org;",
   'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
@@ -84,6 +84,10 @@ async function getAuthUser(request, env) {
 
   const userData = await env.KV.get('user:' + sessionData.username, 'json');
   if (!userData) return null;
+
+  if (userData.passwordChangedAt && sessionData.createdAt && sessionData.createdAt < userData.passwordChangedAt) {
+    return null;
+  }
 
   return { username: sessionData.username, user: userData, token };
 }
@@ -196,9 +200,14 @@ export default {
 
       try {
         const { password } = await request.json();
-        const expectedPassword = env.ADMIN_PASSWORD || 'admin_liquid_secret_2026';
+        const expectedPassword = env.ADMIN_PASSWORD;
 
-        if (!password || password !== expectedPassword) {
+        if (!expectedPassword) {
+          return json({ error: 'رمز عبور مدیریت در سرور تنظیم نشده است.' }, 500);
+        }
+
+        const isMatch = await timingSafeStringCompare(String(password || ''), expectedPassword);
+        if (!isMatch) {
           return json({ error: 'رمز عبور مدیریت نادرست است.' }, 401);
         }
 
@@ -215,6 +224,16 @@ export default {
       } catch (err) {
         return json({ error: 'خطا در احراز هویت مدیریت' }, 500);
       }
+    }
+
+    // خروج از حساب مدیریت و باطل‌سازی سشن
+    if (url.pathname === '/api/admin/logout' && request.method === 'POST') {
+      const authHeader = request.headers.get('Authorization') || '';
+      if (authHeader.startsWith('Bearer ')) {
+        const token = authHeader.slice(7).trim();
+        await env.KV.delete('admin_token:' + token);
+      }
+      return json({ ok: true });
     }
 
     // دریافت آمار سیستم برای ادمین
@@ -520,9 +539,15 @@ export default {
           return json({ error: passValidation.error }, 400);
         }
 
+        // 🛡️ بررسی پیشگیرانه عدم وجود نام کاربری تکراری (پیش از مصرف یا باطل شدن کد لایسنس)
+        const existing = await env.KV.get('user:' + cleanUser);
+        if (existing) {
+          return json({ error: 'این نام کاربری قبلاً ثبت شده است. لطفاً نام دیگری برگزینید.' }, 400);
+        }
+
         // 🎟️ بررسی و اعتبارسنجی کد لایسنس
         let usersList = await env.KV.get('users_list', 'json') || [];
-        const isFirstUser = usersList.length === 0 || cleanUser === 'amirmaster' || cleanUser === 'admin';
+        const isFirstUser = usersList.length === 0;
 
         let codeData = null;
         let plan = '1_month';
@@ -532,7 +557,7 @@ export default {
         let userRole = isFirstUser ? 'admin' : 'user';
 
         if (isFirstUser && (!cleanCode || cleanCode === 'ADMIN' || cleanCode === 'FIRST')) {
-          // کاربر نخست یا ادمین پیش‌فرض به عنوان مدیر ارشد با پلن دائمی نامحدود ثبت می‌شود
+          // کاربر نخست به عنوان مدیر ارشد با پلن دائمی نامحدود ثبت می‌شود
           plan = 'lifetime';
           planName = 'دائمی و نامحدود (مدیر ارشد)';
           durationDays = 0;
@@ -564,11 +589,6 @@ export default {
           subscriptionUntil = codeData.plan === 'lifetime'
             ? null
             : (Date.now() + durationDays * 86400 * 1000);
-        }
-
-        const existing = await env.KV.get('user:' + cleanUser);
-        if (existing) {
-          return json({ error: 'این نام کاربری قبلاً ثبت شده است. لطفاً نام دیگری برگزینید.' }, 400);
         }
 
         const salt = generateRandomHex(16);
@@ -786,6 +806,7 @@ export default {
         }
 
         await env.KV.delete('token:' + auth.token);
+        await env.KV.delete('miniapp_token:' + auth.username);
         await env.KV.delete('user:' + auth.username);
         await env.KV.delete('temp_auth_' + auth.username);
 
@@ -1288,19 +1309,20 @@ export default {
     // ⚙️ APIهای اختصاصی رانر خارجی (GitHub Actions / External Runner)
     // ==========================================
 
-    function isRunnerAuthorized(req, workerEnv) {
+    async function isRunnerAuthorized(req, workerEnv) {
       const authHeader = req.headers.get('Authorization') || '';
       let token = '';
       if (authHeader.startsWith('Bearer ')) {
         token = authHeader.slice(7).trim();
       }
-      const secret = workerEnv.RUNNER_SECRET || workerEnv.ADMIN_PASSWORD || 'admin_liquid_secret_2026';
-      return token === secret;
+      const secret = workerEnv.RUNNER_SECRET || workerEnv.ADMIN_PASSWORD;
+      if (!secret || !token) return false;
+      return await timingSafeStringCompare(token, secret);
     }
 
     // ۱. دریافت لیست کاربران فعال برای رانر خارجی
     if (url.pathname === '/api/internal/active-users' && request.method === 'GET') {
-      if (!isRunnerAuthorized(request, env)) {
+      if (!await isRunnerAuthorized(request, env)) {
         return json({ error: 'unauthorized runner' }, 401);
       }
 
@@ -1382,7 +1404,7 @@ export default {
 
     // ۲. به‌روزرسانی وضعیت کاربران از طریق رانر خارجی
     if (url.pathname === '/api/internal/update-status' && request.method === 'POST') {
-      if (!isRunnerAuthorized(request, env)) {
+      if (!await isRunnerAuthorized(request, env)) {
         return json({ error: 'unauthorized runner' }, 401);
       }
 
@@ -1415,7 +1437,7 @@ export default {
 
     // ۳. به‌روزرسانی آنی لیست کاربران مسدود/سکوت از رانر گیت‌هاب (.mute و .unmute تلگرام)
     if (url.pathname === '/api/internal/update-user-mute' && request.method === 'POST') {
-      if (!isRunnerAuthorized(request, env)) {
+      if (!await isRunnerAuthorized(request, env)) {
         return json({ error: 'unauthorized runner' }, 401);
       }
       try {
@@ -1438,7 +1460,7 @@ export default {
 
     // ۳.۱ به‌روزرسانی و ثبت شناسه عددی تلگرام کاربر از طریق رانر (جهت قفل امنیتی انحصاری ربات به مالک)
     if (url.pathname === '/api/internal/set-user-tg-id' && request.method === 'POST') {
-      if (!isRunnerAuthorized(request, env)) {
+      if (!await isRunnerAuthorized(request, env)) {
         return json({ error: 'unauthorized runner' }, 401);
       }
       try {
@@ -1463,7 +1485,7 @@ export default {
 
     // ۳.۲ به‌روزرسانی آنی وضعیت قابلیت‌ها از رانر گیت‌هاب (.ghost و .ai تلگرام)
     if (url.pathname === '/api/internal/update-user-feature' && request.method === 'POST') {
-      if (!isRunnerAuthorized(request, env)) {
+      if (!await isRunnerAuthorized(request, env)) {
         return json({ error: 'unauthorized runner' }, 401);
       }
       try {
@@ -1695,7 +1717,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
 
     if (!res || !res.ok) {
       const errText = res ? await res.text().catch(() => '') : 'اتصال برقرار نشد';
-      throw new Error(`خطای Gemini: ${errText.slice(0, 150)}`);
+      const safeErr = String(errText || '').replaceAll(apiKey, '[REDACTED_KEY]');
+      throw new Error(`خطای Gemini: ${safeErr.slice(0, 150)}`);
     }
     const data = await res.json();
     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -1723,7 +1746,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
 
     if (!res || !res.ok) {
       const errText = res ? await res.text().catch(() => '') : 'اتصال برقرار نشد';
-      throw new Error(`خطای OpenAI: ${errText.slice(0, 150)}`);
+      const safeErr = String(errText || '').replaceAll(apiKey, '[REDACTED_KEY]');
+      throw new Error(`خطای OpenAI: ${safeErr.slice(0, 150)}`);
     }
     const data = await res.json();
     const reply = data?.choices?.[0]?.message?.content;
