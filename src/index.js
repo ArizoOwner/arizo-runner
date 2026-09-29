@@ -1267,7 +1267,8 @@ export default {
         auth.user.telegram.aiMaxReplies = Math.max(1, Math.min(20, parseInt(b.aiMaxReplies, 10) || 3));
       }
       if (b.aiCooldown !== undefined) {
-        auth.user.telegram.aiCooldown = Math.max(1, parseInt(b.aiCooldown, 10) || 5);
+        const pCd = parseInt(b.aiCooldown, 10);
+        auth.user.telegram.aiCooldown = isNaN(pCd) ? 5 : Math.max(0, pCd);
       }
       if (b.bot !== undefined && typeof b.bot === 'object' && b.bot !== null) {
         if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
@@ -1945,7 +1946,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 { text: `🔄 وضعیت پاسخگویی هوشمند: ${aiAct ? 'غیرفعال‌سازی ⚪' : 'فعال‌سازی 🟢'}`, callback_data: 'bot_toggle_ai', style: aiAct ? 'danger' : 'success' }
               ],
               [
-                { text: `🌐 مدل انتخابی: ${provider === 'openai' ? 'OpenAI GPT 🧠' : 'Google Gemini ♊'} (تغییر مدل)`, callback_data: 'ai_toggle_provider', style: 'primary' }
+                { text: `🌐 مدل: ${provider === 'openai' ? 'OpenAI GPT 🧠' : 'Google Gemini ♊'}`, callback_data: 'ai_toggle_provider', style: 'primary' },
+                { text: `⏱️ فاصله: ${targetU.telegram?.aiCooldown === 0 ? 'بدون محدودیت ⚡' : `هر ${targetU.telegram?.aiCooldown || 5} دقیقه`}`, callback_data: 'ai_toggle_cooldown', style: 'primary' }
               ],
               [
                 { text: '🔑 ثبت / ویرایش کلید API', callback_data: 'ai_set_key_prompt', style: 'primary' },
@@ -1964,6 +1966,9 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           const aiAct = !!targetU.telegram?.aiReplyEnabled;
           const hasKey = !!targetU.telegram?.aiApiKey;
           const provider = targetU.telegram?.aiProvider || 'gemini';
+          const cdText = targetU.telegram?.aiCooldown === 0 
+            ? 'بدون محدودیت زمانی (فوری و بدون کول‌داون ⚡)' 
+            : `هر ${targetU.telegram?.aiCooldown || 5} دقیقه`;
           const keyDisplay = hasKey 
             ? `<code>${targetU.telegram.aiApiKey.slice(0, 6)}••••••••${targetU.telegram.aiApiKey.slice(-4)}</code> (فعال و ذخیره‌شده ✅)`
             : '<i>تنظیم نشده ❌ (کلید ثبت نشده است)</i>';
@@ -1974,12 +1979,12 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             `🌐 <b>موتور هوش مصنوعی:</b> <code>${provider.toUpperCase()}</code>\n` +
             `🔑 <b>کلید API ذخیره‌شده:</b>\n<blockquote>${keyDisplay}</blockquote>\n` +
             `🔢 <b>سقف پاسخ به هر شخص:</b> ${targetU.telegram?.aiMaxReplies || 3} پاسخ در هر گفتگو\n` +
-            `⏱️ <b>کول‌داون ضد اسپم:</b> هر ${targetU.telegram?.aiCooldown || 5} دقیقه\n` +
+            `⏱️ <b>فاصله بین پاسخ‌ها (کول‌داون):</b> ${cdText}\n` +
             `🛡️ <b>سپر هوشمند ۴ لایه:</b> فعال ✅\n` +
             `<blockquote>هنگامی که آنلاین هستید، صفحه چت باز است، یا در ۵ دقیقه اخیر پیامی ارسال کرده‌اید، هوش مصنوعی خودکار پاسخ نمی‌دهد تا آرامش گفتگوی شما حفظ شود.</blockquote>\n` +
             `━━━━━━━━━━━━━━━━━━━━\n` +
-            `💡 <b>راهنمای کلید API:</b>\n` +
-            `• برای رفع هرگونه تداخل با کلیدهای قبلی، روی <b>🗑️ حذف کامل کلید API</b> کلیک کنید.\n` +
+            `💡 <b>راهنمای کلید API و تنظیمات:</b>\n` +
+            `• برای تغییر فاصله زمانی بین پاسخ‌ها، روی دکمه <b>⏱️ فاصله</b> کلیک فرمایید.\n` +
             `• با انتخاب <b>🔑 ثبت / تغییر کلید API</b> کلید جدید را مستقیماً در همین چت ارسال فرمایید.`;
         };
 
@@ -3234,6 +3239,39 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               body: JSON.stringify({
                 callback_query_id: cb.id,
                 text: `🌐 مدل هوش مصنوعی به ${u.telegram.aiProvider === 'gemini' ? 'Google Gemini ♊' : 'OpenAI GPT 🧠'} تغییر یافت.`
+              })
+            }).catch(() => {});
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  text: renderAiMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderAiKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+          } else if (data === 'ai_toggle_cooldown') {
+            const cooldownOptions = [0, 1, 3, 5, 10, 30];
+            const currentCooldown = u.telegram?.aiCooldown ?? 5;
+            let currentIdx = cooldownOptions.indexOf(currentCooldown);
+            if (currentIdx === -1) currentIdx = 3;
+            const nextCooldown = cooldownOptions[(currentIdx + 1) % cooldownOptions.length];
+            u.telegram.aiCooldown = nextCooldown;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+
+            const cdLabel = nextCooldown === 0 ? 'بدون محدودیت زمانی (فوری ⚡)' : `هر ${nextCooldown} دقیقه`;
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: cb.id,
+                text: `⏱️ فاصله پاسخگویی هوش مصنوعی: ${cdLabel}`
               })
             }).catch(() => {});
 
