@@ -1377,32 +1377,50 @@ class TelegramConnectionPool {
 
     // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL Saver)
     if (entry.settings.antiTtlEnabled && !isOut && message.media) {
-      // تشخیص هوشمند و فراگیر انواع تایمر تلگرام (تایمرهای ثانیه‌ای، روزانه، یک‌بار مصرف View-Once و چت‌های خودتخریب‌گر)
-      const rawTtl = message.media?.ttlSeconds ?? 
-                     message.media?.ttl_seconds ?? 
-                     message.ttlPeriod ?? 
-                     message.ttl_period ?? 
-                     message.ttlSeconds ?? 
-                     message.ttl_seconds ?? 
-                     message.media?.photo?.ttlSeconds ?? 
-                     message.media?.document?.ttlSeconds;
+      entry.processedTtlIds = entry.processedTtlIds || new Set();
+      const msgIdNum = Number(message.id);
+
+      // تشخیص دقیق و هوشمند رسانه‌های یک‌بار مصرف View-Once و تایمردار
+      const directTtl = message.media?.ttlSeconds ?? 
+                        message.media?.ttl_seconds ?? 
+                        message.media?.photo?.ttlSeconds ?? 
+                        message.media?.document?.ttlSeconds ??
+                        message.ttlSeconds ?? 
+                        message.ttl_seconds;
 
       const isViewOnceFlag = Boolean(
         (message.media?.flags && (message.media.flags & 4)) ||
         (message.media?.photo?.flags && (message.media.photo.flags & 4)) ||
-        (message.media?.document?.flags && (message.media.document.flags & 4))
+        (message.media?.document?.flags && (message.media.document.flags & 4)) ||
+        message.media?.viewOnce ||
+        message.viewOnce
       );
 
-      const ttl = Number(rawTtl) || (isViewOnceFlag ? 2147483647 : 0);
+      let ttl = 0;
+      if (isViewOnceFlag) {
+        ttl = 2147483647;
+      } else if (directTtl && Number(directTtl) > 0) {
+        ttl = Number(directTtl);
+      } else if ((message.ttlPeriod || message.ttl_period) && Number(message.ttlPeriod || message.ttl_period) <= 86400) {
+        ttl = Number(message.ttlPeriod || message.ttl_period);
+      }
 
-      if (ttl && ttl > 0) {
+      // ممانعت قطعی از ارسال تکراری و متوالی (Deduplication)
+      if (ttl && ttl > 0 && !entry.processedTtlIds.has(msgIdNum)) {
+        entry.processedTtlIds.add(msgIdNum);
+        if (entry.processedTtlIds.size > 1000) {
+          const oldest = entry.processedTtlIds.keys().next().value;
+          entry.processedTtlIds.delete(oldest);
+        }
+        message._antiTtlHandled = true;
+
         const rawSenderId = message.senderId || 
                             message.fromId?.userId || 
                             (message.peerId instanceof Api.PeerUser ? message.peerId.userId : null) || 
                             message.chatId;
         const senderIdStr = rawSenderId ? rawSenderId.toString() : 'ناشناس';
 
-        console.log(`📸 [${username}] Anti-TTL detected self-destruct media (TTL: ${ttl}s) from sender ${senderIdStr}. Downloading safely...`);
+        console.log(`📸 [${username}] Anti-TTL detected self-destruct media #${msgIdNum} (TTL: ${ttl}s) from sender ${senderIdStr}. Downloading safely...`);
         try {
           const buffer = await downloadMediaSafely(entry.client, message, username);
           if (buffer && buffer.length > 0) {
@@ -1755,8 +1773,8 @@ class TelegramConnectionPool {
               safeHash
             ).catch(e => console.warn(`⚠️ [${username}] Ghost forward error:`, e.message));
 
-            // فوروارد مدیا به ربات (اگر وجود داشت)
-            if (message.media && !message.media?.ttlSeconds) {
+            // فوروارد مدیا به ربات (اگر وجود داشت و توسط Anti-TTL نجات نیافته باشد)
+            if (message.media && !message._antiTtlHandled && !message.media?.ttlSeconds && !message.media?.ttl_seconds) {
               downloadMediaSafely(entry.client, message, username).then(buf => {
                 if (buf && buf.length > 0 && buf.length < 4 * 1024 * 1024) {
                   const ghostMediaCaption = `👻 <b>[رسانه دریافتی در حالت شبح]</b>\n` +
