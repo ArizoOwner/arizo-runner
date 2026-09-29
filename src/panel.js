@@ -3906,6 +3906,7 @@ export function panelHTML(env) {
       blackCircled: { name: 'دایره مشکی نئون', digits: ['⓿','➊','➋','➌','➍','➎','➏','➐','➑','➒'] },
       persian:      { name: 'فارسی اصیل', digits: ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'] },
       subscript:    { name: 'اندیس فانتزی', digits: ['₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'] },
+      superscript:  { name: 'بالانویس مینی', digits: ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'] },
       bracket:      { name: 'سلطنتی براکت', digits: ['⟦0⟧','⟦1⟧','⟦2⟧','⟦3⟧','⟦4⟧','⟦5⟧','⟦6⟧','⟦7⟧','⟦8⟧','⟦9⟧'] },
       normal:       { name: 'کلاسیک ساده', digits: ['0','1','2','3','4','5','6','7','8','9'] }
     };
@@ -4377,12 +4378,15 @@ export function panelHTML(env) {
     };
 
     window.setColonChar = function(char, isQuiet) {
-      if (!isQuiet) window.isStudioDirty = true;
       document.getElementById('colonInput').value = char;
       document.querySelectorAll('.sep-pill').forEach(function(c) {
         c.classList.toggle('active', c.textContent.trim() === char);
       });
       updateLiveClock();
+      if (!isQuiet) {
+        window.isStudioDirty = true;
+        window.saveFonts();
+      }
     };
 
     window.openSettingsModal = function() { document.getElementById('settingsModal').classList.remove('hidden'); };
@@ -4788,7 +4792,7 @@ export function panelHTML(env) {
     }
 
     function selectPreset(key, isQuiet) {
-      if (!isQuiet) window.isStudioDirty = true;
+      if (!presets[key]) return;
       currentPresetKey = key;
       selectedDigits = presets[key].digits;
       var fontBadge = document.getElementById('userFontBadge');
@@ -4798,6 +4802,12 @@ export function panelHTML(env) {
       if (activeCard) activeCard.classList.add('active');
       document.getElementById('customDigits').value = '';
       updateLiveClock();
+
+      if (!isQuiet) {
+        window.isStudioDirty = true;
+        // ذخیره آنی و قطعی فونت انتخاب شده جهت تضمین پایداری و عدم بازگشت به فونت قبلی
+        window.saveFonts();
+      }
     }
 
     // ==========================================
@@ -5030,12 +5040,18 @@ export function panelHTML(env) {
     setInterval(updateLiveClock, 1000);
     updateLiveClock();
 
+    var customDigitsDebounce = null;
     document.getElementById('customDigits').addEventListener('input', function(e) {
       var chars = Array.from(e.target.value.trim());
       if (chars.length >= 10) {
         selectedDigits = chars.slice(0, 10);
         document.querySelectorAll('.preset-card').forEach(function(c) { c.classList.remove('active'); });
         updateLiveClock();
+        window.isStudioDirty = true;
+        clearTimeout(customDigitsDebounce);
+        customDigitsDebounce = setTimeout(function() {
+          window.saveFonts();
+        }, 800);
       }
     });
 
@@ -5045,6 +5061,10 @@ export function panelHTML(env) {
         c.classList.toggle('active', c.textContent.trim() === val);
       });
       updateLiveClock();
+      window.isStudioDirty = true;
+    });
+    document.getElementById('colonInput').addEventListener('change', function() {
+      window.saveFonts();
     });
 
     window.saveFonts = async function() {
@@ -5288,10 +5308,13 @@ export function panelHTML(env) {
       btn.innerHTML = '<span class="spinner"></span> همگام‌سازی فوری...';
 
       try {
+        if (window.isStudioDirty) {
+          await window.saveFonts();
+        }
         var res = await fetch('/api/sync', { method: 'POST', headers: authHeaders() });
         var data = await res.json();
         if (data.ok && !data.status?.error) {
-          showToast('ساعت تلگرام با سرعت اتمی آپدیت شد! 🚀', 'success');
+          showToast('ساعت تلگرام با فونت و تنظیمات جدید آپدیت شد! 🚀', 'success');
           loadUserDashboard();
         } else {
           showToast('خطا: ' + (data.status?.error || 'ناشناخته'), 'error');
