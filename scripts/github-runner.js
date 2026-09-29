@@ -755,11 +755,12 @@ async function isUserActiveOrOnline(entry, username, senderIdStr, message) {
 /**
  * فوروارد پیام ورودی پیوی به ربات اختصاصی کاربر در حالت شبح (Ghost Mode)
  */
-async function forwardGhostMessage(botToken, chatId, senderName, senderUsername, senderIdStr, messageText, hasMedia, mediaType) {
+async function forwardGhostMessage(botToken, chatId, senderName, senderUsername, senderIdStr, messageText, hasMedia, mediaType, accessHash = null) {
   if (!botToken || !chatId) return false;
   const senderUserStr = senderUsername ? ` (@${senderUsername})` : '';
   const cleanSender = String(senderName).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const cleanText = String(messageText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const safeHash = accessHash && accessHash !== '0' ? accessHash : '0';
 
   const mediaLabel = hasMedia ? `\n📎 <b>نوع رسانه:</b> <code>${mediaType || 'فایل'}</code>` : '';
   const text = `👻 <b>[پیام جدید در حالت شبح — Ghost Mode]</b>\n` +
@@ -774,11 +775,11 @@ async function forwardGhostMessage(botToken, chatId, senderName, senderUsername,
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}`, style: 'success' }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${safeHash}`, style: 'primary' },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}:${safeHash}`, style: 'success' }
       ],
       [
-        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}`, style: 'primary' },
+        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}:${safeHash}`, style: 'primary' },
         { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
       ]
     ]
@@ -1170,11 +1171,24 @@ class TelegramConnectionPool {
         else if (isVoice) fileName = `voice_${Date.now()}.ogg`;
         else if (isVideo) fileName = `video_${Date.now()}.mp4`;
 
+        const senderAccessHash = sender?.accessHash ? sender.accessHash.toString() : null;
+        if (peerIdStr && senderAccessHash) {
+          entry.peerCache = entry.peerCache || new Map();
+          entry.peerCache.set(peerIdStr, {
+            userId: peerIdStr,
+            accessHash: senderAccessHash,
+            firstName: sender?.firstName,
+            lastName: sender?.lastName,
+            username: sender?.username
+          });
+        }
+
         const cacheObj = {
           id: message.id,
           senderId: peerIdStr || 'unknown',
           senderName: senderFullName,
           senderUsername: sender?.username || '',
+          accessHash: senderAccessHash,
           text: message.text || message.message || '',
           date: message.date || Math.floor(Date.now() / 1000),
           hasMedia: Boolean(message.media),
@@ -1403,6 +1417,20 @@ class TelegramConnectionPool {
               } catch (_) {}
             }
 
+            const senderAccessHash = sender?.accessHash ? sender.accessHash.toString() : null;
+            const safeHash = (senderAccessHash && senderAccessHash !== '0') ? senderAccessHash : '0';
+
+            if (rawSenderId && senderAccessHash) {
+              entry.peerCache = entry.peerCache || new Map();
+              entry.peerCache.set(rawSenderId.toString(), {
+                userId: rawSenderId,
+                accessHash: senderAccessHash,
+                firstName: sender?.firstName,
+                lastName: sender?.lastName,
+                username: sender?.username
+              });
+            }
+
             const senderFullName = sender ? (
               [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 
               sender.title || 
@@ -1471,8 +1499,8 @@ class TelegramConnectionPool {
                 const ttlKeyboard = {
                   inline_keyboard: [
                     [
-                      { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
-                      { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}`, style: 'success' }
+                      { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${safeHash}`, style: 'primary' },
+                      { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}:${safeHash}`, style: 'success' }
                     ]
                   ]
                 };
@@ -1682,6 +1710,20 @@ class TelegramConnectionPool {
           (sender.username ? `@${sender.username}` : senderIdStr)
         ) : senderIdStr;
 
+        const senderAccessHash = sender?.accessHash ? sender.accessHash.toString() : null;
+        const safeHash = (senderAccessHash && senderAccessHash !== '0') ? senderAccessHash : '0';
+
+        if (senderIdStr && senderAccessHash) {
+          entry.peerCache = entry.peerCache || new Map();
+          entry.peerCache.set(senderIdStr, {
+            userId: senderIdStr,
+            accessHash: senderAccessHash,
+            firstName: sender?.firstName,
+            lastName: sender?.lastName,
+            username: sender?.username
+          });
+        }
+
         // ——— ۴.A 👻 Ghost Mode: فوروارد پیام به ربات بدون زدن تیک آبی ———
         if (entry.settings.ghostMode) {
           const bot = entry.settings?.bot;
@@ -1709,7 +1751,8 @@ class TelegramConnectionPool {
               senderIdStr,
               message.text || message.message || '',
               Boolean(message.media),
-              mediaType
+              mediaType,
+              safeHash
             ).catch(e => console.warn(`⚠️ [${username}] Ghost forward error:`, e.message));
 
             // فوروارد مدیا به ربات (اگر وجود داشت)
@@ -1726,8 +1769,8 @@ class TelegramConnectionPool {
                   const ghostMediaKeyboard = {
                     inline_keyboard: [
                       [
-                        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
-                        { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}`, style: 'success' }
+                        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${safeHash}`, style: 'primary' },
+                        { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}:${safeHash}`, style: 'success' }
                       ]
                     ]
                   };
@@ -1822,8 +1865,8 @@ class TelegramConnectionPool {
                     const logKeyboard = {
                       inline_keyboard: [
                         [
-                          { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}`, style: 'primary' },
-                          { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}`, style: 'success' }
+                          { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${safeHash}`, style: 'primary' },
+                          { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${senderIdStr}:${safeHash}`, style: 'success' }
                         ]
                       ]
                     };
@@ -2013,11 +2056,12 @@ class TelegramConnectionPool {
 
           console.log(`🗑️ [${username}] Anti-Delete triggered for message #${msgId} from ${cached.senderId}`);
 
+          const safeHash = (cached.accessHash && cached.accessHash !== '0') ? cached.accessHash : '0';
           const deleteActionKeyboard = {
             inline_keyboard: [
               [
-                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}`, style: 'primary' },
-                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}`, style: 'success' }
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}:${safeHash}`, style: 'primary' },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}:${safeHash}`, style: 'success' }
               ]
             ]
           };
@@ -2082,11 +2126,12 @@ class TelegramConnectionPool {
             `💡 <i>جهت پاسخ به این پیام روی دکمه‌های زیر کلیک کنید.</i>`;
 
           console.log(`✏️ [${username}] Anti-Edit triggered for message #${msgId} from ${cached.senderId}`);
+          const safeHash = (cached.accessHash && cached.accessHash !== '0') ? cached.accessHash : '0';
           const editActionKeyboard = {
             inline_keyboard: [
               [
-                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}`, style: 'primary' },
-                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}`, style: 'success' }
+                { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${cached.senderId}:${safeHash}`, style: 'primary' },
+                { text: '👻 چت در حالت شبح', callback_data: `ghost_view:${cached.senderId}:${safeHash}`, style: 'success' }
               ]
             ]
           };
@@ -2347,13 +2392,29 @@ function escapeHtml(str) {
 }
 
 /**
- * حل امن انتیتی برای آیدی‌های عددی و یوزرنیم‌ها در GramJS با کش چندلایه
+ * حل امن انتیتی برای آیدی‌های عددی و یوزرنیم‌ها در GramJS با کش چندلایه و کلید دسترسی (AccessHash)
  */
-async function resolveInputPeerSafely(client, peerId, entry = null) {
+async function resolveInputPeerSafely(client, peerId, entry = null, accessHash = null) {
   if (!client || !peerId) return peerId;
   const peerStr = peerId.toString();
 
-  // ۱. بررسی کش اختصاصی و محلی رانر
+  // ۱. اگر accessHash به صورت صریح ارائه شده باشد (از دکمه اینلاین یا کش)
+  if (accessHash && accessHash !== '0' && accessHash !== 'null' && accessHash !== 'undefined') {
+    try {
+      const inputPeer = new Api.InputPeerUser({
+        userId: BigInt(peerStr),
+        accessHash: BigInt(accessHash)
+      });
+      if (entry) {
+        entry.peerCache = entry.peerCache || new Map();
+        const existing = entry.peerCache.get(peerStr) || {};
+        entry.peerCache.set(peerStr, { ...existing, userId: peerStr, accessHash });
+      }
+      return inputPeer;
+    } catch (_) {}
+  }
+
+  // ۲. بررسی کش اختصاصی و محلی رانر
   if (entry?.peerCache?.has(peerStr)) {
     const cached = entry.peerCache.get(peerStr);
     if (cached && cached.accessHash) {
@@ -2364,22 +2425,27 @@ async function resolveInputPeerSafely(client, peerId, entry = null) {
     }
   }
 
-  // ۲. تلاش با متدهای بومی کلاینت GramJS
+  // ۳. تلاش با متدهای بومی کلاینت GramJS
   try {
-    return await client.getInputEntity(peerId);
+    const p = await client.getInputEntity(peerId);
+    if (p && typeof p === 'object' && p.className) return p;
   } catch (_) {}
 
   try {
     const num = Number(peerId);
-    if (!isNaN(num)) return await client.getInputEntity(num);
+    if (!isNaN(num)) {
+      const p = await client.getInputEntity(num);
+      if (p && typeof p === 'object' && p.className) return p;
+    }
   } catch (_) {}
 
   try {
     const big = BigInt(peerId);
-    return await client.getInputEntity(big);
+    const p = await client.getInputEntity(big);
+    if (p && typeof p === 'object' && p.className) return p;
   } catch (_) {}
 
-  // ۳. در صورت عدم وجود در سشن، واکشی فوری دیالوگ‌ها از تلگرام برای کش‌کردن همه مخاطبان و استخراج AccessHash
+  // ۴. در صورت عدم وجود در سشن، واکشی فوری دیالوگ‌ها از تلگرام برای کش‌کردن همه مخاطبان و استخراج AccessHash
   try {
     const res = await client.invoke(new Api.messages.GetDialogs({
       offsetDate: 0,
@@ -2415,7 +2481,20 @@ async function resolveInputPeerSafely(client, peerId, entry = null) {
     }
   } catch (_) {}
 
-  return peerId;
+  // ۵. تلاش با getEntity
+  try {
+    const ent = await client.getEntity(peerId);
+    if (ent && ent.accessHash) {
+      return new Api.InputPeerUser({
+        userId: BigInt(ent.id),
+        accessHash: BigInt(ent.accessHash)
+      });
+    }
+    const inp = await client.getInputEntity(ent);
+    if (inp && typeof inp === 'object' && inp.className) return inp;
+  } catch (_) {}
+
+  throw new Error(`امکان شناسایی موجودیت مخاطب (${peerStr}) در نشست تلگرام میسر نشد. شناسه یا کلید دسترسی (accessHash) نامعتبر است.`);
 }
 
 /**
@@ -2507,9 +2586,10 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
   const buttons = topChats.map(d => {
     const badge = d.unreadCount > 0 ? ` (${d.unreadCount} 📩)` : '';
     const safeName = (d.name || 'کاربر').slice(0, 18);
+    const safeHash = (d.accessHash && d.accessHash !== '0') ? d.accessHash : '0';
     return [{
       text: `👤 ${safeName}${badge}`,
-      callback_data: `ghost_view:${d.id}`,
+      callback_data: `ghost_view:${d.id}:${safeHash}`,
       style: d.unreadCount > 0 ? 'success' : 'primary'
     }];
   });
@@ -2539,10 +2619,10 @@ async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = nu
 /**
  * دریافت پیام‌های چت بدون ثبت تیک آبی (Ghost Mode Reading via MTProto messages.getHistory)
  */
-async function fetchChatMessagesInGhostMode(client, peerId, limit = 10, entry = null) {
+async function fetchChatMessagesInGhostMode(client, peerId, limit = 15, entry = null, accessHash = null) {
   if (!client || !client.connected) return [];
   try {
-    const inputPeer = await resolveInputPeerSafely(client, peerId, entry);
+    const inputPeer = await resolveInputPeerSafely(client, peerId, entry, accessHash);
 
     // روش ۱: استفاده از client.getMessages
     try {
@@ -2574,9 +2654,10 @@ async function fetchChatMessagesInGhostMode(client, peerId, limit = 10, entry = 
 /**
  * ارسال یا ویرایش نمایش چت در حالت شبح به ربات با دکمه‌های پاسخ سریع و تیک آبی
  */
-async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, messages, botMessageId = null) {
+async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, messages, botMessageId = null, unreadCount = 0, accessHash = null) {
   if (!botToken || !chatId) return false;
   const cleanName = escapeHtml(targetName || 'مخاطب');
+  const safeHash = (accessHash && accessHash !== '0') ? accessHash : '0';
   
   let body = `👻 <b>[مشاهده پیام‌های ${cleanName} — حالت شبح]</b>\n` +
     `🆔 <b>شناسه مخاطب:</b> <code>${peerId}</code>\n` +
@@ -2588,10 +2669,31 @@ async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, mess
   } else {
     // مرتب‌سازی زمانی از قدیمی به جدید برای خوانایی طبیعی گفتگو
     const sorted = [...messages].sort((a, b) => (a.date || 0) - (b.date || 0));
+    
+    // مشخص کردن مرز پیام‌های خوانده‌نشده
+    const unreadNum = Number(unreadCount) || 0;
+    const incomingMessages = sorted.filter(m => !m.out);
+    const unreadBoundaryIndex = unreadNum > 0 && incomingMessages.length >= unreadNum
+      ? incomingMessages[incomingMessages.length - unreadNum]?.id
+      : null;
+
+    let unreadDividerShown = false;
+
     for (const m of sorted) {
       const timeStr = m.date ? new Date(m.date * 1000).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' }) : '';
       const isOut = Boolean(m.out);
-      const senderBadge = isOut ? '📤 <b>شما:</b>' : `📥 <b>${cleanName}:</b>`;
+      
+      const isUnread = !isOut && unreadNum > 0 && (
+        unreadBoundaryIndex ? m.id >= unreadBoundaryIndex : true
+      );
+
+      if (isUnread && !unreadDividerShown) {
+        body += `── 📩 <b>پیام‌های جدید (خوانده نشده)</b> ──\n\n`;
+        unreadDividerShown = true;
+      }
+
+      const unreadBadge = isUnread ? ' 🔥 [جدید]' : '';
+      const senderBadge = isOut ? '📤 <b>شما:</b>' : `📥 <b>${cleanName}${unreadBadge}:</b>`;
       
       let mediaTag = '';
       if (m.media) {
@@ -2615,11 +2717,11 @@ async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, mess
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}`, style: 'primary' },
-        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}`, style: 'success' }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}:${safeHash}`, style: 'primary' },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}:${safeHash}`, style: 'success' }
       ],
       [
-        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}`, style: 'primary' },
+        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}:${safeHash}`, style: 'primary' },
         { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
       ]
     ]
@@ -2697,14 +2799,14 @@ async function pollAndProcessBotActions(pool) {
 
         } else if (action.action === 'get_messages') {
           console.log(`👻 [bot-actions] Fetching ghost messages for [${action.username}] peer ${action.peerId}...`);
-          const messages = await fetchChatMessagesInGhostMode(entry.client, action.peerId, 10, entry);
+          const messages = await fetchChatMessagesInGhostMode(entry.client, action.peerId, 15, entry, action.accessHash);
           if (botToken && action.chatId) {
-            await sendGhostChatViewToBot(botToken, action.chatId, action.peerId, action.targetName, messages, action.messageId);
+            await sendGhostChatViewToBot(botToken, action.chatId, action.peerId, action.targetName, messages, action.messageId, action.unreadCount || 0, action.accessHash);
           }
 
         } else if (action.action === 'send_reply') {
           console.log(`✍️ [bot-actions] Sending reply from [${action.username}] to ${action.peerId}...`);
-          const inputPeer = await resolveInputPeerSafely(entry.client, action.peerId, entry);
+          const inputPeer = await resolveInputPeerSafely(entry.client, action.peerId, entry, action.accessHash);
           try {
             await entry.client.sendMessage(inputPeer, { message: action.text });
           } catch (smErr) {
@@ -2726,6 +2828,7 @@ async function pollAndProcessBotActions(pool) {
           if (botToken && action.chatId) {
             const cleanText = escapeHtml(action.text || '');
             const cleanTarget = escapeHtml(action.targetName || action.peerId);
+            const safeHash = (action.accessHash && action.accessHash !== '0') ? action.accessHash : '0';
             const confirmText = `✅ <b>[ارسال موفق پاسخ — Reply Sent]</b>\n` +
               `━━━━━━━━━━━━━━━━━━━━\n` +
               `👤 <b>به مخاطب:</b> ${cleanTarget} (<code>${action.peerId}</code>)\n` +
@@ -2735,7 +2838,7 @@ async function pollAndProcessBotActions(pool) {
             const keyboard = {
               inline_keyboard: [
                 [
-                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}`, style: 'primary' },
+                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}:${safeHash}`, style: 'primary' },
                   { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats', style: 'danger' }
                 ]
               ]
@@ -2745,7 +2848,7 @@ async function pollAndProcessBotActions(pool) {
 
         } else if (action.action === 'mark_read') {
           console.log(`👁️ [bot-actions] Marking read for [${action.username}] peer ${action.peerId}...`);
-          const inputPeer = await resolveInputPeerSafely(entry.client, action.peerId, entry);
+          const inputPeer = await resolveInputPeerSafely(entry.client, action.peerId, entry, action.accessHash);
           try {
             await entry.client.markAsRead(inputPeer);
           } catch (mrErr) {
@@ -2891,8 +2994,10 @@ async function main() {
           };
           resolveMutedUsernames(entry);
 
-          // همگام‌سازی دوره‌ای دیالوگ‌های خصوصی با ورکر کلادفلر
-          if (entry.client && entry.client.connected) {
+          // همگام‌سازی دوره‌ای دیالوگ‌های خصوصی با ورکر کلادفلر (کنترل نرخ زمانی ۹۰ ثانیه‌ای جهت پیشگیری قطعی از FLOOD_WAIT)
+          const nowTs = Date.now();
+          if (entry.client && entry.client.connected && (!entry.lastDialogSync || (nowTs - entry.lastDialogSync > 90000))) {
+            entry.lastDialogSync = nowTs;
             fetchUserPrivateDialogs(entry.client, entry).then(dlgs => {
               if (dlgs.length > 0) syncDialogsToCloudflare(u.username, dlgs);
             }).catch(() => {});
