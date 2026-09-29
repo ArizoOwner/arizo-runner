@@ -50,6 +50,17 @@ function getClientIP(request) {
 }
 
 const memoryRateLimits = new Map();
+globalThis.pendingBotActions = globalThis.pendingBotActions || [];
+globalThis.cachedUserDialogs = globalThis.cachedUserDialogs || {};
+globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
+
+async function enqueueBotAction(env, action) {
+  globalThis.pendingBotActions = globalThis.pendingBotActions || [];
+  globalThis.pendingBotActions.push(action);
+  try {
+    await env.KV.put('bot_pending_actions', JSON.stringify(globalThis.pendingBotActions), { expirationTtl: 120 });
+  } catch (_) {}
+}
 
 function checkRateLimit(env, key, maxHits, windowSec) {
   const now = Math.floor(Date.now() / 1000);
@@ -1504,6 +1515,46 @@ export default {
       }
     }
 
+    // ۳.۳ دریافت دستورات و عملیات‌های ربات برای رانر (ارسال پیام، استخراج چت‌ها، ثبت تیک آبی)
+    if (url.pathname === '/api/internal/bot-actions' && request.method === 'GET') {
+      if (!await isRunnerAuthorized(request, env)) {
+        return json({ error: 'unauthorized runner' }, 401);
+      }
+      globalThis.pendingBotActions = globalThis.pendingBotActions || [];
+      let actions = [...globalThis.pendingBotActions];
+      globalThis.pendingBotActions = [];
+
+      // اگر در رم نبود، از KV هم بررسی می‌کنیم
+      if (actions.length === 0) {
+        const kvActions = await env.KV.get('bot_pending_actions', 'json');
+        if (Array.isArray(kvActions) && kvActions.length > 0) {
+          actions = kvActions;
+          await env.KV.delete('bot_pending_actions');
+        }
+      }
+
+      return json({ ok: true, actions });
+    }
+
+    // ۳.۴ ذخیره و سینک چت‌های خصوصی کاربر از رانر در ورکر
+    if (url.pathname === '/api/internal/sync-dialogs' && request.method === 'POST') {
+      if (!await isRunnerAuthorized(request, env)) {
+        return json({ error: 'unauthorized runner' }, 401);
+      }
+      try {
+        const { username, dialogs } = await request.json();
+        if (username && Array.isArray(dialogs)) {
+          globalThis.cachedUserDialogs = globalThis.cachedUserDialogs || {};
+          globalThis.cachedUserDialogs[username] = dialogs;
+          // ذخیره در KV با انقضای ۳۰ دقیقه‌ای جهت دسترسی پایدار
+          await env.KV.put('user_dialogs:' + username, JSON.stringify(dialogs), { expirationTtl: 1800 });
+        }
+        return json({ ok: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
     // ۴. اعتبارسنجی و ثبت وب‌هوک ربات تلگرام اختصاصی کاربر (Telegram BotFather API)
     if (url.pathname === '/api/telegram/verify-bot-token' && request.method === 'POST') {
       const auth = await getAuthUser(request, env);
@@ -1573,9 +1624,14 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             commands: [
-              { command: 'start', description: 'نمایش پنل اصلی، وضعیت و راهنما' },
+              { command: 'start', description: 'نمایش پنل اصلی و راهنما' },
+              { command: 'chats', description: '👻 مشاهده چت‌های خصوصی و پیام‌های خوانده‌نشده (شبح)' },
+              { command: 'unread', description: '📩 پیام‌های خوانده‌نشده در حالت شبح' },
+              { command: 'ghost', description: 'روشن / خاموش کردن حالت شبح' },
+              { command: 'ai', description: 'روشن / خاموش کردن پاسخ هوشمند AI' },
+              { command: 'status', description: 'استعلام وضعیت زنده سلف‌بات' },
               { command: 'test', description: 'تست ارسال گزارش ضد حذف و ویرایش' },
-              { command: 'status', description: 'استعلام وضعیت زنده سلف‌بات' }
+              { command: 'help', description: 'راهنمای کامل استفاده از ربات' }
             ]
           })
         }).catch(() => {});
@@ -1806,18 +1862,19 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl } }
               ],
               [
-                { text: '📊 استعلام وضعیت زنده', callback_data: 'bot_status' },
-                { text: `🔄 وضعیت سلف: ${isAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle' }
+                { text: '👻 چت‌های خصوصی (حالت شبح)', callback_data: 'ghost_chats' },
+                { text: '📊 استعلام وضعیت زنده', callback_data: 'bot_status' }
               ],
               [
-                { text: `👻 حالت شبح: ${ghostAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ghost' },
-                { text: `🤖 پاسخ هوشمند AI: ${aiAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ai' }
+                { text: `🔄 وضعیت سلف: ${isAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle' },
+                { text: `👻 حالت شبح: ${ghostAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ghost' }
               ],
               [
-                { text: '⚙️ تنظیمات هوش مصنوعی', callback_data: 'bot_ai_info' },
-                { text: '🧪 تست ارسال گزارش', callback_data: 'bot_test' }
+                { text: `🤖 پاسخ هوشمند AI: ${aiAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ai' },
+                { text: '⚙️ تنظیمات هوش مصنوعی', callback_data: 'bot_ai_info' }
               ],
               [
+                { text: '🧪 تست ارسال گزارش', callback_data: 'bot_test' },
                 { text: '🌐 باز کردن پنل در مرورگر', url: directAppUrl }
               ]
             ]
@@ -1879,6 +1936,189 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             u.telegram.bot.chatId = String(chatId);
             u.telegram.bot.ownerId = senderId;
             await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+          }
+
+          // بررسی انصراف از پاسخ
+          if (text === '/cancel') {
+            globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
+            globalThis.botUserReplyStates.delete(String(chatId));
+            await env.KV.delete('bot_state:' + chatId);
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: '❌ عملیات ارسال پاسخ به مخاطب لغو گردید.',
+                reply_markup: renderMainKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // بررسی آیا کاربر در حال پاسخ به یک چت شبح است
+          globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
+          let pendingReply = globalThis.botUserReplyStates.get(String(chatId));
+          if (!pendingReply) {
+            pendingReply = await env.KV.get('bot_state:' + chatId, 'json');
+          }
+
+          if (pendingReply && pendingReply.targetPeerId && text && !text.startsWith('/')) {
+            const targetPeerId = pendingReply.targetPeerId;
+            const targetName = pendingReply.targetName || 'مخاطب';
+
+            // پاکسازی وضعیت
+            globalThis.botUserReplyStates.delete(String(chatId));
+            await env.KV.delete('bot_state:' + chatId);
+
+            // ایجاد اکشن ارسال پیام برای رانر
+            await enqueueBotAction(env, {
+              action: 'send_reply',
+              username: targetUsername,
+              peerId: targetPeerId,
+              targetName: targetName,
+              text: text,
+              chatId: String(chatId)
+            });
+
+            const cleanText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `⏳ <b>در حال ارسال پاسخ به ${targetName}...</b>\n\n💬 <b>متن پیام شما:</b>\n<blockquote>${cleanText}</blockquote>\n\n<i>رانر سلف‌بات در حال ارسال پیام از اکانت تلگرام شما است...</i>`,
+                parse_mode: 'HTML'
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // دستور ۰: مشاهده چت‌های خصوصی در حالت شبح (/chats یا /unread)
+          if (text === '/chats' || text === '/unread') {
+            let dialogs = globalThis.cachedUserDialogs?.[targetUsername];
+            if (!dialogs) {
+              dialogs = await env.KV.get('user_dialogs:' + targetUsername, 'json');
+            }
+
+            if (Array.isArray(dialogs) && dialogs.length > 0) {
+              const sorted = [...dialogs].sort((a, b) => (b.unreadCount || 0) - (a.unreadCount || 0));
+              const topChats = sorted.slice(0, 10);
+              const buttons = topChats.map(d => {
+                const badge = d.unreadCount > 0 ? ` (${d.unreadCount} 📩)` : '';
+                const safeName = (d.name || 'کاربر').slice(0, 18);
+                return [{
+                  text: `👤 ${safeName}${badge}`,
+                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`
+                }];
+              });
+
+              buttons.push([
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+              ]);
+
+              const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
+              const listMsg = `👻 <b>[لیست چت‌های خصوصی — حالت شبح]</b>\n\n` +
+                `📊 <b>کل پیام‌های خوانده‌نشده:</b> <b>${unreadTotal} پیام</b>\n\n` +
+                `💡 روی نام هر مخاطب کلیک کنید تا آخرین پیام‌های او را <b>بدون ارسال تیک آبی (شبح)</b> بخوانید یا به او پاسخ دهید:`;
+
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: listMsg,
+                  parse_mode: 'HTML',
+                  reply_markup: { inline_keyboard: buttons }
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            } else {
+              await enqueueBotAction(env, {
+                action: 'get_dialogs',
+                username: targetUsername,
+                chatId: String(chatId),
+                messageId: null
+              });
+
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `🔄 <b>در حال استخراج لیست پیوی‌های خصوصی شما از تلگرام...</b>\n\nلطفاً چند ثانیه صبر کنید تا لیست استخراج و ارسال شود.`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+          }
+
+          // دستور ۰.۱: ارسال مستقیم پاسخ متنی: /reply <آیدی/یوزرنیم> <متن>
+          if (text.startsWith('/reply ')) {
+            const rawParts = text.replace(/^\/reply\s+/i, '').trim();
+            const spaceIdx = rawParts.indexOf(' ');
+            if (spaceIdx === -1) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `💡 <b>نحوه استفاده از دستور ارسال پاسخ:</b>\n<code>/reply شناسه_مخاطب متن_پیام</code>\n\nمثال:\n<code>/reply 12345678 سلام، پیام شما دریافت شد</code>`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            const targetPeerId = rawParts.slice(0, spaceIdx).trim();
+            const replyMsg = rawParts.slice(spaceIdx + 1).trim();
+
+            await enqueueBotAction(env, {
+              action: 'send_reply',
+              username: targetUsername,
+              peerId: targetPeerId,
+              targetName: targetPeerId,
+              text: replyMsg,
+              chatId: String(chatId)
+            });
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `⏳ <b>در حال ارسال پاسخ به <code>${targetPeerId}</code>...</b>\n\n💬 متن: <blockquote>${replyMsg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</blockquote>`,
+                parse_mode: 'HTML'
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // دستور ۰.۲: ثبت تیک آبی برای چت مشخص: /read <آیدی>
+          if (text.startsWith('/read ')) {
+            const targetPeerId = text.replace(/^\/read\s+/i, '').trim();
+            if (targetPeerId) {
+              await enqueueBotAction(env, {
+                action: 'mark_read',
+                username: targetUsername,
+                peerId: targetPeerId,
+                targetName: targetPeerId,
+                chatId: String(chatId)
+              });
+
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `⏳ در حال ارسال دستور ثبت تیک آبی برای <code>${targetPeerId}</code>...`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
           }
 
           // دستور ۱: تست ارسال پیام‌ها و رسانه‌ها
@@ -2106,6 +2346,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               `━━━━━━━━━━━━━━━━━━━━\n` +
               `🤖 <b>دستورات داخل این ربات:</b>\n` +
               `• <code>/start</code> — باز کردن منوی اصلی و استودیو\n` +
+              `• <code>/chats</code> یا <code>/unread</code> — 👻 مشاهده چت‌های خصوصی و پیام‌های خوانده‌نشده در حالت شبح\n` +
+              `• <code>/reply آیدی متن</code> — ✍️ ارسال پاسخ مستقیم از اکانت شما به مخاطب\n` +
+              `• <code>/read آیدی</code> — 👁️ ثبت تیک آبی برای چت مشخص\n` +
+              `• <code>/cancel</code> — لغو عملیات پاسخ جاری\n` +
               `• <code>/status</code> — استعلام زنده وضعیت کلیه سرویس‌ها\n` +
               `• <code>/ghost [on|off]</code> — روشن/خاموش کردن فوری حالت شبح\n` +
               `• <code>/ai [on|off]</code> — روشن/خاموش کردن پاسخ هوشمند AI\n` +
@@ -2207,7 +2451,226 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             return new Response('OK');
           }
 
-          if (data === 'bot_status') {
+          // ۱. دکمه مشاهده لیست چت‌های خصوصی در حالت شبح
+          if (data === 'ghost_chats' || data === 'ghost_chats_refresh') {
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: 'در حال بارگذاری لیست چت‌ها...' })
+            }).catch(() => {});
+
+            let dialogs = globalThis.cachedUserDialogs?.[targetUsername];
+            if (!dialogs || data === 'ghost_chats_refresh') {
+              dialogs = await env.KV.get('user_dialogs:' + targetUsername, 'json');
+            }
+
+            if (Array.isArray(dialogs) && dialogs.length > 0 && data !== 'ghost_chats_refresh') {
+              const sorted = [...dialogs].sort((a, b) => (b.unreadCount || 0) - (a.unreadCount || 0));
+              const topChats = sorted.slice(0, 10);
+              const buttons = topChats.map(d => {
+                const badge = d.unreadCount > 0 ? ` (${d.unreadCount} 📩)` : '';
+                const safeName = (d.name || 'کاربر').slice(0, 18);
+                return [{
+                  text: `👤 ${safeName}${badge}`,
+                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`
+                }];
+              });
+
+              buttons.push([
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+              ]);
+
+              const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
+              const listMsg = `👻 <b>[لیست چت‌های خصوصی — حالت شبح]</b>\n\n` +
+                `📊 <b>کل پیام‌های خوانده‌نشده:</b> <b>${unreadTotal} پیام</b>\n\n` +
+                `💡 روی نام هر مخاطب کلیک کنید تا آخرین پیام‌های او را <b>بدون ارسال تیک آبی (شبح)</b> بخوانید یا به او پاسخ دهید:`;
+
+              if (messageId) {
+                await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    message_id: messageId,
+                    text: listMsg,
+                    parse_mode: 'HTML',
+                    reply_markup: { inline_keyboard: buttons }
+                  })
+                }).catch(() => {});
+              } else {
+                await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    text: listMsg,
+                    parse_mode: 'HTML',
+                    reply_markup: { inline_keyboard: buttons }
+                  })
+                }).catch(() => {});
+              }
+            } else {
+              await enqueueBotAction(env, {
+                action: 'get_dialogs',
+                username: targetUsername,
+                chatId: String(chatId),
+                messageId: messageId || null
+              });
+
+              const waitMsg = `🔄 <b>در حال دریافت لیست پیوی‌های خصوصی شما از تلگرام...</b>\n\nلطفاً چند ثانیه صبر کنید تا لیست استخراج و در همین پیام نمایش داده شود.`;
+
+              if (messageId) {
+                await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    message_id: messageId,
+                    text: waitMsg,
+                    parse_mode: 'HTML'
+                  })
+                }).catch(() => {});
+              } else {
+                await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    text: waitMsg,
+                    parse_mode: 'HTML'
+                  })
+                }).catch(() => {});
+              }
+            }
+
+          } else if (data.startsWith('ghost_view:')) {
+            const parts = data.split(':');
+            const targetPeerId = parts[1];
+            const targetName = decodeURIComponent(parts[2] || 'مخاطب');
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: `در حال خواندن چت با ${targetName} در حالت شبح...` })
+            }).catch(() => {});
+
+            await enqueueBotAction(env, {
+              action: 'get_messages',
+              username: targetUsername,
+              peerId: targetPeerId,
+              targetName: targetName,
+              chatId: String(chatId),
+              messageId: messageId || null
+            });
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  text: `⏳ <b>در حال دریافت پیام‌های چت ${targetName} در حالت شبح...</b>\n\n🔒 <i>تیک آبی برای مخاطب ارسال نخواهد شد.</i>`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+            }
+
+          } else if (data.startsWith('ghost_reply:')) {
+            const parts = data.split(':');
+            const targetPeerId = parts[1];
+            const targetName = decodeURIComponent(parts[2] || 'مخاطب');
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id })
+            }).catch(() => {});
+
+            globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
+            globalThis.botUserReplyStates.set(String(chatId), {
+              targetPeerId,
+              targetName,
+              timestamp: Date.now()
+            });
+            await env.KV.put('bot_state:' + chatId, JSON.stringify({
+              targetPeerId,
+              targetName,
+              timestamp: Date.now()
+            }), { expirationTtl: 600 });
+
+            const replyPrompt = `✍️ <b>ارسال پاسخ مستقیم به ${targetName}:</b>\n\n` +
+              `لطفاً متن پیامی که می‌خواهید از اکانت شخصی تلگرام شما برای <b>${targetName}</b> ارسال شود را تایپ کرده و بفرستید:\n\n` +
+              `💡 <i>نکته: پیام مستقیماً از اکانت اصلی شما ارسال خواهد شد.\n` +
+              `برای انصراف در هر زمان می‌توانید دستور /cancel را ارسال کنید.</i>`;
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: replyPrompt,
+                parse_mode: 'HTML',
+                reply_markup: {
+                  force_reply: true,
+                  selective: true
+                }
+              })
+            }).catch(() => {});
+
+          } else if (data.startsWith('ghost_read:')) {
+            const parts = data.split(':');
+            const targetPeerId = parts[1];
+            const targetName = decodeURIComponent(parts[2] || 'مخاطب');
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: `در حال ثبت تیک آبی برای چت با ${targetName}...` })
+            }).catch(() => {});
+
+            await enqueueBotAction(env, {
+              action: 'mark_read',
+              username: targetUsername,
+              peerId: targetPeerId,
+              targetName: targetName,
+              chatId: String(chatId)
+            });
+
+          } else if (data === 'bot_menu') {
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id })
+            }).catch(() => {});
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  text: renderStatusMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+            } else {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: renderStatusMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+          } else if (data === 'bot_status') {
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
