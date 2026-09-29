@@ -2135,6 +2135,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
 
           if (pendingReply && pendingReply.targetPeerId && text && !text.startsWith('/')) {
             const targetPeerId = pendingReply.targetPeerId;
+            const targetAccessHash = pendingReply.targetAccessHash || null;
             const targetName = pendingReply.targetName || 'مخاطب';
 
             // پاکسازی وضعیت
@@ -2146,6 +2147,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               action: 'send_reply',
               username: targetUsername,
               peerId: targetPeerId,
+              accessHash: targetAccessHash,
               targetName: targetName,
               text: text,
               chatId: String(chatId),
@@ -2172,10 +2174,34 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             const idMatch = repText.match(/<code>(\d{5,15})<\/code>/) || repText.match(/\((\d{5,15})\)/);
             if (idMatch && idMatch[1]) {
               const targetPeerId = idMatch[1];
+              let extractedHash = null;
+              if (replyToMsg.reply_markup?.inline_keyboard) {
+                for (const row of replyToMsg.reply_markup.inline_keyboard) {
+                  for (const btn of row) {
+                    if (btn.callback_data && btn.callback_data.includes(targetPeerId)) {
+                      const cbParts = btn.callback_data.split(':');
+                      if (cbParts[2] && cbParts[2] !== '0') {
+                        extractedHash = cbParts[2];
+                        break;
+                      }
+                    }
+                  }
+                  if (extractedHash) break;
+                }
+              }
+
+              if (!extractedHash) {
+                const lowerTarget = targetUsername.toLowerCase();
+                const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+                const found = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(targetPeerId)) : null;
+                extractedHash = found?.accessHash || null;
+              }
+
               await enqueueBotAction(env, {
                 action: 'send_reply',
                 username: targetUsername,
                 peerId: targetPeerId,
+                accessHash: extractedHash,
                 targetName: targetPeerId,
                 text: text,
                 chatId: String(chatId),
@@ -2213,9 +2239,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               const buttons = topChats.map(d => {
                 const badge = d.unreadCount > 0 ? ` (${d.unreadCount} 📩)` : '';
                 const safeName = (d.name || 'کاربر').slice(0, 18);
+                const safeHash = d.accessHash && d.accessHash !== '0' ? d.accessHash : '0';
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}`,
+                  callback_data: `ghost_view:${d.id}:${safeHash}`,
                   style: d.unreadCount > 0 ? 'success' : 'primary'
                 }];
               });
@@ -2280,14 +2307,22 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               return new Response('OK');
             }
 
-            const targetPeerId = rawParts.slice(0, spaceIdx).trim();
+            const rawTarget = rawParts.slice(0, spaceIdx).trim();
             const replyMsg = rawParts.slice(spaceIdx + 1).trim();
+
+            const lowerTarget = targetUsername.toLowerCase();
+            const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+            const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(rawTarget) || (d.username && d.username.toLowerCase() === rawTarget.toLowerCase().replace(/^@/, ''))) : null;
+            const targetPeerId = foundChat ? String(foundChat.id) : rawTarget;
+            const targetAccessHash = foundChat?.accessHash || null;
+            const targetDisplayName = foundChat?.name || rawTarget;
 
             await enqueueBotAction(env, {
               action: 'send_reply',
               username: targetUsername,
               peerId: targetPeerId,
-              targetName: targetPeerId,
+              accessHash: targetAccessHash,
+              targetName: targetDisplayName,
               text: replyMsg,
               chatId: String(chatId),
               botToken: actualBotToken
@@ -2298,7 +2333,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: `⏳ <b>در حال ارسال پاسخ به <code>${targetPeerId}</code>...</b>\n\n💬 متن: <blockquote>${replyMsg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</blockquote>`,
+                text: `⏳ <b>در حال ارسال پاسخ به ${escapeHtml(targetDisplayName)} (<code>${targetPeerId}</code>)...</b>\n\n💬 متن: <blockquote>${replyMsg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</blockquote>`,
                 parse_mode: 'HTML'
               })
             }).catch(() => {});
@@ -2307,13 +2342,21 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
 
           // دستور ۰.۲: ثبت تیک آبی برای چت مشخص: /read <آیدی>
           if (text.startsWith('/read ')) {
-            const targetPeerId = text.replace(/^\/read\s+/i, '').trim();
-            if (targetPeerId) {
+            const rawTarget = text.replace(/^\/read\s+/i, '').trim();
+            if (rawTarget) {
+              const lowerTarget = targetUsername.toLowerCase();
+              const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+              const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(rawTarget) || (d.username && d.username.toLowerCase() === rawTarget.toLowerCase().replace(/^@/, ''))) : null;
+              const targetPeerId = foundChat ? String(foundChat.id) : rawTarget;
+              const targetAccessHash = foundChat?.accessHash || null;
+              const targetDisplayName = foundChat?.name || rawTarget;
+
               await enqueueBotAction(env, {
                 action: 'mark_read',
                 username: targetUsername,
                 peerId: targetPeerId,
-                targetName: targetPeerId,
+                accessHash: targetAccessHash,
+                targetName: targetDisplayName,
                 chatId: String(chatId),
                 botToken: actualBotToken
               });
@@ -2323,7 +2366,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   chat_id: chatId,
-                  text: `⏳ در حال ارسال دستور ثبت تیک آبی برای <code>${targetPeerId}</code>...`,
+                  text: `⏳ در حال ارسال دستور ثبت تیک آبی برای ${escapeHtml(targetDisplayName)} (<code>${targetPeerId}</code>)...`,
                   parse_mode: 'HTML'
                 })
               }).catch(() => {});
@@ -2336,8 +2379,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             const testActionKb = {
               inline_keyboard: [
                 [
-                  { text: '✍️ ارسال پاسخ', callback_data: 'ghost_reply:12345678', style: 'primary' },
-                  { text: '👻 چت در حالت شبح', callback_data: 'ghost_view:12345678', style: 'success' }
+                  { text: '✍️ ارسال پاسخ', callback_data: 'ghost_reply:12345678:0', style: 'primary' },
+                  { text: '👻 چت در حالت شبح', callback_data: 'ghost_view:12345678:0', style: 'success' }
                 ]
               ]
             };
@@ -2792,9 +2835,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               const buttons = topChats.map(d => {
                 const badge = d.unreadCount > 0 ? ` (${d.unreadCount} 📩)` : '';
                 const safeName = (d.name || 'کاربر').slice(0, 18);
+                const safeHash = d.accessHash && d.accessHash !== '0' ? d.accessHash : '0';
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}`,
+                  callback_data: `ghost_view:${d.id}:${safeHash}`,
                   style: d.unreadCount > 0 ? 'success' : 'primary'
                 }];
               });
@@ -2877,10 +2921,13 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           } else if (data.startsWith('ghost_view:')) {
             const parts = data.split(':');
             const targetPeerId = parts[1];
+            const targetAccessHash = parts[2] || null;
             const lowerTarget = targetUsername.toLowerCase();
             const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
             const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(targetPeerId)) : null;
-            const targetName = foundChat?.name || (parts[2] ? decodeURIComponent(parts[2]) : 'مخاطب');
+            const targetName = foundChat?.name || (parts[3] ? decodeURIComponent(parts[3]) : 'مخاطب');
+            const finalAccessHash = (targetAccessHash && targetAccessHash !== '0') ? targetAccessHash : (foundChat?.accessHash || null);
+            const unreadCount = Number(foundChat?.unreadCount) || 0;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
@@ -2892,13 +2939,15 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               action: 'get_messages',
               username: targetUsername,
               peerId: targetPeerId,
+              accessHash: finalAccessHash,
               targetName: targetName,
+              unreadCount: unreadCount,
               chatId: String(chatId),
               messageId: messageId || null,
               botToken: actualBotToken
             });
 
-            const loadingMsg = `⏳ <b>در حال دریافت پیام‌های چت ${targetName} در حالت شبح...</b>\n\n🔒 <i>تیک آبی برای مخاطب ارسال نخواهد شد.</i>`;
+            const loadingMsg = `⏳ <b>در حال دریافت پیام‌های چت ${escapeHtml(targetName)} در حالت شبح...</b>\n\n🔒 <i>تیک آبی برای مخاطب ارسال نخواهد شد.</i>`;
             let viewEdited = false;
             if (messageId) {
               const editRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
@@ -2928,10 +2977,12 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           } else if (data.startsWith('ghost_reply:')) {
             const parts = data.split(':');
             const targetPeerId = parts[1];
+            const targetAccessHash = parts[2] || null;
             const lowerTarget = targetUsername.toLowerCase();
             const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
             const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(targetPeerId)) : null;
-            const targetName = foundChat?.name || (parts[2] ? decodeURIComponent(parts[2]) : 'مخاطب');
+            const targetName = foundChat?.name || (parts[3] ? decodeURIComponent(parts[3]) : 'مخاطب');
+            const finalAccessHash = (targetAccessHash && targetAccessHash !== '0') ? targetAccessHash : (foundChat?.accessHash || null);
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
@@ -2942,19 +2993,23 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
             globalThis.botUserReplyStates.set(String(chatId), {
               targetPeerId,
+              targetAccessHash: finalAccessHash,
               targetName,
               timestamp: Date.now()
             });
             await env.KV.put('bot_state:' + chatId, JSON.stringify({
               targetPeerId,
+              targetAccessHash: finalAccessHash,
               targetName,
               timestamp: Date.now()
             }), { expirationTtl: 600 });
 
-            const replyPrompt = `✍️ <b>ارسال پاسخ مستقیم به ${targetName}:</b>\n\n` +
-              `لطفاً متن پیامی که می‌خواهید از اکانت شخصی تلگرام شما برای <b>${targetName}</b> ارسال شود را تایپ کرده و بفرستید:\n\n` +
-              `💡 <i>نکته: پیام مستقیماً از اکانت اصلی شما ارسال خواهد شد.\n` +
-              `برای انصراف در هر زمان می‌توانید دستور /cancel را ارسال کنید.</i>`;
+            const replyPrompt = `✍️ <b>ارسال پاسخ مستقیم به ${escapeHtml(targetName)}:</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `👤 <b>مخاطب:</b> ${escapeHtml(targetName)} (<code>${targetPeerId}</code>)\n\n` +
+              `لطفاً متن پیامی که می‌خواهید از اکانت شخصی تلگرام شما برای <b>${escapeHtml(targetName)}</b> ارسال شود را تایپ کرده و بفرستید:\n\n` +
+              `💡 <i>نکته: پیام مستقیماً از اکانت اصلی شما ارسال خواهد شد و تیک آبی در حالت شبح مدیریت می‌شود.\n` +
+              `❌ برای انصراف در هر زمان می‌توانید دستور <code>/cancel</code> را ارسال کنید.</i>`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
@@ -2973,10 +3028,12 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           } else if (data.startsWith('ghost_read:')) {
             const parts = data.split(':');
             const targetPeerId = parts[1];
+            const targetAccessHash = parts[2] || null;
             const lowerTarget = targetUsername.toLowerCase();
             const dlgs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget] || await env.KV.get('user_dialogs:' + lowerTarget, 'json');
             const foundChat = Array.isArray(dlgs) ? dlgs.find(d => String(d.id) === String(targetPeerId)) : null;
-            const targetName = foundChat?.name || (parts[2] ? decodeURIComponent(parts[2]) : 'مخاطب');
+            const targetName = foundChat?.name || (parts[3] ? decodeURIComponent(parts[3]) : 'مخاطب');
+            const finalAccessHash = (targetAccessHash && targetAccessHash !== '0') ? targetAccessHash : (foundChat?.accessHash || null);
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
@@ -2988,8 +3045,10 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               action: 'mark_read',
               username: targetUsername,
               peerId: targetPeerId,
+              accessHash: finalAccessHash,
               targetName: targetName,
               chatId: String(chatId),
+              messageId: messageId || null,
               botToken: actualBotToken
             });
 
@@ -3340,8 +3399,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             const testActionKb = {
               inline_keyboard: [
                 [
-                  { text: '✍️ ارسال پاسخ', callback_data: 'ghost_reply:12345678', style: 'primary' },
-                  { text: '👻 چت در حالت شبح', callback_data: 'ghost_view:12345678', style: 'success' }
+                  { text: '✍️ ارسال پاسخ', callback_data: 'ghost_reply:12345678:0', style: 'primary' },
+                  { text: '👻 چت در حالت شبح', callback_data: 'ghost_view:12345678:0', style: 'success' }
                 ]
               ]
             };
