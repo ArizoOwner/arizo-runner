@@ -1708,15 +1708,17 @@ class TelegramConnectionPool {
         // ——— ۴.B 🤖 پاسخ هوشمند AI (اولویت بالاتر از AFK ثابت) ———
         if (entry.settings.aiReplyEnabled && entry.settings.aiApiKey) {
           const aiCooldownMin = entry.settings.aiCooldown ?? 5;
-          const aiCooldownMs = aiCooldownMin * 60 * 1000;
+          const aiCooldownMs = aiCooldownMin > 0 ? (aiCooldownMin * 60 * 1000) : 0;
           const lastAiReply = entry.aiCooldownMap?.get(senderIdStr) || 0;
           const now = Date.now();
 
-          // بررسی سقف تعداد پاسخ
+          // بررسی سقف تعداد پاسخ و کول‌داون زمانی
           const maxReplies = entry.settings.aiMaxReplies ?? 3;
           const currentCount = entry.aiReplyCountMap?.get(senderIdStr) || 0;
+          const isRepliesAllowed = maxReplies === 0 || currentCount < maxReplies;
+          const isCooldownPassed = aiCooldownMs === 0 || (now - lastAiReply >= aiCooldownMs);
 
-          if (currentCount < maxReplies && (now - lastAiReply >= aiCooldownMs)) {
+          if (isRepliesAllowed && isCooldownPassed) {
             const messageText = (message.text || message.message || '').trim();
             if (messageText.length > 0) {
               console.log(`🤖 [${username}] AI Smart Reply: processing message from ${senderIdStr}...`);
