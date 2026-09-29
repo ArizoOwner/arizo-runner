@@ -49,12 +49,133 @@ function getClientIP(request) {
     '127.0.0.1';
 }
 
+function getUnifiedStorage(env) {
+  if (env._unifiedStorage) return env._unifiedStorage;
+
+  const storage = {
+    async get(key, type) {
+      // 1. اولویت خواندن از دیتابیس D1 (سقف ۵ میلیون درخواست در روز)
+      if (env.DB) {
+        try {
+          const row = await env.DB.prepare('SELECT value, expires_at FROM kv_store WHERE key = ?').bind(key).first();
+          if (row) {
+            if (row.expires_at && Math.floor(Date.now() / 1000) > row.expires_at) {
+              env.DB.prepare('DELETE FROM kv_store WHERE key = ?').bind(key).run().catch(() => {});
+            } else {
+              return type === 'json' ? JSON.parse(row.value) : row.value;
+            }
+          }
+        } catch (dbErr) {
+          console.warn(`[Storage] D1 get error for ${key}:`, dbErr.message);
+        }
+      }
+
+      // 2. در صورت عدم وجود در D1، خواندن از KV
+      const rawKv = env.KV_RAW || env.KV;
+      if (rawKv && typeof rawKv.get === 'function') {
+        try {
+          const val = await rawKv.get(key, type);
+          if (val !== null && val !== undefined) {
+            if (env.DB) {
+              const valStr = typeof val === 'string' ? val : JSON.stringify(val);
+              env.DB.prepare('INSERT OR REPLACE INTO kv_store (key, value, updated_at) VALUES (?, ?, ?)')
+                .bind(key, valStr, Date.now()).run().catch(() => {});
+            }
+            return val;
+          }
+        } catch (_) {}
+      }
+      return null;
+    },
+
+    async put(key, value, options = {}) {
+      const valStr = typeof value === 'string' ? value : JSON.stringify(value);
+      let exp = null;
+      if (options && options.expirationTtl) {
+        exp = Math.floor(Date.now() / 1000) + options.expirationTtl;
+      } else if (options && options.expiration) {
+        exp = Math.floor(options.expiration);
+      }
+
+      let d1Success = false;
+      // 1. ذخیره قطعی در پایگاه داده D1 (۱۰۰,۰۰۰ رایت در روز رایگان!)
+      if (env.DB) {
+        try {
+          await env.DB.prepare(
+            'INSERT OR REPLACE INTO kv_store (key, value, expires_at, updated_at) VALUES (?, ?, ?, ?)'
+          ).bind(key, valStr, exp, Date.now()).run();
+          d1Success = true;
+        } catch (dbErr) {
+          console.error(`[Storage] D1 put error for ${key}:`, dbErr);
+        }
+      }
+
+      // 2. آینه‌سازی در حافظه KV (در صورت پر شدن سهمیه KV، خطا سرکوب می‌شود)
+      const rawKv = env.KV_RAW || env.KV;
+      if (rawKv && typeof rawKv.put === 'function') {
+        try {
+          await rawKv.put(key, valStr, options);
+        } catch (kvErr) {
+          if (d1Success) {
+            console.warn(`[Storage] KV quota reached for ${key} (successfully persisted in D1):`, kvErr.message);
+          } else {
+            throw kvErr;
+          }
+        }
+      }
+    },
+
+    async delete(key) {
+      if (env.DB) {
+        try {
+          await env.DB.prepare('DELETE FROM kv_store WHERE key = ?').bind(key).run();
+        } catch (_) {}
+      }
+      const rawKv = env.KV_RAW || env.KV;
+      if (rawKv && typeof rawKv.delete === 'function') {
+        try {
+          await rawKv.delete(key);
+        } catch (_) {}
+      }
+    },
+
+    async list(options = {}) {
+      if (env.DB) {
+        try {
+          const prefix = options.prefix || '';
+          const rows = await env.DB.prepare('SELECT key FROM kv_store WHERE key LIKE ?').bind(prefix + '%').all();
+          if (rows && rows.results) {
+            return { keys: rows.results.map(r => ({ name: r.key })) };
+          }
+        } catch (_) {}
+      }
+      const rawKv = env.KV_RAW || env.KV;
+      if (rawKv && typeof rawKv.list === 'function') {
+        return await rawKv.list(options);
+      }
+      return { keys: [] };
+    }
+  };
+
+  env._unifiedStorage = storage;
+  return storage;
+}
+
+function initEnvStorage(env) {
+  if (!env) return;
+  if (!env.KV_RAW) {
+    env.KV_RAW = env.KV;
+    env.KV = getUnifiedStorage(env);
+  }
+}
+
 const memoryRateLimits = new Map();
 globalThis.pendingBotActions = globalThis.pendingBotActions || [];
 globalThis.cachedUserDialogs = globalThis.cachedUserDialogs || {};
 globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
 
 async function enqueueBotAction(env, action) {
+  initEnvStorage(env);
   globalThis.pendingBotActions = globalThis.pendingBotActions || [];
   if (!action.id) {
     action.id = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
@@ -93,6 +214,7 @@ function checkRateLimit(env, key, maxHits, windowSec) {
 }
 
 async function getAuthUser(request, env) {
+  initEnvStorage(env);
   const authHeader = request.headers.get('Authorization') || '';
   let token = '';
   if (authHeader.startsWith('Bearer ')) {
@@ -117,6 +239,7 @@ async function getAuthUser(request, env) {
  * احراز هویت اختصاصی مدیر ارشد (Admin Master Authentication)
  */
 async function getAdminAuth(request, env) {
+  initEnvStorage(env);
   const authHeader = request.headers.get('Authorization') || '';
   let token = '';
   if (authHeader.startsWith('Bearer ')) {
@@ -188,6 +311,7 @@ let activeUsersCacheTime = 0;
 
 export default {
   async fetch(request, env) {
+    initEnvStorage(env);
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: { ...CORS_HEADERS, ...SECURITY_HEADERS } });
@@ -1149,152 +1273,154 @@ export default {
 
     // ذخیره فونت و تنظیمات پیشرفته استودیو
     if ((url.pathname === '/api/fonts' || url.pathname === '/api/user/settings') && request.method === 'POST') {
-      const auth = await getAuthUser(request, env);
-      if (!auth) return json({ error: 'unauthorized' }, 401);
+      try {
+        const auth = await getAuthUser(request, env);
+        if (!auth) return json({ error: 'unauthorized' }, 401);
 
-      const sub = checkUserSubscription(auth.user);
-      if (!sub.active || auth.user.isSuspended) {
-        return json({ error: 'اشتراک شما به پایان رسیده و پنل در حالت تعلیق است. لطفاً اشتراک خود را تمدید فرمایید.', isSuspended: true }, 403);
-      }
+        const sub = checkUserSubscription(auth.user);
+        if (!sub.active || auth.user.isSuspended) {
+          return json({ error: 'اشتراک شما به پایان رسیده و پنل در حالت تعلیق است. لطفاً اشتراک خود را تمدید فرمایید.', isSuspended: true }, 403);
+        }
 
-      if (!auth.user.telegram) {
-        auth.user.telegram = { enabled: false };
-      }
+        if (!auth.user.telegram) {
+          auth.user.telegram = { enabled: false };
+        }
 
-      const b = await request.json();
-      if (Array.isArray(b.digits) && b.digits.length === 10) {
-        auth.user.telegram.digits = b.digits.map(d => String(d).slice(0, 5));
-      }
-      if (typeof b.colon === 'string') {
-        auth.user.telegram.colon = b.colon.slice(0, 5) || ':';
-      }
-      if (b.prefix !== undefined) {
-        auth.user.telegram.prefix = String(b.prefix).slice(0, 15);
-      }
-      if (b.suffix !== undefined) {
-        auth.user.telegram.suffix = String(b.suffix).slice(0, 15);
-      }
-      if (b.is12h !== undefined) {
-        auth.user.telegram.is12h = !!b.is12h;
-      }
-      if (b.bioEnabled !== undefined) {
-        auth.user.telegram.bioEnabled = !!b.bioEnabled;
-      }
-      if (b.bioTemplate !== undefined) {
-        auth.user.telegram.bioTemplate = String(b.bioTemplate).slice(0, 70);
-      }
-      if (b.sleepEnabled !== undefined) {
-        auth.user.telegram.sleepEnabled = !!b.sleepEnabled;
-      }
-      if (b.sleepStart !== undefined) {
-        auth.user.telegram.sleepStart = parseInt(b.sleepStart, 10) || 0;
-      }
-      if (b.sleepEnd !== undefined) {
-        auth.user.telegram.sleepEnd = parseInt(b.sleepEnd, 10) || 0;
-      }
-      if (b.sleepText !== undefined) {
-        auth.user.telegram.sleepText = String(b.sleepText).slice(0, 30);
-      }
-      if (b.afkEnabled !== undefined) {
-        auth.user.telegram.afkEnabled = !!b.afkEnabled;
-      }
-      if (b.afkMessage !== undefined) {
-        auth.user.telegram.afkMessage = String(b.afkMessage).slice(0, 300);
-      }
-      if (b.afkCooldown !== undefined) {
-        auth.user.telegram.afkCooldown = Math.max(1, parseInt(b.afkCooldown, 10) || 10);
-      }
-      if (b.mutedUsers !== undefined) {
-        let rawList = [];
-        if (Array.isArray(b.mutedUsers)) {
-          rawList = b.mutedUsers;
-        } else if (typeof b.mutedUsers === 'string') {
-          rawList = b.mutedUsers.split(/[,،;\s]+/);
+        const b = await request.json().catch(() => ({}));
+        if (Array.isArray(b.digits) && b.digits.length === 10) {
+          auth.user.telegram.digits = b.digits.map(d => String(d).slice(0, 5));
         }
-        auth.user.telegram.mutedUsers = rawList.map(x => {
-          let s = String(x).trim();
-          s = s.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-          s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-          return s;
-        }).filter(Boolean);
-      }
-      if (b.muteEnabled !== undefined) {
-        auth.user.telegram.muteEnabled = !!b.muteEnabled;
-      }
-      if (Array.isArray(auth.user.telegram.mutedUsers) && auth.user.telegram.mutedUsers.length > 0) {
-        if (b.muteEnabled !== false) {
-          auth.user.telegram.muteEnabled = true;
+        if (typeof b.colon === 'string') {
+          auth.user.telegram.colon = b.colon.slice(0, 5) || ':';
         }
-      }
-      if (b.antiTtlEnabled !== undefined) {
-        auth.user.telegram.antiTtlEnabled = !!b.antiTtlEnabled;
-        auth.user.antiTtlEnabled = !!b.antiTtlEnabled;
-      }
-      // 👻 تنظیمات حالت شبح (Ghost Mode / Anti-Read-Receipt)
-      if (b.ghostMode !== undefined) {
-        auth.user.telegram.ghostMode = !!b.ghostMode;
-      }
-      if (b.ghostExcludeList !== undefined) {
-        let rawExclude = [];
-        if (Array.isArray(b.ghostExcludeList)) {
-          rawExclude = b.ghostExcludeList;
-        } else if (typeof b.ghostExcludeList === 'string') {
-          rawExclude = b.ghostExcludeList.split(/[,،;\s]+/);
+        if (b.prefix !== undefined) {
+          auth.user.telegram.prefix = String(b.prefix).slice(0, 15);
         }
-        auth.user.telegram.ghostExcludeList = rawExclude.map(x => String(x).trim()).filter(Boolean).slice(0, 50);
-      }
-      // 🤖 تنظیمات پاسخ هوشمند مبتنی بر AI (Smart AI Auto-Reply)
-      if (b.aiReplyEnabled !== undefined) {
-        auth.user.telegram.aiReplyEnabled = !!b.aiReplyEnabled;
-      }
-      if (b.aiProvider !== undefined) {
-        const allowed = ['gemini', 'openai', 'custom'];
-        auth.user.telegram.aiProvider = allowed.includes(b.aiProvider) ? b.aiProvider : 'gemini';
-      }
-      if (b.aiApiKey !== undefined) {
-        auth.user.telegram.aiApiKey = String(b.aiApiKey).trim().slice(0, 200);
-        if (auth.user.telegram.aiApiKey === '') {
-          auth.user.telegram.aiReplyEnabled = false;
+        if (b.suffix !== undefined) {
+          auth.user.telegram.suffix = String(b.suffix).slice(0, 15);
         }
-      }
-      if (b.aiSystemPrompt !== undefined) {
-        auth.user.telegram.aiSystemPrompt = String(b.aiSystemPrompt).slice(0, 500);
-      }
-      if (b.aiContext !== undefined) {
-        auth.user.telegram.aiContext = String(b.aiContext).slice(0, 500);
-      }
-      if (b.aiMaxReplies !== undefined) {
-        auth.user.telegram.aiMaxReplies = Math.max(1, Math.min(20, parseInt(b.aiMaxReplies, 10) || 3));
-      }
-      if (b.aiCooldown !== undefined) {
-        const pCd = parseInt(b.aiCooldown, 10);
-        auth.user.telegram.aiCooldown = isNaN(pCd) ? 5 : Math.max(0, pCd);
-      }
-      if (b.bot !== undefined && typeof b.bot === 'object' && b.bot !== null) {
-        if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
-        const rawToken = b.bot.token !== undefined ? String(b.bot.token).trim() : null;
-        if (rawToken && /^\d+:[A-Za-z0-9_-]{20,}$/.test(rawToken)) {
-          auth.user.telegram.bot.token = rawToken;
+        if (b.is12h !== undefined) {
+          auth.user.telegram.is12h = !!b.is12h;
         }
-        if (b.bot.antiDeleteEnabled !== undefined) {
-          auth.user.telegram.bot.antiDeleteEnabled = !!b.bot.antiDeleteEnabled;
+        if (b.bioEnabled !== undefined) {
+          auth.user.telegram.bioEnabled = !!b.bioEnabled;
         }
-        if (b.bot.antiEditEnabled !== undefined) {
-          auth.user.telegram.bot.antiEditEnabled = !!b.bot.antiEditEnabled;
+        if (b.bioTemplate !== undefined) {
+          auth.user.telegram.bioTemplate = String(b.bioTemplate).slice(0, 70);
         }
-        if (b.bot.forwardTtlToBot !== undefined) {
-          auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
-          auth.user.telegram.antiTtlEnabled = !!b.bot.forwardTtlToBot;
-          auth.user.antiTtlEnabled = !!b.bot.forwardTtlToBot;
+        if (b.sleepEnabled !== undefined) {
+          auth.user.telegram.sleepEnabled = !!b.sleepEnabled;
         }
-      }
+        if (b.sleepStart !== undefined) {
+          auth.user.telegram.sleepStart = parseInt(b.sleepStart, 10) || 0;
+        }
+        if (b.sleepEnd !== undefined) {
+          auth.user.telegram.sleepEnd = parseInt(b.sleepEnd, 10) || 0;
+        }
+        if (b.sleepText !== undefined) {
+          auth.user.telegram.sleepText = String(b.sleepText).slice(0, 30);
+        }
+        if (b.afkEnabled !== undefined) {
+          auth.user.telegram.afkEnabled = !!b.afkEnabled;
+        }
+        if (b.afkMessage !== undefined) {
+          auth.user.telegram.afkMessage = String(b.afkMessage).slice(0, 300);
+        }
+        if (b.afkCooldown !== undefined) {
+          auth.user.telegram.afkCooldown = Math.max(1, parseInt(b.afkCooldown, 10) || 10);
+        }
+        if (b.mutedUsers !== undefined) {
+          let rawList = [];
+          if (Array.isArray(b.mutedUsers)) {
+            rawList = b.mutedUsers;
+          } else if (typeof b.mutedUsers === 'string') {
+            rawList = b.mutedUsers.split(/[,،;\s]+/);
+          }
+          auth.user.telegram.mutedUsers = rawList.map(x => {
+            let s = String(x).trim();
+            s = s.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+            s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+            return s;
+          }).filter(Boolean);
+        }
+        if (b.muteEnabled !== undefined) {
+          auth.user.telegram.muteEnabled = !!b.muteEnabled;
+        }
+        if (Array.isArray(auth.user.telegram.mutedUsers) && auth.user.telegram.mutedUsers.length > 0) {
+          if (b.muteEnabled !== false) {
+            auth.user.telegram.muteEnabled = true;
+          }
+        }
+        if (b.antiTtlEnabled !== undefined) {
+          auth.user.telegram.antiTtlEnabled = !!b.antiTtlEnabled;
+          auth.user.antiTtlEnabled = !!b.antiTtlEnabled;
+        }
+        // 👻 تنظیمات حالت شبح (Ghost Mode / Anti-Read-Receipt)
+        if (b.ghostMode !== undefined) {
+          auth.user.telegram.ghostMode = !!b.ghostMode;
+        }
+        if (b.ghostExcludeList !== undefined) {
+          let rawExclude = [];
+          if (Array.isArray(b.ghostExcludeList)) {
+            rawExclude = b.ghostExcludeList;
+          } else if (typeof b.ghostExcludeList === 'string') {
+            rawExclude = b.ghostExcludeList.split(/[,،;\s]+/);
+          }
+          auth.user.telegram.ghostExcludeList = rawExclude.map(x => String(x).trim()).filter(Boolean).slice(0, 50);
+        }
+        // 🤖 تنظیمات پاسخ هوشمند مبتنی بر AI (Smart AI Auto-Reply)
+        if (b.aiReplyEnabled !== undefined) {
+          auth.user.telegram.aiReplyEnabled = !!b.aiReplyEnabled;
+        }
+        if (b.aiProvider !== undefined) {
+          const allowed = ['gemini', 'openai', 'custom'];
+          auth.user.telegram.aiProvider = allowed.includes(b.aiProvider) ? b.aiProvider : 'gemini';
+        }
+        if (b.aiApiKey !== undefined) {
+          auth.user.telegram.aiApiKey = String(b.aiApiKey).trim().slice(0, 200);
+          if (auth.user.telegram.aiApiKey === '') {
+            auth.user.telegram.aiReplyEnabled = false;
+          }
+        }
+        if (b.aiSystemPrompt !== undefined) {
+          auth.user.telegram.aiSystemPrompt = String(b.aiSystemPrompt).slice(0, 500);
+        }
+        if (b.aiContext !== undefined) {
+          auth.user.telegram.aiContext = String(b.aiContext).slice(0, 500);
+        }
+        if (b.aiMaxReplies !== undefined) {
+          auth.user.telegram.aiMaxReplies = Math.max(1, Math.min(20, parseInt(b.aiMaxReplies, 10) || 3));
+        }
+        if (b.aiCooldown !== undefined) {
+          const pCd = parseInt(b.aiCooldown, 10);
+          auth.user.telegram.aiCooldown = isNaN(pCd) ? 5 : Math.max(0, pCd);
+        }
+        if (b.bot !== undefined && typeof b.bot === 'object' && b.bot !== null) {
+          if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
+          const rawToken = b.bot.token !== undefined ? String(b.bot.token).trim() : null;
+          if (rawToken && /^\d+:[A-Za-z0-9_-]{20,}$/.test(rawToken)) {
+            auth.user.telegram.bot.token = rawToken;
+          }
+          if (b.bot.antiDeleteEnabled !== undefined) {
+            auth.user.telegram.bot.antiDeleteEnabled = !!b.bot.antiDeleteEnabled;
+          }
+          if (b.bot.antiEditEnabled !== undefined) {
+            auth.user.telegram.bot.antiEditEnabled = !!b.bot.antiEditEnabled;
+          }
+          if (b.bot.forwardTtlToBot !== undefined) {
+            auth.user.telegram.bot.forwardTtlToBot = !!b.bot.forwardTtlToBot;
+            auth.user.telegram.antiTtlEnabled = !!b.bot.forwardTtlToBot;
+            auth.user.antiTtlEnabled = !!b.bot.forwardTtlToBot;
+          }
+        }
 
-      await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
-      if (auth.user.telegram?.sessionEncrypted) {
-        await updateSingleUserProfile(auth.user, env, true);
+        // ذخیره آنی و قطعی در KV
+        await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+        return json({ ok: true, status: auth.user.status || { error: null } });
+      } catch (err) {
+        console.error('Error saving settings in /api/fonts:', err);
+        return json({ error: err.message || 'خطا در ذخیره‌سازی' }, 500);
       }
-      const freshUser = await env.KV.get('user:' + auth.username, 'json');
-      return json({ ok: true, status: freshUser?.status });
     }
 
     // قطع اتصال تلگرام
@@ -1494,12 +1620,16 @@ export default {
           const u = await env.KV.get('user:' + username, 'json');
           if (u && u.telegram) {
             const cleanId = String(tgUserId).trim();
-            u.telegram.userId = cleanId;
-            if (u.telegram.bot && !u.telegram.bot.ownerId) {
-              u.telegram.bot.ownerId = cleanId;
-              u.telegram.bot.chatId = cleanId;
+            const needsUpdate = u.telegram.userId !== cleanId ||
+              (u.telegram.bot && (!u.telegram.bot.ownerId || !u.telegram.bot.chatId));
+            if (needsUpdate) {
+              u.telegram.userId = cleanId;
+              if (u.telegram.bot) {
+                u.telegram.bot.ownerId = cleanId;
+                u.telegram.bot.chatId = cleanId;
+              }
+              await env.KV.put('user:' + username, JSON.stringify(u));
             }
-            await env.KV.put('user:' + username, JSON.stringify(u));
           }
         }
         return json({ ok: true });
@@ -1581,11 +1711,8 @@ export default {
           globalThis.cachedUserDialogs = globalThis.cachedUserDialogs || {};
           globalThis.cachedUserDialogs[username] = dialogs;
           globalThis.cachedUserDialogs[lowerName] = dialogs;
-          // ذخیره در KV با انقضای ۳۰ دقیقه‌ای جهت دسترسی پایدار
-          await env.KV.put('user_dialogs:' + lowerName, JSON.stringify(dialogs), { expirationTtl: 1800 });
-          if (username !== lowerName) {
-            await env.KV.put('user_dialogs:' + username, JSON.stringify(dialogs), { expirationTtl: 1800 });
-          }
+          // ذخیره در دیتابیس با انقضای ۲ ساعته جهت دسترسی پایدار
+          await env.KV.put('user_dialogs:' + lowerName, JSON.stringify(dialogs), { expirationTtl: 7200 });
         }
         return json({ ok: true });
       } catch (err) {
@@ -3474,6 +3601,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
   // ⏱️ چرخه کرون خودکار (پشتیبان هوشمند در صورت قطعی رانر خارجی)
   // ==========================================
   async scheduled(event, env, ctx) {
+    initEnvStorage(env);
     ctx.waitUntil((async () => {
       try {
         // ۱. بررسی زنده بودن رانر گیت‌هاب: اگر رانر در ۳ دقیقه اخیر فعال بوده یا کش فعال است، پردازش کلادفلر متوقف می‌شود
@@ -3535,85 +3663,25 @@ async function updateAllUsersOptimized(env) {
   }
 }
 
-/**
- * ارسال مستقیم و فوق‌سبک دستور تغییر پروفایل بدون بارگذاری help.GetConfig و بدون لوپ پس‌زمینه
- * زمان CPU: کمتر از ۱ تا ۲ میلی‌ثانیه برای هر کاربر
- */
-async function updateProfileDirect(sessionStr, apiId, apiHash, lastName, about = null) {
-  const client = new TelegramClient(
-    new StringSession(sessionStr),
-    apiId,
-    apiHash,
-    {
-      connectionRetries: 1,
-      timeout: 8000,
-      useWSS: false,
-      autoReconnect: false,
-      floodSleepThreshold: 0,
-    }
-  );
-  await client._initSession();
-  const sender = new MTProtoSender(client.session.getAuthKey(), {
-    logger: client._log,
-    dcId: client.session.dcId || 4,
-    retries: 1,
-    connectTimeout: 8000,
-    securityChecks: false,
-  });
-  const connection = new client._connection({
-    ip: client.session.serverAddress,
-    port: 80,
-    dcId: client.session.dcId,
-    loggers: client._log,
-    socket: client.networkSocket,
-  });
-  await sender.connect(connection, false);
-  try {
-    const updateParams = { lastName };
-    if (about) updateParams.about = about;
-
-    const res = await sender.send(new Api.InvokeWithLayer({
-      layer: LAYER,
-      query: new Api.InitConnection({
-        apiId,
-        deviceModel: 'Arizo Cloud Server',
-        systemVersion: 'Cloudflare Edge',
-        appVersion: '2.0.0',
-        systemLangCode: 'en',
-        langCode: 'en',
-        langPack: '',
-        query: new Api.account.UpdateProfile(updateParams),
-      }),
-    }));
-    return res;
-  } finally {
-    try {
-      await sender.disconnect();
-    } catch (_) {}
-  }
-}
 
 /**
- * به‌روزرسانی فوق‌سریع لست‌نیم و بیوگرافی هوشمند با حداقل مصرف پردازنده
+ * به‌روزرسانی وضعیت پروفایل و استایل ساعت در پایگاه داده (همگام با رانر گیت‌هاب)
  */
 async function updateSingleUserProfile(user, env, forcePersist = false) {
-  const encSession = user.telegram?.sessionEncrypted;
-  const sessionStr = await decryptSession(encSession, env.API_HASH);
-  if (!sessionStr) return;
-
+  initEnvStorage(env);
   const now = new Date();
-  let exactTimeStr = getStylizedTime(user.telegram.digits, user.telegram.colon, now, {
-    prefix: user.telegram.prefix,
-    suffix: user.telegram.suffix,
-    is12h: user.telegram.is12h
+  let exactTimeStr = getStylizedTime(user.telegram?.digits, user.telegram?.colon, now, {
+    prefix: user.telegram?.prefix,
+    suffix: user.telegram?.suffix,
+    is12h: user.telegram?.is12h
   });
 
-  if (user.telegram.sleepEnabled && isSleepTime(user.telegram.sleepStart, user.telegram.sleepEnd, now)) {
+  if (user.telegram?.sleepEnabled && isSleepTime(user.telegram.sleepStart, user.telegram.sleepEnd, now)) {
     exactTimeStr = user.telegram.sleepText || '😴 Sleep';
   }
 
   let exactBioStr = null;
-  if (user.telegram.bioEnabled && user.telegram.bioTemplate) {
+  if (user.telegram?.bioEnabled && user.telegram?.bioTemplate) {
     exactBioStr = renderDynamicBio(user.telegram.bioTemplate, {
       digits: user.telegram.digits,
       colon: user.telegram.colon,
@@ -3622,55 +3690,13 @@ async function updateSingleUserProfile(user, env, forcePersist = false) {
     });
   }
 
-  if (user.status?.lastTime === exactTimeStr && !user.status?.error && !forcePersist) {
-    return; // در این دقیقه قبلاً با موفقیت آپدیت شده است
-  }
+  user.status = user.status || {};
+  user.status.lastUpdate = Date.now();
+  user.status.lastTime = exactTimeStr;
+  user.status.lastBio = exactBioStr;
+  user.status.error = null;
 
-  try {
-    await updateProfileDirect(
-      sessionStr,
-      parseInt(env.API_ID),
-      env.API_HASH,
-      exactTimeStr,
-      exactBioStr
-    );
-
-    const hadError = !!user.status?.error;
-    user.status = {
-      lastUpdate: Date.now(),
-      lastTime: exactTimeStr,
-      lastBio: exactBioStr,
-      error: null,
-    };
-
-    // پایدارسازی هوشمند در KV: فقط زمانی که خطای قبلی برطرف شده یا اجباری باشد می‌نویسیم
-    // این کار مصرف KV Writes را از ۱۴۴۰ بار در روز به کمتر از ۵ بار می‌رساند!
-    if (hadError || forcePersist) {
-      await env.KV.put('user:' + user.username, JSON.stringify(user));
-    }
-  } catch (err) {
-    console.error(`Update failed for ${user.username}:`, err.message);
-
-    const isFatal = err.errorMessage === 'AUTH_KEY_UNREGISTERED' ||
-      err.errorMessage === 'USER_DEACTIVATED' ||
-      err.errorMessage === 'SESSION_REVOKED';
-
-    if (isFatal) {
-      user.telegram.enabled = false;
-    }
-
-    let friendlyError = err.message || 'خطای اتصال به سرور تلگرام';
-    if (isFatal) {
-      friendlyError = 'نشست تلگرام شما منقضی یا باطل شده است. لطفاً مجدداً وارد شوید.';
-    } else if (err.errorMessage?.startsWith('FLOOD_WAIT_')) {
-      friendlyError = 'محدودیت موقت تلگرام (Flood Wait). سیستم خودکار بازیابی خواهد شد.';
-    }
-
-    user.status = {
-      lastUpdate: Date.now(),
-      lastTime: user.status?.lastTime || null,
-      error: friendlyError,
-    };
+  if (forcePersist) {
     await env.KV.put('user:' + user.username, JSON.stringify(user));
   }
 }
