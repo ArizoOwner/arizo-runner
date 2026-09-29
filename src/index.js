@@ -1436,6 +1436,8 @@ export default {
 
         // ذخیره آنی و قطعی در KV
         await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+        activeUsersCache = null;
+        activeUsersCacheTime = 0;
         return json({ ok: true, status: auth.user.status || { error: null } });
       } catch (err) {
         console.error('Error saving settings in /api/fonts:', err);
@@ -3667,6 +3669,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 await env.DB.prepare('UPDATE users SET data = ? WHERE username = ?')
                   .bind(JSON.stringify(u), targetUsername.toLowerCase()).run().catch(() => {});
               }
+              activeUsersCache = null;
+              activeUsersCacheTime = 0;
 
               await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
                 method: 'POST',
