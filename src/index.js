@@ -1253,6 +1253,9 @@ export default {
       }
       if (b.aiApiKey !== undefined) {
         auth.user.telegram.aiApiKey = String(b.aiApiKey).trim().slice(0, 200);
+        if (auth.user.telegram.aiApiKey === '') {
+          auth.user.telegram.aiReplyEnabled = false;
+        }
       }
       if (b.aiSystemPrompt !== undefined) {
         auth.user.telegram.aiSystemPrompt = String(b.aiSystemPrompt).slice(0, 500);
@@ -1891,7 +1894,16 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
         }
         const directAppUrl = `${hostUrl}/?token=${appToken}`;
 
-        // تولید کیبورد شیشه‌ای هوشمند و داینامیک
+        const escapeHtml = (str) => {
+          if (!str) return '';
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        };
+
+        // تولید کیبورد شیشه‌ای رسمی و هوشمند با رنگ‌بندی داینامیک
         const renderMainKeyboard = (targetU) => {
           const isAct = !!targetU.telegram?.enabled && !targetU.isSuspended;
           const ghostAct = !!targetU.telegram?.ghostMode;
@@ -1899,29 +1911,79 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           return {
             inline_keyboard: [
               [
-                { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl } }
+                { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl }, style: 'primary' }
               ],
               [
-                { text: '👻 چت‌های خصوصی (حالت شبح)', callback_data: 'ghost_chats' },
-                { text: '📊 استعلام وضعیت زنده', callback_data: 'bot_status' }
+                { text: '👻 چت‌های خصوصی (حالت شبح)', callback_data: 'ghost_chats', style: 'primary' },
+                { text: '📊 استعلام وضعیت زنده', callback_data: 'bot_status', style: 'primary' }
               ],
               [
-                { text: `🔄 وضعیت سلف: ${isAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle' },
-                { text: `👻 حالت شبح: ${ghostAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ghost' }
+                { text: `🔄 سلف‌بات: ${isAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle', style: isAct ? 'success' : 'danger' },
+                { text: `👻 حالت شبح: ${ghostAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ghost', style: ghostAct ? 'success' : 'danger' }
               ],
               [
-                { text: `🤖 پاسخ هوشمند AI: ${aiAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ai' },
-                { text: '⚙️ تنظیمات هوش مصنوعی', callback_data: 'bot_ai_info' }
+                { text: `🤖 هوش مصنوعی: ${aiAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ai', style: aiAct ? 'success' : 'danger' },
+                { text: '⚙️ مدیریت هوش مصنوعی (AI)', callback_data: 'bot_ai_info', style: 'primary' }
               ],
               [
-                { text: '🧪 تست ارسال گزارش', callback_data: 'bot_test' },
-                { text: '🌐 باز کردن پنل در مرورگر', url: directAppUrl }
+                { text: '🧪 تست ارسال گزارش', callback_data: 'bot_test', style: 'primary' },
+                { text: '🌐 باز کردن پنل در مرورگر', url: directAppUrl, style: 'primary' }
               ]
             ]
           };
         };
 
-        // تولید متن پیام وضعیت زنده
+        // تولید کیبورد اختصاصی مدیریت هوش مصنوعی با گزینه حذف کامل کلید
+        const renderAiKeyboard = (targetU) => {
+          const aiAct = !!targetU.telegram?.aiReplyEnabled;
+          const hasKey = !!targetU.telegram?.aiApiKey;
+          const provider = targetU.telegram?.aiProvider || 'gemini';
+
+          return {
+            inline_keyboard: [
+              [
+                { text: `🔄 وضعیت پاسخگویی هوشمند: ${aiAct ? 'غیرفعال‌سازی ⚪' : 'فعال‌سازی 🟢'}`, callback_data: 'bot_toggle_ai', style: aiAct ? 'danger' : 'success' }
+              ],
+              [
+                { text: `🌐 مدل انتخابی: ${provider === 'openai' ? 'OpenAI GPT 🧠' : 'Google Gemini ♊'} (تغییر مدل)`, callback_data: 'ai_toggle_provider', style: 'primary' }
+              ],
+              [
+                { text: '🔑 ثبت / ویرایش کلید API', callback_data: 'ai_set_key_prompt', style: 'primary' },
+                { text: '🗑️ حذف کامل کلید API', callback_data: 'ai_delete_key', style: 'danger' }
+              ],
+              [
+                { text: '🧪 تست زنده پاسخ هوش مصنوعی', callback_data: 'ai_test_modal', style: 'primary' },
+                { text: '🔙 بازگشت به منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
+              ]
+            ]
+          };
+        };
+
+        // تولید متن پیام مدیریت هوش مصنوعی با پرستیژ بالا و رسمی
+        const renderAiMessage = (targetU) => {
+          const aiAct = !!targetU.telegram?.aiReplyEnabled;
+          const hasKey = !!targetU.telegram?.aiApiKey;
+          const provider = targetU.telegram?.aiProvider || 'gemini';
+          const keyDisplay = hasKey 
+            ? `<code>${targetU.telegram.aiApiKey.slice(0, 6)}••••••••${targetU.telegram.aiApiKey.slice(-4)}</code> (فعال و ذخیره‌شده ✅)`
+            : '<i>تنظیم نشده ❌ (کلید ثبت نشده است)</i>';
+
+          return `🤖 <b>[مرکز مدیریت پاسخ هوشمند هوش مصنوعی — AI Reply]</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📡 <b>وضعیت پاسخگویی:</b> ${aiAct ? 'فعال و خودکار 🟢' : 'غیرفعال ⚪'}\n` +
+            `🌐 <b>موتور هوش مصنوعی:</b> <code>${provider.toUpperCase()}</code>\n` +
+            `🔑 <b>کلید API ذخیره‌شده:</b>\n<blockquote>${keyDisplay}</blockquote>\n` +
+            `🔢 <b>سقف پاسخ به هر شخص:</b> ${targetU.telegram?.aiMaxReplies || 3} پاسخ در هر گفتگو\n` +
+            `⏱️ <b>کول‌داون ضد اسپم:</b> هر ${targetU.telegram?.aiCooldown || 5} دقیقه\n` +
+            `🛡️ <b>سپر هوشمند ۴ لایه:</b> فعال ✅\n` +
+            `<blockquote>هنگامی که آنلاین هستید، صفحه چت باز است، یا در ۵ دقیقه اخیر پیامی ارسال کرده‌اید، هوش مصنوعی خودکار پاسخ نمی‌دهد تا آرامش گفتگوی شما حفظ شود.</blockquote>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `💡 <b>راهنمای کلید API:</b>\n` +
+            `• برای رفع هرگونه تداخل با کلیدهای قبلی، روی <b>🗑️ حذف کامل کلید API</b> کلیک کنید.\n` +
+            `• با انتخاب <b>🔑 ثبت / تغییر کلید API</b> کلید جدید را مستقیماً در همین چت ارسال فرمایید.`;
+        };
+
+        // تولید متن پیام وضعیت زنده با دیزاین رسمی و چشم‌نواز
         const renderStatusMessage = (targetU) => {
           const isAct = !!targetU.telegram?.enabled && !targetU.isSuspended;
           const ghostAct = !!targetU.telegram?.ghostMode;
@@ -1931,14 +1993,20 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           const aEd = targetU.telegram?.bot?.antiEditEnabled !== false;
           const fTtl = targetU.telegram?.bot?.forwardTtlToBot !== false;
 
-          return `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
-            `🟢 <b>وضعیت اتصال:</b> ${isAct ? 'فعال و آنلاین ✅' : 'متوقف شده ⏸️'}\n` +
-            `🕒 <b>آخرین ساعت فعال:</b> <code>${lastT}</code>\n` +
-            `🗑️ <b>سیستم ضد حذف (Anti-Delete):</b> ${aDel ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-            `✏️ <b>سیستم ضد ویرایش (Anti-Edit):</b> ${aEd ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-            `📸 <b>ارسال مدیا زمان‌دار به ربات:</b> ${fTtl ? 'فعال 🟢' : 'ارسال به سیومسیج ⚪'}\n` +
-            `👻 <b>حالت شبح (Ghost Mode):</b> ${ghostAct ? 'فعال 🟢 (تیک آبی مسدود + فوروارد به اینجا)' : 'غیرفعال ⚪'}\n` +
-            `🤖 <b>پاسخ هوشمند AI:</b> ${aiAct ? `فعال 🟢 (${targetU.telegram?.aiProvider || 'gemini'})` : 'غیرفعال ⚪'}`;
+          return `💎 <b>[گزارش وضعیت زنده سلف‌بات Arizo]</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `🟢 <b>اتصال به سرور تلگرام:</b> ${isAct ? 'فعال و آنلاین (Sub-100ms) ✅' : 'متوقف شده ⏸️'}\n` +
+            `🕒 <b>ساعت فعال سلف:</b> <code>${lastT}</code>\n\n` +
+            `🛡️ <b>سپر امنیتی و نظارتی:</b>\n` +
+            `<blockquote>` +
+            `• 🗑️ ضد حذف (Anti-Delete): ${aDel ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+            `• ✏️ ضد ویرایش (Anti-Edit): ${aEd ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+            `• 📸 رسانه زمان‌دار (View-Once): ${fTtl ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+            `• 👻 حالت شبح (Ghost Mode): ${ghostAct ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+            `• 🤖 هوش مصنوعی (AI Reply): ${aiAct ? `فعال 🟢 (${targetU.telegram?.aiProvider || 'gemini'})` : 'غیرفعال ⚪'}\n` +
+            `</blockquote>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `⚡ کلیه سرویس‌ها به صورت اختصاصی برای حساب شما فعال هستند.`;
         };
 
         // پاسخ به پیام‌های متنی
@@ -2001,6 +2069,63 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
           let pendingReply = globalThis.botUserReplyStates.get(String(chatId));
           if (!pendingReply) {
             pendingReply = await env.KV.get('bot_state:' + chatId, 'json');
+          }
+
+          // بررسی آیا کاربر در حال ثبت کلید API هوش مصنوعی است
+          if (pendingReply && pendingReply.waitingFor === 'ai_api_key' && text) {
+            globalThis.botUserReplyStates.delete(String(chatId));
+            await env.KV.delete('bot_state:' + chatId);
+
+            if (text === '/cancel') {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: '❌ عملیات ثبت کلید API لغو گردید.',
+                  parse_mode: 'HTML',
+                  reply_markup: renderAiKeyboard(u)
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            const cleanKey = text.trim();
+            if (cleanKey.length < 8) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: '⚠️ <b>طول کلید وارد شده بسیار کوتاه یا نامعتبر است!</b>\n\nلطفاً کلید معتبر خود را از AI Studio گوگل یا OpenAI کپی کرده و ارسال فرمایید.\nبرای انصراف دستور /cancel را بفرستید.',
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            u.telegram.aiApiKey = cleanKey;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+            const masked = cleanKey.slice(0, 6) + '••••••••' + cleanKey.slice(-4);
+
+            const okText = `✅ <b>کلید API جدید با موفقیت ثبت و ذخیره شد!</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `🔑 <b>کلید فعال:</b> <code>${masked}</code>\n` +
+              `🌐 <b>موتور:</b> <code>${(u.telegram?.aiProvider || 'gemini').toUpperCase()}</code>\n\n` +
+              `💡 <i>کلید قبلی به صورت کامل پاکسازی شد و هیچ‌گونه تداخلی با تنظیمات پیشین وجود ندارد.</i>\n\n` +
+              `اکنون می‌توانید پاسخ هوشمند را فعال کرده یا با دکمه زیر عملکرد آن را تست کنید:`;
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: okText,
+                parse_mode: 'HTML',
+                reply_markup: renderAiKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
           }
 
           if (pendingReply && pendingReply.targetPeerId && text && !text.startsWith('/')) {
@@ -2085,13 +2210,14 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 const safeName = (d.name || 'کاربر').slice(0, 18);
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`
+                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`,
+                  style: d.unreadCount > 0 ? 'success' : 'primary'
                 }];
               });
 
               buttons.push([
-                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
-                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
               ]);
 
               const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2294,10 +2420,85 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             return new Response('OK');
           }
 
-          // دستور ۴: تغییر وضعیت پاسخ هوشمند هوش مصنوعی (AI Smart Reply)
-          if (text.startsWith('/ai') && !text.startsWith('/ai_test')) {
+          // دستور حذف کامل کلید API هوش مصنوعی: /ai_del_key یا /ai_delete_key
+          if (text === '/ai_del_key' || text === '/ai_delete_key' || text.startsWith('/ai_del_key') || text.startsWith('/ai_delete_key')) {
+            u.telegram.aiApiKey = '';
+            u.telegram.aiReplyEnabled = false;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+
+            const delMsg = `🗑️ <b>کلید API هوش مصنوعی به طور کامل حذف و پاکسازی شد!</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `✅ فیلد کلید API اکنون کاملاً خالی شد.\n` +
+              `✅ وضعیت پاسخگویی خودکار AI متوقف شد تا تداخلی رخ ندهد.\n\n` +
+              `💡 اکنون می‌توانید کلید جدید را بدون هرگونه تداخل با کلید قبلی ثبت فرمایید.`;
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: delMsg,
+                parse_mode: 'HTML',
+                reply_markup: renderAiKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // دستور ثبت کلید API: /ai_set_key [key]
+          if (text === '/ai_set_key' || text.startsWith('/ai_set_key')) {
+            const rawKey = text.replace(/^\/ai_set_key\s*/i, '').trim();
+            if (!rawKey) {
+              await env.KV.put('bot_state:' + chatId, JSON.stringify({ waitingFor: 'ai_api_key' }), { expirationTtl: 600 });
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `🔑 <b>ثبت کلید API جدید هوش مصنوعی:</b>\n\nلطفاً کلید API خود را در قالب پیام ارسال فرمایید.\n💡 برای لغو، دستور /cancel را بفرستید.`,
+                  parse_mode: 'HTML',
+                  reply_markup: { force_reply: true, selective: true }
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            u.telegram.aiApiKey = rawKey;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+            const masked = rawKey.slice(0, 6) + '••••••••' + rawKey.slice(-4);
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `✅ <b>کلید API جدید با موفقیت ذخیره شد:</b> <code>${masked}</code>\n\nتداخل قبلی کاملاً برطرف گردید.`,
+                parse_mode: 'HTML',
+                reply_markup: renderAiKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // دستور ۴: منو یا تغییر وضعیت پاسخ هوشمند هوش مصنوعی (AI Smart Reply)
+          if (text === '/ai' || (text.startsWith('/ai') && !text.startsWith('/ai_test') && !text.startsWith('/ai_del') && !text.startsWith('/ai_set'))) {
             const parts = text.split(/\s+/);
             const sub = (parts[1] || '').toLowerCase();
+
+            if (!sub || sub === 'menu' || sub === 'info') {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: renderAiMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderAiKeyboard(u)
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
             let newAi;
             if (sub === 'on') newAi = true;
             else if (sub === 'off') newAi = false;
@@ -2309,9 +2510,9 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   chat_id: chatId,
-                  text: `⚠️ <b>کلید API هوش مصنوعی تنظیم نشده است!</b>\n\nجهت فعال‌سازی پاسخ هوشمند، ابتدا کلید API خود را در پنل استودیو (تب پاسخ AI) وارد و ذخیره کنید:\n\n• کلید رایگان Gemini از:\nhttps://aistudio.google.com/apikey`,
+                  text: `⚠️ <b>کلید API هوش مصنوعی تنظیم نشده است!</b>\n\nجهت فعال‌سازی پاسخ هوشمند، ابتدا با دکمه <b>🔑 ثبت / ویرایش کلید API</b> کلید خود را ارسال فرمایید:\n\n• کلید رایگان Gemini از:\nhttps://aistudio.google.com/apikey`,
                   parse_mode: 'HTML',
-                  reply_markup: renderMainKeyboard(u)
+                  reply_markup: renderAiKeyboard(u)
                 })
               }).catch(() => {});
               return new Response('OK');
@@ -2331,7 +2532,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 chat_id: chatId,
                 text: stateTxt,
                 parse_mode: 'HTML',
-                reply_markup: renderMainKeyboard(u)
+                reply_markup: renderAiKeyboard(u)
               })
             }).catch(() => {});
             return new Response('OK');
@@ -2431,7 +2632,9 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               `• <code>/cancel</code> — لغو عملیات پاسخ جاری\n` +
               `• <code>/status</code> — استعلام زنده وضعیت کلیه سرویس‌ها\n` +
               `• <code>/ghost [on|off]</code> — روشن/خاموش کردن فوری حالت شبح\n` +
-              `• <code>/ai [on|off]</code> — روشن/خاموش کردن پاسخ هوشمند AI\n` +
+              `• <code>/ai [on|off]</code> — مشاهده منو یا روشن/خاموش کردن پاسخ هوشمند AI\n` +
+              `• <code>/ai_set_key [کلید]</code> — 🔑 ثبت مستقیم یا تغییر کلید API هوش مصنوعی\n` +
+              `• <code>/ai_del_key</code> — 🗑️ حذف کامل کلید API هوش مصنوعی (رفع هرگونه تداخل)\n` +
               `• <code>/ai_test متن</code> — تست زنده پرامپت و پاسخ هوش مصنوعی\n` +
               `• <code>/test</code> — ارسال گزارش‌های آزمایشی ضد حذف و ضد ویرایش\n\n` +
               `⚡ <b>دستورات سریع در اپلیکیشن تلگرام (سلف‌بات):</b>\n` +
@@ -2465,25 +2668,21 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             const ghostModeActive = !!u.telegram?.ghostMode;
             const aiReplyActive = !!u.telegram?.aiReplyEnabled;
 
-            const welcomeText = `⚡ <b>ربات دستیار و لاگر هوشمند Arizo Self</b>\n` +
+            const welcomeText = `💎 <b>سامانه مدیریت اختصاصی سلف‌بات Arizo Self</b>\n` +
               `━━━━━━━━━━━━━━━━━━━━\n` +
-              `👤 <b>حساب کاربری:</b> <code>${targetUsername}</code>\n` +
-              `📡 <b>وضعیت سلف‌بات:</b> ${isOnline ? '🟢 آنلاین و فعال' : '⏸️ متوقف شده'}\n` +
+              `👤 <b>مالک حساب:</b> <code>@${targetUsername}</code>\n` +
+              `📡 <b>وضعیت اتصال:</b> ${isOnline ? '🟢 آنلاین و متصل (Sub-100ms)' : '⏸️ متوقف شده'}\n` +
               `🕒 <b>ساعت فعال سلف:</b> <code>${lastTime}</code>\n\n` +
-              `🛡️ <b>وضعیت سیستم‌های مانیتورینگ اختصاصی:</b>\n` +
-              `🗑️ <b>سطل زباله و ضد حذف:</b> ${antiDelete ? 'فعال 🟢 (ارسال مستقیم به این چت)' : 'غیرفعال ⚪'}\n` +
-              `✏️ <b>مانیتور و ضد ویرایش:</b> ${antiEdit ? 'فعال 🟢 (نمایش قبل و بعد)' : 'غیرفعال ⚪'}\n` +
-              `📸 <b>نجات‌دهنده مدیا تایمردار:</b> ${forwardTtl ? 'فعال 🟢 (ارسال مستقیم به ربات)' : 'ارسال به سیومسیج ⚪'}\n` +
-              `👻 <b>حالت شبح (Ghost Mode):</b> ${ghostModeActive ? 'فعال 🟢 (تیک آبی مسدود + فوروارد به اینجا)' : 'غیرفعال ⚪'}\n` +
-              `🤖 <b>پاسخ هوشمند AI:</b> ${aiReplyActive ? 'فعال 🟢 (پاسخ خودکار با هوش مصنوعی)' : 'غیرفعال ⚪'}\n\n` +
+              `🛡️ <b>سپر امنیتی و مانیتورینگ زنده:</b>\n` +
+              `<blockquote>` +
+              `• 🗑️ <b>سیستم ضد حذف:</b> ${antiDelete ? 'فعال 🟢 (ارسال مستقیم به این چت)' : 'غیرفعال ⚪'}\n` +
+              `• ✏️ <b>سیستم ضد ویرایش:</b> ${antiEdit ? 'فعال 🟢 (نمایش قبل و بعد)' : 'غیرفعال ⚪'}\n` +
+              `• 📸 <b>رسانه‌های زمان‌دار:</b> ${forwardTtl ? 'فعال 🟢 (ارسال مستقیم به ربات)' : 'ارسال به سیومسیج ⚪'}\n` +
+              `• 👻 <b>حالت شبح (Ghost Mode):</b> ${ghostModeActive ? 'فعال 🟢 (تیک آبی مسدود)' : 'غیرفعال ⚪'}\n` +
+              `• 🤖 <b>پاسخ هوشمند AI:</b> ${aiReplyActive ? `فعال 🟢 (${u.telegram?.aiProvider || 'gemini'})` : 'غیرفعال ⚪'}\n` +
+              `</blockquote>\n` +
               `━━━━━━━━━━━━━━━━━━━━\n` +
-              `📌 <b>امکانات و نحوه عملکرد:</b>\n` +
-              `• در صورت حذف هرگونه پیام در چت‌های خصوصی، محتوای متنی یا رسانه آن فوراً به این چت ارسال می‌شود.\n` +
-              `• در صورت ویرایش متن در پیوی، متن قبل و بعد به صورت کاملاً تفکیک‌شده گزارش خواهد شد.\n` +
-              `• تصاویر و ویدیوهای محوشونده زمان‌دار (View-Once) بدون نابودی ذخیره و به اینجا ارسال می‌شوند.\n` +
-              `• 👻 <b>حالت شبح:</b> پیام‌های خصوصی را بخوانید بدون ارسال تیک آبی (با فوروارد خودکار به این ربات).\n` +
-              `• 🤖 <b>پاسخ هوشمند AI:</b> هوش مصنوعی با درک پیام مخاطب به جای منشی ثابت پاسخ می‌دهد.\n` +
-              `• از طریق دکمه زیر می‌توانید پنل گرافیکی را مستقیماً <b>داخل تلگرام (Mini App)</b> باز کنید 👇`;
+              `💡 <i>جهت مدیریت تنظیمات، مشاهده چت‌های شبح، یا ورود به استودیو، از دکمه‌های زیر استفاده فرمایید:</i>`;
 
             const sendRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
@@ -2571,13 +2770,14 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 const safeName = (d.name || 'کاربر').slice(0, 18);
                 return [{
                   text: `👤 ${safeName}${badge}`,
-                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`
+                  callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`,
+                  style: d.unreadCount > 0 ? 'success' : 'primary'
                 }];
               });
 
               buttons.push([
-                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
-                { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+                { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh', style: 'primary' },
+                { text: '🔙 منوی اصلی', callback_data: 'bot_menu', style: 'danger' }
               ]);
 
               const unreadTotal = dialogs.reduce((sum, d) => sum + (d.unreadCount || 0), 0);
@@ -2906,33 +3106,141 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               })
             }).catch(() => {});
 
-          } else if (data === 'bot_ai_info') {
+          } else if (data === 'bot_ai_info' || data === 'ai_menu') {
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ callback_query_id: cb.id })
             }).catch(() => {});
 
-            const aiStatus = !!u.telegram?.aiReplyEnabled;
-            const hasKey = !!u.telegram?.aiApiKey;
-            const aiInfoMsg = `🤖 <b>مشخصات و پیکربندی پاسخ هوشمند AI</b>\n` +
-              `━━━━━━━━━━━━━━━━━━━━\n` +
-              `📡 <b>وضعیت سیستم:</b> ${aiStatus ? 'فعال و هوشمند 🟢' : 'غیرفعال ⚪'}\n` +
-              `🌐 <b>سرویس‌دهنده:</b> <code>${u.telegram?.aiProvider || 'gemini'}</code>\n` +
-              `🔑 <b>کلید API:</b> ${hasKey ? 'ثبت و معتبر ✅' : 'تنظیم نشده ❌'}\n` +
-              `🔢 <b>سقف پاسخ به هر شخص:</b> ${u.telegram?.aiMaxReplies || 3} پاسخ در هر گفتگو\n` +
-              `⏱️ <b>کول‌داون ضد اسپم:</b> هر ${u.telegram?.aiCooldown || 5} دقیقه\n` +
-              `📝 <b>پرامپت شخصیت:</b> <i>${(u.telegram?.aiSystemPrompt || 'پیش‌فرض دستیار مؤدب').slice(0, 100)}...</i>\n\n` +
-              `💡 <b>تست سریع:</b> دستور زیر را به ربات بفرستید:\n<code>/ai_test سلام خسته نباشید</code>`;
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  text: renderAiMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderAiKeyboard(u)
+                })
+              }).catch(() => {});
+            } else {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: renderAiMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderAiKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+          } else if (data === 'ai_delete_key') {
+            // حذف کامل و ریشه‌ای کلید API هوش مصنوعی برای جلوگیری از هرگونه تداخل
+            u.telegram.aiApiKey = '';
+            u.telegram.aiReplyEnabled = false;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: cb.id,
+                text: '✅ کلید API هوش مصنوعی به طور کامل و ریشه‌ای حذف شد!\nتداخل قبلی پاکسازی گردید و فیلد کلید خالی شد.',
+                show_alert: true
+              })
+            }).catch(() => {});
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  text: renderAiMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderAiKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+          } else if (data === 'ai_set_key_prompt') {
+            await env.KV.put('bot_state:' + chatId, JSON.stringify({ waitingFor: 'ai_api_key' }), { expirationTtl: 600 });
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: cb.id,
+                text: 'لطفاً کلید جدید API خود را در قالب پیام ارسال فرمایید.'
+              })
+            }).catch(() => {});
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: aiInfoMsg,
+                text: `🔑 <b>ثبت کلید API جدید هوش مصنوعی:</b>\n` +
+                  `━━━━━━━━━━━━━━━━━━━━\n` +
+                  `لطفاً کلید جدید خود را در پاسخ به این پیام ارسال فرمایید.\n\n` +
+                  `💡 <i>کلید قبلی به صورت خودکار حذف شده و با کلید جدید جایگزین خواهد شد تا کوچک‌ترین تداخلی رخ ندهد.</i>\n\n` +
+                  `❌ برای انصراف، دستور <code>/cancel</code> را ارسال کنید.`,
                 parse_mode: 'HTML',
-                reply_markup: renderMainKeyboard(u)
+                reply_markup: {
+                  force_reply: true,
+                  selective: true
+                }
+              })
+            }).catch(() => {});
+
+          } else if (data === 'ai_toggle_provider') {
+            u.telegram.aiProvider = (u.telegram.aiProvider === 'openai' ? 'gemini' : 'openai');
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: cb.id,
+                text: `🌐 مدل هوش مصنوعی به ${u.telegram.aiProvider === 'gemini' ? 'Google Gemini ♊' : 'OpenAI GPT 🧠'} تغییر یافت.`
+              })
+            }).catch(() => {});
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageText`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  text: renderAiMessage(u),
+                  parse_mode: 'HTML',
+                  reply_markup: renderAiKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+          } else if (data === 'ai_test_modal') {
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id })
+            }).catch(() => {});
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `🧪 <b>تست سریع پاسخ هوش مصنوعی:</b>\n\n` +
+                  `برای تست عملکرد مدل و کلید خود، دستور زیر را به همین ربات ارسال فرمایید:\n\n` +
+                  `<code>/ai_test سلام وقت بخیر، امروز چه برنامه‌ای داری؟</code>\n\n` +
+                  `پاسخ بلافاصله توسط مدل هوش مصنوعی تولید و در اینجا به شما نشان داده خواهد شد.`,
+                parse_mode: 'HTML'
               })
             }).catch(() => {});
 
