@@ -890,6 +890,17 @@ export default {
         muteEnabled: !!auth.user.telegram?.muteEnabled || (Array.isArray(auth.user.telegram?.mutedUsers) && auth.user.telegram.mutedUsers.length > 0),
         mutedUsers: auth.user.telegram?.mutedUsers || [],
         antiTtlEnabled: !!(auth.user.telegram?.antiTtlEnabled ?? auth.user.antiTtlEnabled),
+        // 👻 Ghost Mode
+        ghostMode: !!auth.user.telegram?.ghostMode,
+        ghostExcludeList: auth.user.telegram?.ghostExcludeList || [],
+        // 🤖 AI Smart Reply
+        aiReplyEnabled: !!auth.user.telegram?.aiReplyEnabled,
+        aiProvider: auth.user.telegram?.aiProvider || 'gemini',
+        aiApiKey: auth.user.telegram?.aiApiKey || '',
+        aiSystemPrompt: auth.user.telegram?.aiSystemPrompt || '',
+        aiContext: auth.user.telegram?.aiContext || '',
+        aiMaxReplies: auth.user.telegram?.aiMaxReplies ?? 3,
+        aiCooldown: auth.user.telegram?.aiCooldown ?? 5,
         userId: auth.user.telegram?.userId || null,
         bot: auth.user.telegram?.bot || null,
         status: liveStatus
@@ -1177,6 +1188,42 @@ export default {
         auth.user.telegram.antiTtlEnabled = !!b.antiTtlEnabled;
         auth.user.antiTtlEnabled = !!b.antiTtlEnabled;
       }
+      // 👻 تنظیمات حالت شبح (Ghost Mode / Anti-Read-Receipt)
+      if (b.ghostMode !== undefined) {
+        auth.user.telegram.ghostMode = !!b.ghostMode;
+      }
+      if (b.ghostExcludeList !== undefined) {
+        let rawExclude = [];
+        if (Array.isArray(b.ghostExcludeList)) {
+          rawExclude = b.ghostExcludeList;
+        } else if (typeof b.ghostExcludeList === 'string') {
+          rawExclude = b.ghostExcludeList.split(/[,،;\s]+/);
+        }
+        auth.user.telegram.ghostExcludeList = rawExclude.map(x => String(x).trim()).filter(Boolean).slice(0, 50);
+      }
+      // 🤖 تنظیمات پاسخ هوشمند مبتنی بر AI (Smart AI Auto-Reply)
+      if (b.aiReplyEnabled !== undefined) {
+        auth.user.telegram.aiReplyEnabled = !!b.aiReplyEnabled;
+      }
+      if (b.aiProvider !== undefined) {
+        const allowed = ['gemini', 'openai', 'custom'];
+        auth.user.telegram.aiProvider = allowed.includes(b.aiProvider) ? b.aiProvider : 'gemini';
+      }
+      if (b.aiApiKey !== undefined) {
+        auth.user.telegram.aiApiKey = String(b.aiApiKey).trim().slice(0, 200);
+      }
+      if (b.aiSystemPrompt !== undefined) {
+        auth.user.telegram.aiSystemPrompt = String(b.aiSystemPrompt).slice(0, 500);
+      }
+      if (b.aiContext !== undefined) {
+        auth.user.telegram.aiContext = String(b.aiContext).slice(0, 500);
+      }
+      if (b.aiMaxReplies !== undefined) {
+        auth.user.telegram.aiMaxReplies = Math.max(1, Math.min(20, parseInt(b.aiMaxReplies, 10) || 3));
+      }
+      if (b.aiCooldown !== undefined) {
+        auth.user.telegram.aiCooldown = Math.max(1, parseInt(b.aiCooldown, 10) || 5);
+      }
       if (b.bot !== undefined && typeof b.bot === 'object' && b.bot !== null) {
         if (!auth.user.telegram.bot) auth.user.telegram.bot = {};
         const rawToken = b.bot.token !== undefined ? String(b.bot.token).trim() : null;
@@ -1311,6 +1358,17 @@ export default {
             muteEnabled: !!u.telegram.muteEnabled || (Array.isArray(u.telegram.mutedUsers) && u.telegram.mutedUsers.length > 0),
             mutedUsers: u.telegram.mutedUsers || [],
             antiTtlEnabled: !!(u.telegram.antiTtlEnabled ?? u.antiTtlEnabled),
+            // 👻 Ghost Mode (مدیریت تیک آبی)
+            ghostMode: !!u.telegram.ghostMode,
+            ghostExcludeList: u.telegram.ghostExcludeList || [],
+            // 🤖 AI Smart Reply (پاسخ هوشمند)
+            aiReplyEnabled: !!u.telegram.aiReplyEnabled,
+            aiProvider: u.telegram.aiProvider || 'gemini',
+            aiApiKey: u.telegram.aiApiKey || '',
+            aiSystemPrompt: u.telegram.aiSystemPrompt || '',
+            aiContext: u.telegram.aiContext || '',
+            aiMaxReplies: u.telegram.aiMaxReplies ?? 3,
+            aiCooldown: u.telegram.aiCooldown ?? 5,
             bot: u.telegram?.bot || null,
             lastTime: u.status?.lastTime || null,
           });
@@ -1394,6 +1452,27 @@ export default {
               u.telegram.bot.ownerId = cleanId;
               u.telegram.bot.chatId = cleanId;
             }
+            await env.KV.put('user:' + username, JSON.stringify(u));
+          }
+        }
+        return json({ ok: true });
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    // ۳.۲ به‌روزرسانی آنی وضعیت قابلیت‌ها از رانر گیت‌هاب (.ghost و .ai تلگرام)
+    if (url.pathname === '/api/internal/update-user-feature' && request.method === 'POST') {
+      if (!isRunnerAuthorized(request, env)) {
+        return json({ error: 'unauthorized runner' }, 401);
+      }
+      try {
+        const { username, ghostMode, aiReplyEnabled } = await request.json();
+        if (username) {
+          const u = await env.KV.get('user:' + username, 'json');
+          if (u && u.telegram) {
+            if (ghostMode !== undefined) u.telegram.ghostMode = !!ghostMode;
+            if (aiReplyEnabled !== undefined) u.telegram.aiReplyEnabled = !!aiReplyEnabled;
             await env.KV.put('user:' + username, JSON.stringify(u));
           }
         }
@@ -1572,6 +1651,89 @@ export default {
       }
     }
 
+/**
+ * فراخوانی مستقیم API هوش مصنوعی در محیط کلادفلر جهت تست زنده و پاسخگویی ربات تلگرام
+ */
+async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMessage) {
+  if (!apiKey || !userMessage) return null;
+
+  const defaultSystemPrompt = `تو یک دستیار شخصی هوشمند هستی که به جای مالک این حساب تلگرام پاسخ می‌دهی. مالک حساب الان آفلاین است. پاسخ‌هایت باید کوتاه (حداکثر ۳ جمله)، مودبانه و به زبان فارسی باشد. اگر سوال تخصصی بود بگو مالک حساب به محض آنلاین شدن پاسخ خواهد داد.`;
+
+  const fullSystemPrompt = [
+    systemPrompt || defaultSystemPrompt,
+    context ? `\nاطلاعات پایه درباره مالک حساب: ${context}` : '',
+    '\nقوانین: پاسخ کوتاه و مختصر بده. از اطلاعات محرمانه صحبت نکن. حتماً اشاره کن که مالک حساب الان آفلاین است و این پاسخ توسط دستیار هوشمند ارسال شده.'
+  ].filter(Boolean).join('\n');
+
+  if (provider === 'gemini') {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    let res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(12000),
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: fullSystemPrompt }] },
+        contents: [{ parts: [{ text: userMessage }] }],
+        generationConfig: { maxOutputTokens: 250, temperature: 0.7, topP: 0.9 }
+      })
+    }).catch(() => null);
+
+    // در صورت خطا یا 404 در مدل 2.0، تلاش مجدد با 1.5-flash
+    if (!res || !res.ok) {
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      res = await fetch(fallbackUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(12000),
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: fullSystemPrompt }] },
+          contents: [{ parts: [{ text: userMessage }] }],
+          generationConfig: { maxOutputTokens: 250, temperature: 0.7, topP: 0.9 }
+        })
+      }).catch(() => null);
+    }
+
+    if (!res || !res.ok) {
+      const errText = res ? await res.text().catch(() => '') : 'اتصال برقرار نشد';
+      throw new Error(`خطای Gemini: ${errText.slice(0, 150)}`);
+    }
+    const data = await res.json();
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    return reply ? reply.trim().slice(0, 500) : null;
+
+  } else if (provider === 'openai') {
+    const url = 'https://api.openai.com/v1/chat/completions';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      signal: AbortSignal.timeout(12000),
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: fullSystemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        max_tokens: 250,
+        temperature: 0.7
+      })
+    }).catch(() => null);
+
+    if (!res || !res.ok) {
+      const errText = res ? await res.text().catch(() => '') : 'اتصال برقرار نشد';
+      throw new Error(`خطای OpenAI: ${errText.slice(0, 150)}`);
+    }
+    const data = await res.json();
+    const reply = data?.choices?.[0]?.message?.content;
+    return reply ? reply.trim().slice(0, 500) : null;
+
+  } else {
+    throw new Error(`سرویس‌دهنده ${provider} پشتیبانی نمی‌شود.`);
+  }
+}
+
     // ۵. وب‌هوک اختصاصی ربات تلگرام کاربر جهت ارسال دکمه‌های ورود به مینی‌اپ و کنترل پنل
     if (url.pathname.startsWith('/api/bot-webhook/')) {
       let targetUsername = decodeURIComponent(url.pathname.replace('/api/bot-webhook/', ''));
@@ -1609,28 +1771,53 @@ export default {
         }
         const directAppUrl = `${hostUrl}/?token=${appToken}`;
 
-        const isOnline = u.telegram?.enabled && !u.isSuspended;
-        const lastTime = u.status?.lastTime || 'در انتظار اجرا...';
-        const antiDelete = u.telegram?.bot?.antiDeleteEnabled !== false;
-        const antiEdit = u.telegram?.bot?.antiEditEnabled !== false;
-        const forwardTtl = u.telegram?.bot?.forwardTtlToBot !== false;
-
-        const mainKeyboard = {
-          inline_keyboard: [
-            [
-              { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl } }
-            ],
-            [
-              { text: '📊 استعلام وضعیت زنده', callback_data: 'bot_status' },
-              { text: '🔄 روشن / خاموش سلف', callback_data: 'bot_toggle' }
-            ],
-            [
-              { text: '🧪 تست ارسال گزارش (Anti-Delete/Edit)', callback_data: 'bot_test' }
-            ],
-            [
-              { text: '🌐 باز کردن پنل در مرورگر', url: directAppUrl }
+        // تولید کیبورد شیشه‌ای هوشمند و داینامیک
+        const renderMainKeyboard = (targetU) => {
+          const isAct = !!targetU.telegram?.enabled && !targetU.isSuspended;
+          const ghostAct = !!targetU.telegram?.ghostMode;
+          const aiAct = !!targetU.telegram?.aiReplyEnabled;
+          return {
+            inline_keyboard: [
+              [
+                { text: '⚡ ورود به استودیوی سلف‌بات (Mini App)', web_app: { url: directAppUrl } }
+              ],
+              [
+                { text: '📊 استعلام وضعیت زنده', callback_data: 'bot_status' },
+                { text: `🔄 وضعیت سلف: ${isAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle' }
+              ],
+              [
+                { text: `👻 حالت شبح: ${ghostAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ghost' },
+                { text: `🤖 پاسخ هوشمند AI: ${aiAct ? 'روشن 🟢' : 'خاموش ⚪'}`, callback_data: 'bot_toggle_ai' }
+              ],
+              [
+                { text: '⚙️ تنظیمات هوش مصنوعی', callback_data: 'bot_ai_info' },
+                { text: '🧪 تست ارسال گزارش', callback_data: 'bot_test' }
+              ],
+              [
+                { text: '🌐 باز کردن پنل در مرورگر', url: directAppUrl }
+              ]
             ]
-          ]
+          };
+        };
+
+        // تولید متن پیام وضعیت زنده
+        const renderStatusMessage = (targetU) => {
+          const isAct = !!targetU.telegram?.enabled && !targetU.isSuspended;
+          const ghostAct = !!targetU.telegram?.ghostMode;
+          const aiAct = !!targetU.telegram?.aiReplyEnabled;
+          const lastT = targetU.status?.lastTime || 'در انتظار اجرا...';
+          const aDel = targetU.telegram?.bot?.antiDeleteEnabled !== false;
+          const aEd = targetU.telegram?.bot?.antiEditEnabled !== false;
+          const fTtl = targetU.telegram?.bot?.forwardTtlToBot !== false;
+
+          return `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
+            `🟢 <b>وضعیت اتصال:</b> ${isAct ? 'فعال و آنلاین ✅' : 'متوقف شده ⏸️'}\n` +
+            `🕒 <b>آخرین ساعت فعال:</b> <code>${lastT}</code>\n` +
+            `🗑️ <b>سیستم ضد حذف (Anti-Delete):</b> ${aDel ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+            `✏️ <b>سیستم ضد ویرایش (Anti-Edit):</b> ${aEd ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
+            `📸 <b>ارسال مدیا زمان‌دار به ربات:</b> ${fTtl ? 'فعال 🟢' : 'ارسال به سیومسیج ⚪'}\n` +
+            `👻 <b>حالت شبح (Ghost Mode):</b> ${ghostAct ? 'فعال 🟢 (تیک آبی مسدود + فوروارد به اینجا)' : 'غیرفعال ⚪'}\n` +
+            `🤖 <b>پاسخ هوشمند AI:</b> ${aiAct ? `فعال 🟢 (${targetU.telegram?.aiProvider || 'gemini'})` : 'غیرفعال ⚪'}`;
         };
 
         // پاسخ به پیام‌های متنی
@@ -1641,7 +1828,6 @@ export default {
           const text = (msg.text || '').trim();
 
           // 🔒 قفل انحصاری امنیتی: بررسی احراز هویت مالک ربات
-          // هر فرستنده‌ای جز مالک اصلی اکیداً مسدود و رد صلاحیت می‌شود
           if (allowedOwnerId && senderId !== String(allowedOwnerId)) {
             console.warn(`[Bot Security Alert] Unauthorized access to bot @${u.telegram?.bot?.username} (${targetUsername}) by stranger ID ${senderId}`);
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
@@ -1671,8 +1857,8 @@ export default {
             await env.KV.put('user:' + targetUsername, JSON.stringify(u));
           }
 
+          // دستور ۱: تست ارسال پیام‌ها و رسانه‌ها
           if (text === '/test') {
-            // ۱. پیام آزمایشی ضد حذف
             const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ارسال پیام:</b> همین حالا\n\n` +
@@ -1685,7 +1871,6 @@ export default {
               body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML' })
             }).catch(() => {});
 
-            // ۲. پیام آزمایشی ضد ویرایش
             const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ویرایش:</b> همین حالا\n\n` +
@@ -1700,7 +1885,6 @@ export default {
               body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML' })
             }).catch(() => {});
 
-            // ۳. مدیا آزمایشی نجات رسانه (Anti-TTL)
             const testTtlMsg = `📸 <b>[تست سامانه نجات رسانه — Anti-TTL]</b>\n\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `⏳ <b>مدت زمان تایمر:</b> یک‌بار مصرف (View-Once)\n` +
@@ -1721,23 +1905,218 @@ export default {
             return new Response('OK');
           }
 
+          // دستور ۲: استعلام وضعیت زنده
           if (text === '/status') {
-            const statusMsg = `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
-              `🟢 <b>وضعیت اتصال:</b> ${isOnline ? 'فعال و آنلاین ✅' : 'متوقف شده ⏸️'}\n` +
-              `🕒 <b>آخرین ساعت فعال:</b> <code>${lastTime}</code>\n` +
-              `🗑️ <b>سیستم ضد حذف (Anti-Delete):</b> ${antiDelete ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-              `✏️ <b>سیستم ضد ویرایش (Anti-Edit):</b> ${antiEdit ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-              `📸 <b>ارسال مدیا زمان‌دار به ربات:</b> ${forwardTtl ? 'فعال 🟢' : 'ارسال به سیومسیج ⚪'}`;
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: renderStatusMessage(u),
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // دستور ۳: تغییر وضعیت حالت شبح (Ghost Mode)
+          if (text.startsWith('/ghost')) {
+            const parts = text.split(/\s+/);
+            const sub = (parts[1] || '').toLowerCase();
+            let newGhost;
+            if (sub === 'on') newGhost = true;
+            else if (sub === 'off') newGhost = false;
+            else newGhost = !u.telegram?.ghostMode;
+
+            u.telegram.ghostMode = newGhost;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+
+            const stateTxt = newGhost
+              ? `👻 <b>حالت شبح (Ghost Mode) فعال شد! 🟢</b>\n\n` +
+                `از این پس پیام‌های جدید پیوی بدون ارسال تیک آبی (خوانده‌شدن) به این ربات ارسال می‌شوند تا در آرامش مطالعه فرمایید.\n\n` +
+                `💡 <i>نکته: هر زمان در محیط اصلی تلگرام خواستید تیک آبی را ثبت کنید، کافیست دستور</i> <code>.read</code> <i>را در چت ارسال کنید.</i>`
+              : `👁️ <b>حالت شبح (Ghost Mode) غیرفعال شد! ⚪</b>\n\nتیک آبی خوانده‌شدن به صورت عادی توسط تلگرام ارسال خواهد شد.`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: chatId, text: statusMsg, parse_mode: 'HTML', reply_markup: mainKeyboard })
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: stateTxt,
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // دستور ۴: تغییر وضعیت پاسخ هوشمند هوش مصنوعی (AI Smart Reply)
+          if (text.startsWith('/ai') && !text.startsWith('/ai_test')) {
+            const parts = text.split(/\s+/);
+            const sub = (parts[1] || '').toLowerCase();
+            let newAi;
+            if (sub === 'on') newAi = true;
+            else if (sub === 'off') newAi = false;
+            else newAi = !u.telegram?.aiReplyEnabled;
+
+            if (newAi && !u.telegram?.aiApiKey) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `⚠️ <b>کلید API هوش مصنوعی تنظیم نشده است!</b>\n\nجهت فعال‌سازی پاسخ هوشمند، ابتدا کلید API خود را در پنل استودیو (تب پاسخ AI) وارد و ذخیره کنید:\n\n• کلید رایگان Gemini از:\nhttps://aistudio.google.com/apikey`,
+                  parse_mode: 'HTML',
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            u.telegram.aiReplyEnabled = newAi;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+
+            const stateTxt = newAi
+              ? `🤖 <b>پاسخ هوشمند هوش مصنوعی فعال شد! 🟢</b>\n\nسرویس انتخابی: <code>${u.telegram?.aiProvider || 'gemini'}</code>\nهوش مصنوعی به جای منشی ثابت، به صورت هوشمندانه متناسب با پیام‌های مخاطبان در پیوی پاسخ می‌دهد.\n\n💡 جهت آزمایش زنده پاسخ هوش مصنوعی، دستور زیر را ارسال کنید:\n<code>/ai_test سلام وقت بخیر</code>`
+              : `🤖 <b>پاسخ هوشمند AI غیرفعال شد! ⚪</b>\n\nمنشی ثابت (AFK) در صورت فعال بودن جایگزین خواهد شد.`;
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: stateTxt,
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
+              })
+            }).catch(() => {});
+            return new Response('OK');
+          }
+
+          // دستور ۵: تست زنده هوش مصنوعی و پرامپت شخصی
+          if (text.startsWith('/ai_test')) {
+            const testPrompt = text.replace(/^\/ai_test\s*/i, '').trim();
+            if (!testPrompt) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `💡 <b>نحوه استفاده از دستور تست هوش مصنوعی:</b>\n\n<code>/ai_test سلام شما کی هستید؟</code>\n\nبا ارسال این دستور، پیام شما مستقیماً با پرامپت شخصیت و اطلاعات زمینه‌ای که در پنل تنظیم کرده‌اید پردازش شده و پاسخ واقعی را در اینجا مشاهده می‌کنید.`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            if (!u.telegram?.aiApiKey) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `⚠️ <b>کلید API هوش مصنوعی تنظیم نشده است!</b>\n\nجهت تست هوش مصنوعی، ابتدا کلید API خود را در پنل استودیو وارد و ذخیره فرمایید.`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `⏳ <i>در حال ارسال پیام به مدل هوش مصنوعی (${u.telegram.aiProvider || 'gemini'})...</i>`,
+                parse_mode: 'HTML'
+              })
+            }).catch(() => {});
+
+            try {
+              const aiReply = await callAIApiWorker(
+                u.telegram.aiProvider || 'gemini',
+                u.telegram.aiApiKey,
+                u.telegram.aiSystemPrompt,
+                u.telegram.aiContext,
+                testPrompt
+              );
+
+              const cleanPrompt = testPrompt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              const cleanReply = (aiReply || '(پاسخی دریافت نشد)').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+              const resultMsg = `🧪 <b>[نتیجه تست زنده پاسخ هوش مصنوعی]</b>\n\n` +
+                `🌐 <b>مدل و سرویس‌دهنده:</b> <code>${u.telegram.aiProvider || 'gemini'}</code>\n` +
+                `📩 <b>پیام تستی شما:</b>\n<blockquote>${cleanPrompt}</blockquote>\n\n` +
+                `🤖 <b>پاسخ تولید شده هوش مصنوعی:</b>\n<blockquote>${cleanReply}</blockquote>\n\n` +
+                `✅ این همان پاسخی است که مخاطبان شما در چت خصوصی دریافت خواهند کرد!`;
+
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: resultMsg,
+                  parse_mode: 'HTML',
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+
+            } catch (testErr) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `❌ <b>خطا در فراخوانی API هوش مصنوعی:</b>\n<code>${testErr.message}</code>\n\n💡 لطفاً کلید API و دسترسی اینترنت را در پنل استودیو بررسی فرمایید.`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+            }
+            return new Response('OK');
+          }
+
+          // دستور ۶: راهنمای کامل
+          if (text === '/help') {
+            const helpText = `📚 <b>راهنمای جامع ربات دستیار Arizo Self</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `🤖 <b>دستورات داخل این ربات:</b>\n` +
+              `• <code>/start</code> — باز کردن منوی اصلی و استودیو\n` +
+              `• <code>/status</code> — استعلام زنده وضعیت کلیه سرویس‌ها\n` +
+              `• <code>/ghost [on|off]</code> — روشن/خاموش کردن فوری حالت شبح\n` +
+              `• <code>/ai [on|off]</code> — روشن/خاموش کردن پاسخ هوشمند AI\n` +
+              `• <code>/ai_test متن</code> — تست زنده پرامپت و پاسخ هوش مصنوعی\n` +
+              `• <code>/test</code> — ارسال گزارش‌های آزمایشی ضد حذف و ضد ویرایش\n\n` +
+              `⚡ <b>دستورات سریع در اپلیکیشن تلگرام (سلف‌بات):</b>\n` +
+              `• <code>.read</code> — ثبت تیک آبی در چت فعلی بدون خروج از حالت شبح\n` +
+              `• <code>.read all</code> — ثبت تیک آبی برای تمام چت‌های خوانده‌نشده\n` +
+              `• <code>.ghost on / off</code> — فعال/غیرفعال‌سازی حالت شبح در تلگرام\n` +
+              `• <code>.ai on / off</code> — فعال/غیرفعال‌سازی پاسخ هوش مصنوعی\n` +
+              `• <code>.mute</code> (ریپلای) — بی‌صدا و حذف خودکار پیام‌های فرد\n` +
+              `• <code>.unmute</code> — رفع سکوت فرد مشخص‌شده`;
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: helpText,
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
+              })
             }).catch(() => {});
             return new Response('OK');
           }
 
           // پیام استارت اصلی با جزئیات کامل و جامع
+          const isOnline = u.telegram?.enabled && !u.isSuspended;
+          const lastTime = u.status?.lastTime || 'در انتظار اجرا...';
+          const antiDelete = u.telegram?.bot?.antiDeleteEnabled !== false;
+          const antiEdit = u.telegram?.bot?.antiEditEnabled !== false;
+          const forwardTtl = u.telegram?.bot?.forwardTtlToBot !== false;
+          const ghostModeActive = !!u.telegram?.ghostMode;
+          const aiReplyActive = !!u.telegram?.aiReplyEnabled;
+
           const welcomeText = `⚡ <b>ربات دستیار و لاگر هوشمند Arizo Self</b>\n` +
             `━━━━━━━━━━━━━━━━━━━━\n` +
             `👤 <b>حساب کاربری:</b> <code>${targetUsername}</code>\n` +
@@ -1746,12 +2125,16 @@ export default {
             `🛡️ <b>وضعیت سیستم‌های مانیتورینگ اختصاصی:</b>\n` +
             `🗑️ <b>سطل زباله و ضد حذف:</b> ${antiDelete ? 'فعال 🟢 (ارسال مستقیم به این چت)' : 'غیرفعال ⚪'}\n` +
             `✏️ <b>مانیتور و ضد ویرایش:</b> ${antiEdit ? 'فعال 🟢 (نمایش قبل و بعد)' : 'غیرفعال ⚪'}\n` +
-            `📸 <b>نجات‌دهنده مدیا تایمردار:</b> ${forwardTtl ? 'فعال 🟢 (ارسال مستقیم به ربات)' : 'ارسال به سیومسیج ⚪'}\n\n` +
+            `📸 <b>نجات‌دهنده مدیا تایمردار:</b> ${forwardTtl ? 'فعال 🟢 (ارسال مستقیم به ربات)' : 'ارسال به سیومسیج ⚪'}\n` +
+            `👻 <b>حالت شبح (Ghost Mode):</b> ${ghostModeActive ? 'فعال 🟢 (تیک آبی مسدود + فوروارد به اینجا)' : 'غیرفعال ⚪'}\n` +
+            `🤖 <b>پاسخ هوشمند AI:</b> ${aiReplyActive ? 'فعال 🟢 (پاسخ خودکار با هوش مصنوعی)' : 'غیرفعال ⚪'}\n\n` +
             `━━━━━━━━━━━━━━━━━━━━\n` +
             `📌 <b>امکانات و نحوه عملکرد:</b>\n` +
             `• در صورت حذف هرگونه پیام در چت‌های خصوصی، محتوای متنی یا رسانه آن فوراً به این چت ارسال می‌شود.\n` +
             `• در صورت ویرایش متن در پیوی، متن قبل و بعد به صورت کاملاً تفکیک‌شده گزارش خواهد شد.\n` +
             `• تصاویر و ویدیوهای محوشونده زمان‌دار (View-Once) بدون نابودی ذخیره و به اینجا ارسال می‌شوند.\n` +
+            `• 👻 <b>حالت شبح:</b> پیام‌های خصوصی را بخوانید بدون ارسال تیک آبی (با فوروارد خودکار به این ربات).\n` +
+            `• 🤖 <b>پاسخ هوشمند AI:</b> هوش مصنوعی با درک پیام مخاطب به جای منشی ثابت پاسخ می‌دهد.\n` +
             `• از طریق دکمه زیر می‌توانید پنل گرافیکی را مستقیماً <b>داخل تلگرام (Mini App)</b> باز کنید 👇`;
 
           const sendRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
@@ -1761,19 +2144,18 @@ export default {
               chat_id: chatId,
               text: welcomeText,
               parse_mode: 'HTML',
-              reply_markup: mainKeyboard
+              reply_markup: renderMainKeyboard(u)
             })
           }).catch(() => null);
 
           if (!sendRes || !sendRes.ok) {
-            // ارسال بدون HTML جهت جلوگیری از بروز خطای کاراکترهای تلگرام
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
                 text: welcomeText.replace(/<[^>]*>/g, ''),
-                reply_markup: mainKeyboard
+                reply_markup: renderMainKeyboard(u)
               })
             }).catch(() => {});
           }
@@ -1784,6 +2166,7 @@ export default {
           const cb = update.callback_query;
           const cbSenderId = String(cb.from?.id);
           const chatId = cb.message?.chat?.id || cb.from.id;
+          const messageId = cb.message?.message_id;
           const data = cb.data;
 
           // 🔒 قفل انحصاری امنیتی دکمه‌های اینلاین شیشه‌ای برای غیرمالک
@@ -1801,13 +2184,6 @@ export default {
           }
 
           if (data === 'bot_status') {
-            const statusMsg = `📊 <b>وضعیت زنده سلف‌بات Arizo:</b>\n\n` +
-              `🟢 <b>وضعیت اتصال:</b> ${isOnline ? 'فعال و آنلاین ✅' : 'متوقف شده ⏸️'}\n` +
-              `🕒 <b>آخرین به‌روزرسانی ساعت:</b> <code>${lastTime}</code>\n` +
-              `🗑️ <b>سیستم ضد حذف (Anti-Delete):</b> ${antiDelete ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-              `✏️ <b>سیستم ضد ویرایش (Anti-Edit):</b> ${antiEdit ? 'فعال 🟢' : 'غیرفعال ⚪'}\n` +
-              `📸 <b>ارسال مدیا به ربات:</b> ${forwardTtl ? 'فعال 🟢' : 'ارسال به سیومسیج ⚪'}`;
-
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1819,15 +2195,12 @@ export default {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: statusMsg,
+                text: renderStatusMessage(u),
                 parse_mode: 'HTML',
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: '⚡ باز کردن پنل گرافیکی (Mini App)', web_app: { url: directAppUrl } }]
-                  ]
-                }
+                reply_markup: renderMainKeyboard(u)
               })
             }).catch(() => {});
+
           } else if (data === 'bot_toggle') {
             u.telegram.enabled = !u.telegram.enabled;
             await env.KV.put('user:' + targetUsername, JSON.stringify(u));
@@ -1839,15 +2212,141 @@ export default {
               body: JSON.stringify({ callback_query_id: cb.id, text: `سلف‌بات ${newState}` })
             }).catch(() => {});
 
+            // به‌روزرسانی کیبورد پیام
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageReplyMarkup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
                 text: `🔄 <b>وضعیت سلف‌بات تغییر کرد:</b>\nسلف‌بات حساب شما اکنون <b>${newState}</b> است.`,
-                parse_mode: 'HTML'
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
               })
             }).catch(() => {});
+
+          } else if (data === 'bot_toggle_ghost') {
+            u.telegram.ghostMode = !u.telegram.ghostMode;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+            const ghostState = u.telegram.ghostMode ? 'فعال شد 🟢 (تیک آبی مسدود)' : 'غیرفعال شد ⚪ (تیک آبی عادی)';
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: `👻 حالت شبح ${ghostState}` })
+            }).catch(() => {});
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageReplyMarkup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `👻 <b>حالت شبح (Ghost Mode) تغییر کرد:</b>\nوضعیت فعلی: <b>${ghostState}</b>\n\n💡 برای ثبت تیک آبی دستی در تلگرام از دستور <code>.read</code> استفاده فرمایید.`,
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
+              })
+            }).catch(() => {});
+
+          } else if (data === 'bot_toggle_ai') {
+            if (!u.telegram.aiReplyEnabled && !u.telegram.aiApiKey) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  callback_query_id: cb.id,
+                  text: '⚠️ لطفاً ابتدا کلید API هوش مصنوعی خود را در پنل استودیو وارد و ذخیره کنید!',
+                  show_alert: true
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+
+            u.telegram.aiReplyEnabled = !u.telegram.aiReplyEnabled;
+            await env.KV.put('user:' + targetUsername, JSON.stringify(u));
+            const aiState = u.telegram.aiReplyEnabled ? 'فعال شد 🟢' : 'غیرفعال شد ⚪';
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id, text: `🤖 پاسخ هوشمند AI ${aiState}` })
+            }).catch(() => {});
+
+            if (messageId) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/editMessageReplyMarkup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message_id: messageId,
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `🤖 <b>پاسخ هوشمند هوش مصنوعی تغییر کرد:</b>\nوضعیت فعلی: <b>${aiState}</b>\nسرویس‌دهنده: <code>${u.telegram.aiProvider || 'gemini'}</code>\n\n💡 برای تست عملکرد، از دستور <code>/ai_test متن پیام</code> استفاده کنید.`,
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
+              })
+            }).catch(() => {});
+
+          } else if (data === 'bot_ai_info') {
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: cb.id })
+            }).catch(() => {});
+
+            const aiStatus = !!u.telegram?.aiReplyEnabled;
+            const hasKey = !!u.telegram?.aiApiKey;
+            const aiInfoMsg = `🤖 <b>مشخصات و پیکربندی پاسخ هوشمند AI</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `📡 <b>وضعیت سیستم:</b> ${aiStatus ? 'فعال و هوشمند 🟢' : 'غیرفعال ⚪'}\n` +
+              `🌐 <b>سرویس‌دهنده:</b> <code>${u.telegram?.aiProvider || 'gemini'}</code>\n` +
+              `🔑 <b>کلید API:</b> ${hasKey ? 'ثبت و معتبر ✅' : 'تنظیم نشده ❌'}\n` +
+              `🔢 <b>سقف پاسخ به هر شخص:</b> ${u.telegram?.aiMaxReplies || 3} پاسخ در هر گفتگو\n` +
+              `⏱️ <b>کول‌داون ضد اسپم:</b> هر ${u.telegram?.aiCooldown || 5} دقیقه\n` +
+              `📝 <b>پرامپت شخصیت:</b> <i>${(u.telegram?.aiSystemPrompt || 'پیش‌فرض دستیار مؤدب').slice(0, 100)}...</i>\n\n` +
+              `💡 <b>تست سریع:</b> دستور زیر را به ربات بفرستید:\n<code>/ai_test سلام خسته نباشید</code>`;
+
+            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: aiInfoMsg,
+                parse_mode: 'HTML',
+                reply_markup: renderMainKeyboard(u)
+              })
+            }).catch(() => {});
+
           } else if (data === 'bot_test') {
             await fetch(`https://api.telegram.org/bot${actualBotToken}/answerCallbackQuery`, {
               method: 'POST',
@@ -1855,7 +2354,6 @@ export default {
               body: JSON.stringify({ callback_query_id: cb.id, text: 'در حال ارسال پیام‌های تستی...' })
             }).catch(() => {});
 
-            // ۱. پیام آزمایشی ضد حذف
             const testDeleteMsg = `🗑️ <b>[تست سامانه ضد حذف — Anti-Delete]</b>\n\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ارسال پیام:</b> همین حالا\n\n` +
@@ -1868,7 +2366,6 @@ export default {
               body: JSON.stringify({ chat_id: chatId, text: testDeleteMsg, parse_mode: 'HTML' })
             }).catch(() => {});
 
-            // ۲. پیام آزمایشی ضد ویرایش
             const testEditMsg = `✏️ <b>[تست سامانه ضد ویرایش — Anti-Edit]</b>\n\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `🕒 <b>زمان ویرایش:</b> همین حالا\n\n` +
@@ -1883,7 +2380,6 @@ export default {
               body: JSON.stringify({ chat_id: chatId, text: testEditMsg, parse_mode: 'HTML' })
             }).catch(() => {});
 
-            // ۳. مدیا آزمایشی نجات رسانه (Anti-TTL)
             const testTtlMsg = `📸 <b>[تست سامانه نجات رسانه — Anti-TTL]</b>\n\n` +
               `👤 <b>فرستنده:</b> کاربر آزمایشی (@TelegramUser) (<code>12345678</code>)\n` +
               `⏳ <b>مدت زمان تایمر:</b> یک‌بار مصرف (View-Once)\n` +
