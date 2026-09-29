@@ -2,16 +2,16 @@
 
 <br>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:6366f1,100:0ea5e9&height=220&section=header&text=⚡%20Arizo%20Self&fontSize=60&fontColor=ffffff&animation=fadeIn&fontAlignY=32&desc=Next-Gen%20Edge%20Telegram%20Selfbot%20%26%20Logger%20Studio&descSize=18&descAlignY=52&descAlign=50" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:6366f1,100:0ea5e9&height=220&section=header&text=⚡%20Arizo%20Telegram%20Self%20Manager&fontSize=52&fontColor=ffffff&animation=fadeIn&fontAlignY=32&desc=Next-Gen%20Edge%20Telegram%20Selfbot%2C%20AI%20Assistant%20%26%20Logger%20Studio&descSize=18&descAlignY=52&descAlign=50" width="100%"/>
 
 <br>
 
-<h3>🔮 پلتفرم نسل جدید سلف‌بات، لاگر هوشمند و استودیوی تلگرام</h3>
+<h3>🔮 پلتفرم نسل جدید سلف‌بات، لاگر هوشمند و استودیوی تلگرام (Arizo Telegram Self Manager)</h3>
 <h4><i>Next-Gen Telegram Profile Engine, Edge Helper Bot & Logger Studio with Sub-40ms MTProto Precision</i></h4>
 
 <br>
 
-<a href="https://github.com/ArizoOwner/arizo-runner/actions"><img src="https://img.shields.io/badge/⚡_Engine_Status-24%2F7_Active-22c55e?style=for-the-badge&labelColor=0d1117" alt="Engine Status"/></a>
+<a href="https://github.com/ArizoOwner/arizo-telegram-self-manager/actions"><img src="https://img.shields.io/badge/⚡_Engine_Status-24%2F7_Active-22c55e?style=for-the-badge&labelColor=0d1117" alt="Engine Status"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Response_Time-<%2040ms-a855f7?style=for-the-badge&labelColor=0d1117" alt="Response Time"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Uptime-99.9%25-0ea5e9?style=for-the-badge&labelColor=0d1117" alt="Uptime"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Version-3.5_PRO-f59e0b?style=for-the-badge&labelColor=0d1117" alt="Version"/></a>
