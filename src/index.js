@@ -56,9 +56,19 @@ globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
 
 async function enqueueBotAction(env, action) {
   globalThis.pendingBotActions = globalThis.pendingBotActions || [];
+  if (!action.id) {
+    action.id = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  }
   globalThis.pendingBotActions.push(action);
   try {
-    await env.KV.put('bot_pending_actions', JSON.stringify(globalThis.pendingBotActions), { expirationTtl: 120 });
+    let existing = [];
+    try {
+      existing = await env.KV.get('bot_pending_actions', 'json') || [];
+    } catch (_) {}
+    if (!Array.isArray(existing)) existing = [];
+    existing.push(action);
+    if (existing.length > 30) existing = existing.slice(-30);
+    await env.KV.put('bot_pending_actions', JSON.stringify(existing), { expirationTtl: 180 });
   } catch (_) {}
 }
 
@@ -1521,18 +1531,37 @@ export default {
         return json({ error: 'unauthorized runner' }, 401);
       }
       globalThis.pendingBotActions = globalThis.pendingBotActions || [];
-      let actions = [...globalThis.pendingBotActions];
+      const memActions = [...globalThis.pendingBotActions];
       globalThis.pendingBotActions = [];
 
-      // اگر در رم نبود، از KV هم بررسی می‌کنیم
-      if (actions.length === 0) {
-        const kvActions = await env.KV.get('bot_pending_actions', 'json');
+      let kvActions = [];
+      try {
+        kvActions = await env.KV.get('bot_pending_actions', 'json') || [];
         if (Array.isArray(kvActions) && kvActions.length > 0) {
-          actions = kvActions;
           await env.KV.delete('bot_pending_actions');
+        }
+      } catch (_) {}
+
+      // ادغام بدون تکرار بر اساس id یا ترکیب action+peerId
+      const actionMap = new Map();
+      for (const a of memActions) {
+        if (a) {
+          const key = a.id || `${a.action}:${a.username}:${a.peerId || ''}:${a.messageId || ''}`;
+          actionMap.set(key, a);
+        }
+      }
+      if (Array.isArray(kvActions)) {
+        for (const a of kvActions) {
+          if (a) {
+            const key = a.id || `${a.action}:${a.username}:${a.peerId || ''}:${a.messageId || ''}`;
+            if (!actionMap.has(key)) {
+              actionMap.set(key, a);
+            }
+          }
         }
       }
 
+      const actions = Array.from(actionMap.values());
       return json({ ok: true, actions });
     }
 
@@ -1544,10 +1573,15 @@ export default {
       try {
         const { username, dialogs } = await request.json();
         if (username && Array.isArray(dialogs)) {
+          const lowerName = username.toLowerCase();
           globalThis.cachedUserDialogs = globalThis.cachedUserDialogs || {};
           globalThis.cachedUserDialogs[username] = dialogs;
+          globalThis.cachedUserDialogs[lowerName] = dialogs;
           // ذخیره در KV با انقضای ۳۰ دقیقه‌ای جهت دسترسی پایدار
-          await env.KV.put('user_dialogs:' + username, JSON.stringify(dialogs), { expirationTtl: 1800 });
+          await env.KV.put('user_dialogs:' + lowerName, JSON.stringify(dialogs), { expirationTtl: 1800 });
+          if (username !== lowerName) {
+            await env.KV.put('user_dialogs:' + username, JSON.stringify(dialogs), { expirationTtl: 1800 });
+          }
         }
         return json({ ok: true });
       } catch (err) {
@@ -1984,7 +2018,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               peerId: targetPeerId,
               targetName: targetName,
               text: text,
-              chatId: String(chatId)
+              chatId: String(chatId),
+              botToken: actualBotToken
             });
 
             const cleanText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -2000,10 +2035,45 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             return new Response('OK');
           }
 
+          // پاسخ مستقیم به پیام‌های فوروارد شده شبح با قابلیت ریپلای تلگرام (Swipe to Reply)
+          const replyToMsg = msg.reply_to_message;
+          if (replyToMsg && text && !text.startsWith('/')) {
+            const repText = replyToMsg.text || replyToMsg.caption || '';
+            const idMatch = repText.match(/<code>(\d{5,15})<\/code>/) || repText.match(/\((\d{5,15})\)/);
+            if (idMatch && idMatch[1]) {
+              const targetPeerId = idMatch[1];
+              await enqueueBotAction(env, {
+                action: 'send_reply',
+                username: targetUsername,
+                peerId: targetPeerId,
+                targetName: targetPeerId,
+                text: text,
+                chatId: String(chatId),
+                botToken: actualBotToken
+              });
+
+              const cleanText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `⏳ <b>در حال ارسال پاسخ به مخاطب (<code>${targetPeerId}</code>)...</b>\n\n💬 <b>متن پاسخ:</b>\n<blockquote>${cleanText}</blockquote>\n\n<i>رانر سلف‌بات در حال ارسال پیام از اکانت تلگرام شما است...</i>`,
+                  parse_mode: 'HTML'
+                })
+              }).catch(() => {});
+              return new Response('OK');
+            }
+          }
+
           // دستور ۰: مشاهده چت‌های خصوصی در حالت شبح (/chats یا /unread)
           if (text === '/chats' || text === '/unread') {
-            let dialogs = globalThis.cachedUserDialogs?.[targetUsername];
+            const lowerTarget = targetUsername.toLowerCase();
+            let dialogs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget];
             if (!dialogs) {
+              dialogs = await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+            }
+            if (!dialogs && lowerTarget !== targetUsername) {
               dialogs = await env.KV.get('user_dialogs:' + targetUsername, 'json');
             }
 
@@ -2045,7 +2115,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 action: 'get_dialogs',
                 username: targetUsername,
                 chatId: String(chatId),
-                messageId: null
+                messageId: null,
+                botToken: actualBotToken
               });
 
               await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
@@ -2087,7 +2158,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               peerId: targetPeerId,
               targetName: targetPeerId,
               text: replyMsg,
-              chatId: String(chatId)
+              chatId: String(chatId),
+              botToken: actualBotToken
             });
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
@@ -2111,7 +2183,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 username: targetUsername,
                 peerId: targetPeerId,
                 targetName: targetPeerId,
-                chatId: String(chatId)
+                chatId: String(chatId),
+                botToken: actualBotToken
               });
 
               await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
@@ -2382,57 +2455,73 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             return new Response('OK');
           }
 
-          // پیام استارت اصلی با جزئیات کامل و جامع
-          const isOnline = u.telegram?.enabled && !u.isSuspended;
-          const lastTime = u.status?.lastTime || 'در انتظار اجرا...';
-          const antiDelete = u.telegram?.bot?.antiDeleteEnabled !== false;
-          const antiEdit = u.telegram?.bot?.antiEditEnabled !== false;
-          const forwardTtl = u.telegram?.bot?.forwardTtlToBot !== false;
-          const ghostModeActive = !!u.telegram?.ghostMode;
-          const aiReplyActive = !!u.telegram?.aiReplyEnabled;
+          // پیام استارت اصلی با جزئیات کامل و جامع — فقط و فقط در صورت ارسال صریح دستور /start
+          if (text === '/start' || text.startsWith('/start')) {
+            const isOnline = u.telegram?.enabled && !u.isSuspended;
+            const lastTime = u.status?.lastTime || 'در انتظار اجرا...';
+            const antiDelete = u.telegram?.bot?.antiDeleteEnabled !== false;
+            const antiEdit = u.telegram?.bot?.antiEditEnabled !== false;
+            const forwardTtl = u.telegram?.bot?.forwardTtlToBot !== false;
+            const ghostModeActive = !!u.telegram?.ghostMode;
+            const aiReplyActive = !!u.telegram?.aiReplyEnabled;
 
-          const welcomeText = `⚡ <b>ربات دستیار و لاگر هوشمند Arizo Self</b>\n` +
-            `━━━━━━━━━━━━━━━━━━━━\n` +
-            `👤 <b>حساب کاربری:</b> <code>${targetUsername}</code>\n` +
-            `📡 <b>وضعیت سلف‌بات:</b> ${isOnline ? '🟢 آنلاین و فعال' : '⏸️ متوقف شده'}\n` +
-            `🕒 <b>ساعت فعال سلف:</b> <code>${lastTime}</code>\n\n` +
-            `🛡️ <b>وضعیت سیستم‌های مانیتورینگ اختصاصی:</b>\n` +
-            `🗑️ <b>سطل زباله و ضد حذف:</b> ${antiDelete ? 'فعال 🟢 (ارسال مستقیم به این چت)' : 'غیرفعال ⚪'}\n` +
-            `✏️ <b>مانیتور و ضد ویرایش:</b> ${antiEdit ? 'فعال 🟢 (نمایش قبل و بعد)' : 'غیرفعال ⚪'}\n` +
-            `📸 <b>نجات‌دهنده مدیا تایمردار:</b> ${forwardTtl ? 'فعال 🟢 (ارسال مستقیم به ربات)' : 'ارسال به سیومسیج ⚪'}\n` +
-            `👻 <b>حالت شبح (Ghost Mode):</b> ${ghostModeActive ? 'فعال 🟢 (تیک آبی مسدود + فوروارد به اینجا)' : 'غیرفعال ⚪'}\n` +
-            `🤖 <b>پاسخ هوشمند AI:</b> ${aiReplyActive ? 'فعال 🟢 (پاسخ خودکار با هوش مصنوعی)' : 'غیرفعال ⚪'}\n\n` +
-            `━━━━━━━━━━━━━━━━━━━━\n` +
-            `📌 <b>امکانات و نحوه عملکرد:</b>\n` +
-            `• در صورت حذف هرگونه پیام در چت‌های خصوصی، محتوای متنی یا رسانه آن فوراً به این چت ارسال می‌شود.\n` +
-            `• در صورت ویرایش متن در پیوی، متن قبل و بعد به صورت کاملاً تفکیک‌شده گزارش خواهد شد.\n` +
-            `• تصاویر و ویدیوهای محوشونده زمان‌دار (View-Once) بدون نابودی ذخیره و به اینجا ارسال می‌شوند.\n` +
-            `• 👻 <b>حالت شبح:</b> پیام‌های خصوصی را بخوانید بدون ارسال تیک آبی (با فوروارد خودکار به این ربات).\n` +
-            `• 🤖 <b>پاسخ هوشمند AI:</b> هوش مصنوعی با درک پیام مخاطب به جای منشی ثابت پاسخ می‌دهد.\n` +
-            `• از طریق دکمه زیر می‌توانید پنل گرافیکی را مستقیماً <b>داخل تلگرام (Mini App)</b> باز کنید 👇`;
+            const welcomeText = `⚡ <b>ربات دستیار و لاگر هوشمند Arizo Self</b>\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `👤 <b>حساب کاربری:</b> <code>${targetUsername}</code>\n` +
+              `📡 <b>وضعیت سلف‌بات:</b> ${isOnline ? '🟢 آنلاین و فعال' : '⏸️ متوقف شده'}\n` +
+              `🕒 <b>ساعت فعال سلف:</b> <code>${lastTime}</code>\n\n` +
+              `🛡️ <b>وضعیت سیستم‌های مانیتورینگ اختصاصی:</b>\n` +
+              `🗑️ <b>سطل زباله و ضد حذف:</b> ${antiDelete ? 'فعال 🟢 (ارسال مستقیم به این چت)' : 'غیرفعال ⚪'}\n` +
+              `✏️ <b>مانیتور و ضد ویرایش:</b> ${antiEdit ? 'فعال 🟢 (نمایش قبل و بعد)' : 'غیرفعال ⚪'}\n` +
+              `📸 <b>نجات‌دهنده مدیا تایمردار:</b> ${forwardTtl ? 'فعال 🟢 (ارسال مستقیم به ربات)' : 'ارسال به سیومسیج ⚪'}\n` +
+              `👻 <b>حالت شبح (Ghost Mode):</b> ${ghostModeActive ? 'فعال 🟢 (تیک آبی مسدود + فوروارد به اینجا)' : 'غیرفعال ⚪'}\n` +
+              `🤖 <b>پاسخ هوشمند AI:</b> ${aiReplyActive ? 'فعال 🟢 (پاسخ خودکار با هوش مصنوعی)' : 'غیرفعال ⚪'}\n\n` +
+              `━━━━━━━━━━━━━━━━━━━━\n` +
+              `📌 <b>امکانات و نحوه عملکرد:</b>\n` +
+              `• در صورت حذف هرگونه پیام در چت‌های خصوصی، محتوای متنی یا رسانه آن فوراً به این چت ارسال می‌شود.\n` +
+              `• در صورت ویرایش متن در پیوی، متن قبل و بعد به صورت کاملاً تفکیک‌شده گزارش خواهد شد.\n` +
+              `• تصاویر و ویدیوهای محوشونده زمان‌دار (View-Once) بدون نابودی ذخیره و به اینجا ارسال می‌شوند.\n` +
+              `• 👻 <b>حالت شبح:</b> پیام‌های خصوصی را بخوانید بدون ارسال تیک آبی (با فوروارد خودکار به این ربات).\n` +
+              `• 🤖 <b>پاسخ هوشمند AI:</b> هوش مصنوعی با درک پیام مخاطب به جای منشی ثابت پاسخ می‌دهد.\n` +
+              `• از طریق دکمه زیر می‌توانید پنل گرافیکی را مستقیماً <b>داخل تلگرام (Mini App)</b> باز کنید 👇`;
 
-          const sendRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: welcomeText,
-              parse_mode: 'HTML',
-              reply_markup: renderMainKeyboard(u)
-            })
-          }).catch(() => null);
-
-          if (!sendRes || !sendRes.ok) {
-            await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+            const sendRes = await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: welcomeText.replace(/<[^>]*>/g, ''),
+                text: welcomeText,
+                parse_mode: 'HTML',
                 reply_markup: renderMainKeyboard(u)
               })
-            }).catch(() => {});
+            }).catch(() => null);
+
+            if (!sendRes || !sendRes.ok) {
+              await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: welcomeText.replace(/<[^>]*>/g, ''),
+                  reply_markup: renderMainKeyboard(u)
+                })
+              }).catch(() => {});
+            }
+            return new Response('OK');
           }
+
+          // پاسخ کوتاه و بهینه به پیام‌های متفرقه غیردستوری (جلوگیری از ارسال مکرر پیام طولانی خوشامدگویی)
+          await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: `💡 <b>پیام شما دریافت شد.</b>\n\nبرای مشاهده امکانات سلف‌بات از دکمه‌های زیر استفاده فرمایید یا دستور /start را ارسال کنید:`,
+              parse_mode: 'HTML',
+              reply_markup: renderMainKeyboard(u)
+            })
+          }).catch(() => {});
+          return new Response('OK');
         }
 
         // پاسخ به کلیک دکمه‌های اینلاین شیشه‌ای
@@ -2465,8 +2554,12 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               body: JSON.stringify({ callback_query_id: cb.id, text: 'در حال بارگذاری لیست چت‌ها...' })
             }).catch(() => {});
 
-            let dialogs = globalThis.cachedUserDialogs?.[targetUsername];
+            const lowerTarget = targetUsername.toLowerCase();
+            let dialogs = globalThis.cachedUserDialogs?.[targetUsername] || globalThis.cachedUserDialogs?.[lowerTarget];
             if (!dialogs || data === 'ghost_chats_refresh') {
+              dialogs = await env.KV.get('user_dialogs:' + lowerTarget, 'json');
+            }
+            if (!dialogs && data !== 'ghost_chats_refresh' && lowerTarget !== targetUsername) {
               dialogs = await env.KV.get('user_dialogs:' + targetUsername, 'json');
             }
 
@@ -2521,7 +2614,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
                 action: 'get_dialogs',
                 username: targetUsername,
                 chatId: String(chatId),
-                messageId: messageId || null
+                messageId: messageId || null,
+                botToken: actualBotToken
               });
 
               const waitMsg = `🔄 <b>در حال دریافت لیست پیوی‌های خصوصی شما از تلگرام...</b>\n\nلطفاً چند ثانیه صبر کنید تا لیست استخراج و در همین پیام نمایش داده شود.`;
@@ -2567,7 +2661,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               peerId: targetPeerId,
               targetName: targetName,
               chatId: String(chatId),
-              messageId: messageId || null
+              messageId: messageId || null,
+              botToken: actualBotToken
             });
 
             if (messageId) {
@@ -2641,7 +2736,8 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
               username: targetUsername,
               peerId: targetPeerId,
               targetName: targetName,
-              chatId: String(chatId)
+              chatId: String(chatId),
+              botToken: actualBotToken
             });
 
           } else if (data === 'bot_menu') {
