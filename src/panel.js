@@ -3255,6 +3255,7 @@ export function panelHTML(env) {
           <div class="form-group" style="flex:1; min-width:140px;">
             <label class="form-label">فاصله زمانی بین پاسخ‌ها (کول‌داون)</label>
             <select id="aiCooldownSelect" class="input-field" style="background:var(--bg-input);">
+              <option value="0">⚡ بدون محدودیت زمانی (فوری و بدون کول‌داون)</option>
               <option value="1">هر ۱ دقیقه</option>
               <option value="3">هر ۳ دقیقه</option>
               <option value="5" selected>هر ۵ دقیقه (پیشنهادی)</option>
