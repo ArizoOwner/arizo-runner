@@ -72,7 +72,11 @@ function cleanMuteTarget(raw) {
  */
 function isClientConnected(entry) {
   if (!entry || !entry.client) return false;
-  return Boolean(entry.connected || entry.client.connected || entry.client._sender?.connected);
+  try {
+    return Boolean(entry.connected || entry.client.connected || entry.client._sender?.connected);
+  } catch (_) {
+    return Boolean(entry.connected);
+  }
 }
 
 /**
@@ -876,7 +880,6 @@ class TelegramConnectionPool {
 
       console.log(`🔌 Connecting warm socket for [${username}]...`);
       await client.connect();
-      client.connected = true;
       console.log(`✅ Warm socket connected for [${username}]!`);
 
       // ۱. ثبت رسمی نشست در تلگرام جهت اشتراک دائمی در دریافت بلادرنگ Push Updates
@@ -957,7 +960,6 @@ class TelegramConnectionPool {
     } else if (!isClientConnected(entry)) {
       console.log(`🔌 Reconnecting dropped socket for [${username}]...`);
       await entry.client.connect();
-      entry.client.connected = true;
       entry.connected = true;
       try {
         await entry.client.invoke(new Api.updates.GetState());
