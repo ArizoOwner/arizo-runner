@@ -216,6 +216,40 @@ async function sendBotTelegramMessage(token, chatId, text, replyMarkup = null) {
 }
 
 /**
+ * ویرایش پیام متنی با فرمت HTML در ربات تلگرام اختصاصی کاربر (با کیبورد شیشه‌ای)
+ */
+async function editBotTelegramMessage(token, chatId, messageId, text, replyMarkup = null) {
+  if (!token || !chatId || !messageId || !text) return false;
+  try {
+    const payload = {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      // در صورت عدم تغییر متن، خطا طبیعی است و نیازی به لاگ قرمز نیست
+      if (err.includes('message is not modified')) return true;
+      console.warn(`⚠️ [editBotTelegramMessage] Telegram API non-200: ${err}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('❌ [editBotTelegramMessage] Error:', err.message);
+    return false;
+  }
+}
+
+/**
  * ارسال چندلایه و تضمینی انواع رسانه (عکس، فیلم، صوت یا فایل) به ربات تلگرام اختصاصی کاربر
  */
 async function sendBotTelegramMedia(token, chatId, buffer, fileName, caption, isPhoto, isVideo, isVoice) {
@@ -585,12 +619,17 @@ async function forwardGhostMessage(botToken, chatId, senderName, senderUsername,
     `🕒 <b>زمان:</b> ${new Date().toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' })}\n` +
     `${mediaLabel}\n` +
     `📝 <b>متن پیام:</b>\n<blockquote>${cleanText || '<i>(پیام فاقد متن)</i>'}</blockquote>\n\n` +
-    `💡 <i>برای زدن تیک آبی در تلگرام بنویسید:</i> <code>.read</code>`;
+    `💡 <i>برای ارسال پاسخ مستقیم از اکانت خود یا ثبت تیک آبی، دکمه‌های زیر را انتخاب کنید:</i>`;
 
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '💡 راهنما: ثبت تیک آبی با دستور .read', callback_data: 'ghost_help' }
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${senderIdStr}:${encodeURIComponent(senderName)}` },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${senderIdStr}:${encodeURIComponent(senderName)}` }
+      ],
+      [
+        { text: '👻 مشاهده کامل چت (شبح)', callback_data: `ghost_view:${senderIdStr}:${encodeURIComponent(senderName)}` },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
       ]
     ]
   };
@@ -661,6 +700,14 @@ class TelegramConnectionPool {
           }
         }
         console.log(`📚 [${username}] Initial dialog entities primed (${initDialogs.length} dialogs in cache).`);
+
+        // استخراج و همگام‌سازی فوری پیوی‌های خصوصی کاربر در کلادفلر جهت نمایش در ربات
+        fetchUserPrivateDialogs(client).then(privateDlgs => {
+          if (privateDlgs.length > 0) {
+            syncDialogsToCloudflare(username, privateDlgs);
+            console.log(`💬 [${username}] Initial sync: ${privateDlgs.length} private dialogs pushed to Cloudflare.`);
+          }
+        }).catch(() => {});
       } catch (dlgErr) {
         console.warn(`⚠️ [${username}] Initial dialogs priming warning:`, dlgErr.message);
       }
@@ -1899,6 +1946,293 @@ function getMsUntilSecond(targetSecond = 0, targetMs = 0) {
 }
 
 /**
+ * پاکسازی کاراکترهای خطرناک HTML
+ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * حل امن انتیتی برای آیدی‌های عددی و یوزرنیم‌ها در GramJS
+ */
+async function resolveInputPeerSafely(client, peerId) {
+  if (!client || !peerId) return peerId;
+  try {
+    return await client.getInputEntity(peerId);
+  } catch (_) {
+    try {
+      const num = Number(peerId);
+      if (!isNaN(num)) return await client.getInputEntity(num);
+    } catch (_) {}
+    try {
+      return await client.getEntity(peerId);
+    } catch (_) {}
+  }
+  return peerId;
+}
+
+/**
+ * استخراج چت‌های خصوصی کاربر (پیوی‌های افراد واقعی) جهت نمایش در ربات
+ */
+async function fetchUserPrivateDialogs(client) {
+  if (!client || !client.connected) return [];
+  try {
+    const dialogs = await client.getDialogs({ limit: 40 });
+    const privateDialogs = [];
+    for (const d of dialogs) {
+      const isUser = Boolean(d.isUser || (d.entity && (d.entity.className === 'User' || d.entity instanceof Api.User)));
+      const isBot = Boolean(d.entity?.bot);
+      const isSelf = Boolean(d.entity?.isSelf || d.isSelf);
+      if (isUser && !isBot && !isSelf && d.id) {
+        const firstName = d.entity?.firstName || '';
+        const lastName = d.entity?.lastName || '';
+        const fullName = [firstName, lastName].filter(Boolean).join(' ') || d.title || d.name || 'کاربر';
+        const username = d.entity?.username || '';
+        const unreadCount = Number(d.unreadCount) || 0;
+        privateDialogs.push({
+          id: d.id.toString(),
+          name: fullName,
+          username,
+          unreadCount
+        });
+      }
+    }
+    return privateDialogs;
+  } catch (err) {
+    console.warn('⚠️ [fetchUserPrivateDialogs] Error:', err.message);
+    return [];
+  }
+}
+
+/**
+ * همگام‌سازی لیست چت‌های خصوصی با ورکر کلادفلر
+ */
+async function syncDialogsToCloudflare(username, dialogs) {
+  if (!CLOUDFLARE_URL || !RUNNER_SECRET || !username || !Array.isArray(dialogs)) return;
+  try {
+    await fetch(`${CLOUDFLARE_URL}/api/internal/sync-dialogs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RUNNER_SECRET}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
+      },
+      body: JSON.stringify({ username, dialogs })
+    });
+  } catch (_) {}
+}
+
+/**
+ * ایجاد و ارسال لیست چت‌های خصوصی به صورت دکمه‌های اینلاین شیشه‌ای در ربات تلگرام
+ */
+async function sendDialogsListToBot(botToken, chatId, dialogs, botMessageId = null) {
+  if (!botToken || !chatId) return false;
+  const sorted = [...(dialogs || [])].sort((a, b) => (b.unreadCount || 0) - (a.unreadCount || 0));
+  const topChats = sorted.slice(0, 10);
+  
+  const buttons = topChats.map(d => {
+    const badge = d.unreadCount > 0 ? ` (${d.unreadCount} 📩)` : '';
+    const safeName = (d.name || 'کاربر').slice(0, 18);
+    return [{
+      text: `👤 ${safeName}${badge}`,
+      callback_data: `ghost_view:${d.id}:${encodeURIComponent(safeName)}`
+    }];
+  });
+
+  buttons.push([
+    { text: '🔄 بروزرسانی لیست چت‌ها', callback_data: 'ghost_chats_refresh' },
+    { text: '🔙 منوی اصلی', callback_data: 'bot_menu' }
+  ]);
+
+  const unreadTotal = (dialogs || []).reduce((sum, d) => sum + (d.unreadCount || 0), 0);
+  const listMsg = `👻 <b>[لیست چت‌های خصوصی — حالت شبح]</b>\n\n` +
+    `📊 <b>کل پیام‌های خوانده‌نشده:</b> <b>${unreadTotal} پیام</b>\n\n` +
+    `💡 روی نام هر مخاطب کلیک کنید تا آخرین پیام‌های او را <b>بدون ارسال تیک آبی (شبح)</b> بخوانید یا به او پاسخ دهید:`;
+
+  const keyboard = { inline_keyboard: buttons };
+
+  if (botMessageId) {
+    const edited = await editBotTelegramMessage(botToken, chatId, botMessageId, listMsg, keyboard);
+    if (edited) return true;
+  }
+  return sendBotTelegramMessage(botToken, chatId, listMsg, keyboard);
+}
+
+/**
+ * دریافت پیام‌های چت بدون ثبت تیک آبی (Ghost Mode Reading via MTProto messages.getHistory)
+ */
+async function fetchChatMessagesInGhostMode(client, peerId, limit = 8) {
+  if (!client || !client.connected) return [];
+  try {
+    const inputPeer = await resolveInputPeerSafely(client, peerId);
+    const messages = await client.getMessages(inputPeer, { limit });
+    return messages || [];
+  } catch (err) {
+    console.warn(`⚠️ [fetchChatMessagesInGhostMode] Error fetching messages for ${peerId}:`, err.message);
+    return [];
+  }
+}
+
+/**
+ * ارسال یا ویرایش نمایش چت در حالت شبح به ربات با دکمه‌های پاسخ سریع و تیک آبی
+ */
+async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, messages, botMessageId = null) {
+  if (!botToken || !chatId) return false;
+  const cleanName = escapeHtml(targetName || 'مخاطب');
+  
+  let body = `👻 <b>[مشاهده پیام‌های ${cleanName} — حالت شبح]</b>\n` +
+    `🆔 <b>شناسه مخاطب:</b> <code>${peerId}</code>\n` +
+    `🔒 <i>پیام‌های زیر بدون ثبت تیک آبی استخراج شدند. مخاطب متوجه خوانده‌شدن پیام‌ها نخواهد شد.</i>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  if (!messages || messages.length === 0) {
+    body += `<i>هیچ پیامی در این گفتگو یافت نشد یا تاریخچه چت خالی است.</i>\n\n`;
+  } else {
+    const sorted = [...messages].reverse();
+    for (const m of sorted) {
+      const timeStr = m.date ? new Date(m.date * 1000).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' }) : '';
+      const isOut = Boolean(m.out);
+      const senderBadge = isOut ? '📤 <b>شما:</b>' : `📥 <b>${cleanName}:</b>`;
+      
+      let mediaTag = '';
+      if (m.media) {
+        if (m.media instanceof Api.MessageMediaPhoto || m.photo) mediaTag = ' [📷 عکس]';
+        else if (m.voice || m.media?.voice) mediaTag = ' [🎤 ویس]';
+        else if (m.video || m.media?.video) mediaTag = ' [🎥 ویدیو]';
+        else mediaTag = ' [📁 فایل]';
+      }
+
+      const rawText = (m.text || m.message || '').trim();
+      const cleanText = rawText ? escapeHtml(rawText) : (mediaTag ? '<i>(فقط رسانه)</i>' : '<i>(پیام خالی)</i>');
+
+      body += `${senderBadge} <code>[${timeStr}]</code>${mediaTag}\n<blockquote>${cleanText}</blockquote>\n\n`;
+    }
+  }
+
+  body += `━━━━━━━━━━━━━━━━━━━━\n` +
+    `💡 برای ارسال پاسخ از اکانت تلگرام روی دکمه <b>✍️ ارسال پاسخ</b> کلیک کنید.`;
+
+  const keyboard = {
+    inline_keyboard: [
+      [
+        { text: '✍️ ارسال پاسخ', callback_data: `ghost_reply:${peerId}:${encodeURIComponent(targetName || '')}` },
+        { text: '👁️ ثبت تیک آبی', callback_data: `ghost_read:${peerId}:${encodeURIComponent(targetName || '')}` }
+      ],
+      [
+        { text: '🔄 بروزرسانی پیام‌ها', callback_data: `ghost_view:${peerId}:${encodeURIComponent(targetName || '')}` },
+        { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+      ]
+    ]
+  };
+
+  if (botMessageId) {
+    const edited = await editBotTelegramMessage(botToken, chatId, botMessageId, body, keyboard);
+    if (edited) return true;
+  }
+  return sendBotTelegramMessage(botToken, chatId, body, keyboard);
+}
+
+/**
+ * پولینگ منظم و پردازش بلادرنگ اکشن‌های درخواستی از ربات دستیار
+ */
+async function pollAndProcessBotActions(pool) {
+  if (!CLOUDFLARE_URL || !RUNNER_SECRET) return;
+  try {
+    const res = await fetch(`${CLOUDFLARE_URL}/api/internal/bot-actions`, {
+      headers: {
+        'Authorization': `Bearer ${RUNNER_SECRET}`,
+        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
+      }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const actions = data.actions;
+    if (!Array.isArray(actions) || actions.length === 0) return;
+
+    for (const action of actions) {
+      try {
+        const entry = pool.clients.get(action.username);
+        if (!entry || !entry.client || !entry.client.connected) {
+          console.warn(`⚠️ [bot-actions] Client for [${action.username}] not connected yet.`);
+          continue;
+        }
+
+        const botToken = entry.settings?.bot?.token;
+        if (!botToken && action.chatId) {
+          console.warn(`⚠️ [bot-actions] Bot token not configured for [${action.username}].`);
+          continue;
+        }
+
+        if (action.action === 'get_dialogs') {
+          console.log(`📋 [bot-actions] Fetching private dialogs for [${action.username}]...`);
+          const dialogs = await fetchUserPrivateDialogs(entry.client);
+          await syncDialogsToCloudflare(action.username, dialogs);
+          if (botToken && action.chatId) {
+            await sendDialogsListToBot(botToken, action.chatId, dialogs, action.messageId);
+          }
+
+        } else if (action.action === 'get_messages') {
+          console.log(`👻 [bot-actions] Fetching ghost messages for [${action.username}] peer ${action.peerId}...`);
+          const messages = await fetchChatMessagesInGhostMode(entry.client, action.peerId, 8);
+          if (botToken && action.chatId) {
+            await sendGhostChatViewToBot(botToken, action.chatId, action.peerId, action.targetName, messages, action.messageId);
+          }
+
+        } else if (action.action === 'send_reply') {
+          console.log(`✍️ [bot-actions] Sending reply from [${action.username}] to ${action.peerId}...`);
+          const inputPeer = await resolveInputPeerSafely(entry.client, action.peerId);
+          await entry.client.sendMessage(inputPeer, { message: action.text });
+          console.log(`✅ [bot-actions] Reply sent from [${action.username}] to ${action.peerId}`);
+
+          if (botToken && action.chatId) {
+            const cleanText = escapeHtml(action.text || '');
+            const cleanTarget = escapeHtml(action.targetName || action.peerId);
+            const confirmText = `✅ <b>پاسخ شما با موفقیت ارسال شد!</b>\n\n` +
+              `👤 <b>به مخاطب:</b> ${cleanTarget} (<code>${action.peerId}</code>)\n` +
+              `💬 <b>متن ارسال‌شده:</b>\n<blockquote>${cleanText}</blockquote>\n\n` +
+              `<i>پیام مستقیماً از اکانت رسمی تلگرام شما ارسال شد.</i>`;
+            const keyboard = {
+              inline_keyboard: [
+                [
+                  { text: '👁️ مشاهده چت در حالت شبح', callback_data: `ghost_view:${action.peerId}:${encodeURIComponent(action.targetName || '')}` },
+                  { text: '📋 لیست چت‌ها', callback_data: 'ghost_chats' }
+                ]
+              ]
+            };
+            await sendBotTelegramMessage(botToken, action.chatId, confirmText, keyboard);
+          }
+
+        } else if (action.action === 'mark_read') {
+          console.log(`👁️ [bot-actions] Marking read for [${action.username}] peer ${action.peerId}...`);
+          const inputPeer = await resolveInputPeerSafely(entry.client, action.peerId);
+          await entry.client.markAsRead(inputPeer);
+          console.log(`✅ [bot-actions] Marked read for [${action.username}] peer ${action.peerId}`);
+
+          if (botToken && action.chatId) {
+            const cleanTarget = escapeHtml(action.targetName || action.peerId);
+            const markText = `👁️ <b>تیک آبی با موفقیت ثبت شد!</b>\n\n` +
+              `پیام‌های چت <b>${cleanTarget}</b> در تلگرام به عنوان خوانده‌شده علامت‌گذاری شدند. ✅`;
+            const keyboard = {
+              inline_keyboard: [
+                [
+                  { text: '👻 بازگشت به چت‌های خصوصی', callback_data: 'ghost_chats' }
+                ]
+              ]
+            };
+            await sendBotTelegramMessage(botToken, action.chatId, markText, keyboard);
+          }
+        }
+      } catch (actErr) {
+        console.error(`❌ [bot-actions] Error handling action ${action.action}:`, actErr.message);
+      }
+    }
+  } catch (err) {
+    // Silent catch
+  }
+}
+
+/**
  * حلقه اصلی پرسرعت و دقیق
  */
 async function main() {
@@ -1991,10 +2325,24 @@ async function main() {
             aiCooldown: u.aiCooldown ?? 5
           };
           resolveMutedUsernames(entry);
+
+          // همگام‌سازی دوره‌ای دیالوگ‌های خصوصی با ورکر کلادفلر
+          if (entry.client && entry.client.connected) {
+            fetchUserPrivateDialogs(entry.client).then(dlgs => {
+              if (dlgs.length > 0) syncDialogsToCloudflare(u.username, dlgs);
+            }).catch(() => {});
+          }
         }
       }
     } catch (_) {}
   }, 10000);
+
+  // پردازش بلادرنگ دستورات ربات تلگرام (مشاهده چت‌ها در حالت شبح، ارسال پاسخ مستقیم و تیک آبی)
+  const botActionsInterval = setInterval(async () => {
+    try {
+      await pollAndProcessBotActions(pool);
+    } catch (_) {}
+  }, 2500);
 
   while (true) {
     const elapsed = Date.now() - startTime;
@@ -2009,6 +2357,7 @@ async function main() {
     if (remainingTime <= 0) {
       console.log('🏁 Duration reached. Cleaning up and exiting...');
       clearInterval(settingsSyncInterval);
+      clearInterval(botActionsInterval);
       await pool.disconnectAll();
       break;
     }
