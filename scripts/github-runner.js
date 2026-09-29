@@ -1105,48 +1105,62 @@ class TelegramConnectionPool {
     if (isPrivateChat && !isOut && message.id && entry.recentMessagesCache) {
       let sender = null;
       try { sender = await message.getSender(); } catch (_) {}
-      const senderFullName = sender ? (
-        [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 
-        sender.title || 
-        (sender.username ? `@${sender.username}` : (peerIdStr || 'کاربر'))
-      ) : (peerIdStr || 'کاربر');
 
-      const isPhoto = message.media instanceof Api.MessageMediaPhoto || Boolean(message.photo);
-      const isVoice = Boolean(message.voice) || Boolean(message.media?.voice);
-      const isVideo = Boolean(message.video) || Boolean(message.media?.video);
+      // 🛡️ استثنای قطعی: هرگز پیام‌های ربات‌ها (به ویژه ربات دستیار سلف‌بات) و حساب‌های سرویس در سطل زباله یا ضد ویرایش قرار نمی‌گیرند
+      const botTokenId = entry.settings?.bot?.token ? entry.settings.bot.token.split(':')[0] : null;
+      const botUsername = (entry.settings?.bot?.username || '').replace(/^@/, '').toLowerCase();
+      const senderId = peerIdStr || (sender?.id ? sender.id.toString() : '');
+      const senderUser = (sender?.username || '').toLowerCase();
 
-      let fileName = 'media.bin';
-      if (isPhoto) fileName = `photo_${Date.now()}.jpg`;
-      else if (isVoice) fileName = `voice_${Date.now()}.ogg`;
-      else if (isVideo) fileName = `video_${Date.now()}.mp4`;
+      const isHelperBot = (botTokenId && senderId === botTokenId) || 
+                          (botUsername && senderUser && senderUser === botUsername);
+      const isTelegramBot = Boolean(sender?.bot || sender?.isBot);
+      const isOfficialService = (senderId === '777000' || senderId === '42777');
 
-      const cacheObj = {
-        id: message.id,
-        senderId: peerIdStr || 'unknown',
-        senderName: senderFullName,
-        senderUsername: sender?.username || '',
-        text: message.text || message.message || '',
-        date: message.date || Math.floor(Date.now() / 1000),
-        hasMedia: Boolean(message.media),
-        isPhoto,
-        isVideo,
-        isVoice,
-        fileName
-      };
+      if (!isHelperBot && !isTelegramBot && !isOfficialService) {
+        const senderFullName = sender ? (
+          [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 
+          sender.title || 
+          (sender.username ? `@${sender.username}` : (peerIdStr || 'کاربر'))
+        ) : (peerIdStr || 'کاربر');
 
-      entry.recentMessagesCache.set(Number(message.id), cacheObj);
-      if (entry.recentMessagesCache.size > 1200) {
-        const oldestKey = entry.recentMessagesCache.keys().next().value;
-        entry.recentMessagesCache.delete(oldestKey);
-      }
+        const isPhoto = message.media instanceof Api.MessageMediaPhoto || Boolean(message.photo);
+        const isVoice = Boolean(message.voice) || Boolean(message.media?.voice);
+        const isVideo = Boolean(message.video) || Boolean(message.media?.video);
 
-      // دانلود پیش‌دستانه امن برای تصاویر و ویس‌های عادی زیر ۴ مگابایت جهت ارسال به ربات در صورت حذف
-      if ((isPhoto || isVoice) && !message.media?.ttlSeconds && !message.media?.ttl_seconds) {
-        downloadMediaSafely(entry.client, message, username).then(buf => {
-          if (buf && buf.length > 0 && buf.length < 4 * 1024 * 1024) {
-            cacheObj.mediaBuffer = buf;
-          }
-        }).catch(() => {});
+        let fileName = 'media.bin';
+        if (isPhoto) fileName = `photo_${Date.now()}.jpg`;
+        else if (isVoice) fileName = `voice_${Date.now()}.ogg`;
+        else if (isVideo) fileName = `video_${Date.now()}.mp4`;
+
+        const cacheObj = {
+          id: message.id,
+          senderId: peerIdStr || 'unknown',
+          senderName: senderFullName,
+          senderUsername: sender?.username || '',
+          text: message.text || message.message || '',
+          date: message.date || Math.floor(Date.now() / 1000),
+          hasMedia: Boolean(message.media),
+          isPhoto,
+          isVideo,
+          isVoice,
+          fileName
+        };
+
+        entry.recentMessagesCache.set(Number(message.id), cacheObj);
+        if (entry.recentMessagesCache.size > 1200) {
+          const oldestKey = entry.recentMessagesCache.keys().next().value;
+          entry.recentMessagesCache.delete(oldestKey);
+        }
+
+        // دانلود پیش‌دستانه امن برای تصاویر و ویس‌های عادی زیر ۴ مگابایت جهت ارسال به ربات در صورت حذف
+        if ((isPhoto || isVoice) && !message.media?.ttlSeconds && !message.media?.ttl_seconds) {
+          downloadMediaSafely(entry.client, message, username).then(buf => {
+            if (buf && buf.length > 0 && buf.length < 4 * 1024 * 1024) {
+              cacheObj.mediaBuffer = buf;
+            }
+          }).catch(() => {});
+        }
       }
     }
 
@@ -1900,6 +1914,14 @@ class TelegramConnectionPool {
           const cached = entry.recentMessagesCache.get(msgId);
           entry.recentMessagesCache.delete(msgId);
 
+          const botTokenId = bot.token ? bot.token.split(':')[0] : null;
+          if (botTokenId && cached.senderId === botTokenId) {
+            continue; // استثنای قطعی پیام‌های ربات دستیار
+          }
+          if (cached.senderId === '777000' || cached.senderId === '42777') {
+            continue; // استثنای سرویس تلگرام
+          }
+
           const dateStr = cached.date 
             ? new Date(cached.date * 1000).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran' }) 
             : 'لحظاتی پیش';
@@ -1950,6 +1972,15 @@ class TelegramConnectionPool {
     if (isEdit && update.message && bot.antiEditEnabled !== false) {
       const editMsg = update.message;
       const msgId = Number(editMsg.id);
+
+      const botTokenId = bot.token ? bot.token.split(':')[0] : null;
+      const editPeerId = (editMsg.peerId?.userId || editMsg.fromId?.userId || editMsg.senderId)?.toString();
+      if (botTokenId && editPeerId === botTokenId) {
+        return; // استثنای قطعی ویرایش پیام‌ها/منوهای ربات دستیار متصل
+      }
+      if (editPeerId === '777000' || editPeerId === '42777') {
+        return;
+      }
 
       if (entry.recentMessagesCache && entry.recentMessagesCache.has(msgId)) {
         const cached = entry.recentMessagesCache.get(msgId);
