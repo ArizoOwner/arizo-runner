@@ -1,7 +1,5 @@
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
-import { MTProtoSender } from 'telegram/network/index.js';
-import { LAYER } from 'telegram/tl/AllTLObjects.js';
 import { computeCheck } from 'telegram/Password.js';
 import { getStylizedTime, renderDynamicBio, isSleepTime } from './clock.js';
 import { panelHTML } from './panel.js';
