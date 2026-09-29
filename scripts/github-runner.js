@@ -2994,9 +2994,9 @@ async function main() {
           };
           resolveMutedUsernames(entry);
 
-          // همگام‌سازی دوره‌ای دیالوگ‌های خصوصی با ورکر کلادفلر (کنترل نرخ زمانی ۹۰ ثانیه‌ای جهت پیشگیری قطعی از FLOOD_WAIT)
+          // همگام‌سازی دوره‌ای دیالوگ‌های خصوصی با ورکر کلادفلر (هر ۱ ساعت یکبار و همچنین هنگام درخواست فوری در ربات)
           const nowTs = Date.now();
-          if (entry.client && entry.client.connected && (!entry.lastDialogSync || (nowTs - entry.lastDialogSync > 90000))) {
+          if (entry.client && entry.client.connected && (!entry.lastDialogSync || (nowTs - entry.lastDialogSync > 3600000))) {
             entry.lastDialogSync = nowTs;
             fetchUserPrivateDialogs(entry.client, entry).then(dlgs => {
               if (dlgs.length > 0) syncDialogsToCloudflare(u.username, dlgs);
