@@ -523,14 +523,22 @@ export default {
       if (!isAdmin) return json({ error: 'دسترسی غیرمجاز' }, 401);
 
       try {
-        const usersList = await env.KV.get('users_list', 'json') || [];
-        const users = await Promise.all(
+        let usersList = await env.KV.get('users_list', 'json') || [];
+        const validUsersList = [];
+        let listChanged = false;
+
+        const users = (await Promise.all(
           usersList.map(async (uname) => {
-            const u = await env.KV.get('user:' + uname, 'json');
-            if (!u) return { username: uname, exists: false };
+            if (!uname) return null;
+            const cleanUname = String(uname).trim().toLowerCase();
+            const u = await env.KV.get('user:' + cleanUname, 'json') || await env.KV.get('user:' + uname, 'json');
+            if (!u) {
+              listChanged = true;
+              return null;
+            }
+            validUsersList.push(uname);
             const sub = checkUserSubscription(u);
             const isSuspended = !sub.active || u.isSuspended;
-            const cleanUname = uname.toLowerCase();
             const isOwner = cleanUname === 'amirmaster' || cleanUname === 'admin' || (usersList.length > 0 && cleanUname === usersList[0].toLowerCase());
             const isUserAdmin = isOwner || u.role === 'admin';
             return {
@@ -554,7 +562,12 @@ export default {
               error: u.status?.error
             };
           })
-        );
+        )).filter(Boolean);
+
+        if (listChanged) {
+          await env.KV.put('users_list', JSON.stringify(validUsersList));
+        }
+
         return json({ ok: true, users: users.reverse() });
       } catch (err) {
         return json({ error: 'خطا در دریافت کاربران' }, 500);
@@ -570,16 +583,33 @@ export default {
         const body = await request.json();
         const { username, action } = body;
         const cleanUser = String(username || '').trim().toLowerCase();
-        const userData = await env.KV.get('user:' + cleanUser, 'json');
-        if (!userData) return json({ error: 'کاربر یافت نشد' }, 404);
 
-        const usersList = await env.KV.get('users_list', 'json') || [];
+        let usersList = await env.KV.get('users_list', 'json') || [];
         const isRootOwner = cleanUser === 'amirmaster' || cleanUser === 'admin' || (usersList.length > 0 && cleanUser === usersList[0].toLowerCase());
 
         // 🛡️ گارد امنیتی غیرقابل نفوذ: جلوگیری از حذف، تعلیق یا تنزل ادمین اولیه / مالک اصلی
         if (isRootOwner && (action === 'delete' || action === 'toggle_role' || action === 'toggle_suspend')) {
           return json({ error: 'خطای امنیتی: حذف، تعلیق یا تغییر سطح دسترسی مدیر ارشد و مالک اصلی سامانه امکان‌پذیر نیست.' }, 403);
         }
+
+        // اقدام حذف کاربر (حتی اگر دیتای کاربر قبلاً ناقص پاک شده باشد، پاک‌سازی کامل از تمام لیست‌ها و دیتابیس)
+        if (action === 'delete') {
+          await env.KV.delete('user:' + cleanUser);
+          if (username && cleanUser !== username) {
+            await env.KV.delete('user:' + username);
+          }
+          usersList = usersList.filter(u => u && u.toLowerCase() !== cleanUser && u.toLowerCase() !== String(username || '').toLowerCase());
+          await env.KV.put('users_list', JSON.stringify(usersList));
+          if (env.DB) {
+            await env.DB.prepare('DELETE FROM users WHERE lower(username) = ?').bind(cleanUser).run().catch(() => {});
+          }
+          await env.KV.delete('user_dialogs:' + cleanUser);
+          await env.KV.delete('miniapp_token:' + cleanUser);
+          return json({ ok: true, deleted: true });
+        }
+
+        const userData = await env.KV.get('user:' + cleanUser, 'json') || await env.KV.get('user:' + username, 'json');
+        if (!userData) return json({ error: 'کاربر یافت نشد' }, 404);
 
         if (action === 'toggle') {
           if (userData.telegram) {
@@ -610,14 +640,6 @@ export default {
           userData.status = null;
           await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
           return json({ ok: true });
-        }
-
-        if (action === 'delete') {
-          await env.KV.delete('user:' + cleanUser);
-          let usersList = await env.KV.get('users_list', 'json') || [];
-          usersList = usersList.filter(u => u !== cleanUser);
-          await env.KV.put('users_list', JSON.stringify(usersList));
-          return json({ ok: true, deleted: true });
         }
 
         if (action === 'set_plan') {
