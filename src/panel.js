@@ -2823,8 +2823,8 @@ export function panelHTML(env) {
 
         <!-- Clock preview bar with seconds pulse positioned to the right of minute -->
         <div class="tg-clock-bar" dir="ltr">
-          <div class="tg-clock-digits" id="clockPreview" dir="ltr">۰۰:۰۰</div>
-          <div class="clock-seconds-badge" id="secondsPulse" dir="ltr">:۰۰</div>
+          <div class="tg-clock-digits" id="clockPreview" dir="ltr">𝟎𝟎:𝟎𝟎</div>
+          <div class="clock-seconds-badge" id="secondsPulse" dir="ltr">:𝟎𝟎</div>
         </div>
 
         <div class="clock-badges-row">
