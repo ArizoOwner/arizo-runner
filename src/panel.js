@@ -1977,6 +1977,8 @@ export function panelHTML(env) {
     #studioPaneMute:not(.hidden),
     #studioPaneAutomation:not(.hidden),
     #studioPaneBot:not(.hidden),
+    #studioPaneGhost:not(.hidden),
+    #studioPaneAI:not(.hidden),
     #adminTabContentStats:not(.hidden),
     #adminTabContentCodes:not(.hidden),
     #adminTabContentUsers:not(.hidden),
@@ -2929,6 +2931,12 @@ export function panelHTML(env) {
         <button id="studioTabBot" class="studio-tab-btn" onclick="switchStudioTab('bot')">
           <span>⚡</span> <span>ربات و لاگر</span>
         </button>
+        <button id="studioTabGhost" class="studio-tab-btn" onclick="switchStudioTab('ghost')">
+          <span>👻</span> <span>حالت شبح</span>
+        </button>
+        <button id="studioTabAI" class="studio-tab-btn" onclick="switchStudioTab('ai')">
+          <span>🤖</span> <span>پاسخ AI</span>
+        </button>
       </div>
 
       <!-- 🕒 تب ۱: فونت و استایل ساعت -->
@@ -3120,7 +3128,140 @@ export function panelHTML(env) {
         </div>
       </div>
 
-      <!-- 🤖 تب ۷: ربات اختصاصی و لاگر پیشرفته تلگرام (Telegram Mini App & Loggers) -->
+      <!-- 👻 تب ۶: حالت شبح و مدیریت تیک آبی (Ghost Mode / Anti-Read-Receipt) -->
+      <div id="studioPaneGhost" class="hidden">
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(56, 189, 248, 0.12) 100%); border: 1px solid var(--accent-blue-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+          <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+            <span>👻</span> <span>حالت شبح — خواندن بدون تیک آبی (Ghost Read)</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.7;">
+            وقتی این قابلیت فعال باشه، تمام پیام‌های خصوصی جدید به صورت خودکار به <b>ربات اختصاصی</b> شما فوروارد می‌شن و می‌تونید اونجا بخونیدشون بدون اینکه تیک آبی بخوره. وقتی آماده بودید، با دستور <code>.read</code> در تلگرام می‌تونید تیک آبی رو دستی بزنید.
+          </div>
+        </div>
+
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">فعال‌سازی حالت شبح (Ghost Mode)</div>
+            <div class="toggle-desc">پیام‌های خصوصی رو بخونید بدون تیک آبی — فوروارد خودکار به ربات</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="ghostModeToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 18px;">
+          <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px;">دستورات سریع تلگرامی:</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.8;">
+            <code style="color: var(--accent-blue);">.read</code> — تیک آبی رو برای چتی که توش هستید بزنید<br>
+            <code style="color: var(--accent-blue);">.read all</code> — تیک آبی رو برای همه چت‌ها یکجا بزنید<br>
+            <code style="color: var(--accent-blue);">.ghost on</code> — فعال‌سازی سریع حالت شبح<br>
+            <code style="color: var(--accent-blue);">.ghost off</code> — غیرفعال کردن حالت شبح
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">لیست استثنا — افرادی که همیشه تیک آبی بخوره (اختیاری)</label>
+          <input type="text" id="ghostExcludeInput" class="input-field mono" placeholder="آیدی عددی یا یوزرنیم افرادی که می‌خواید تیک آبی برایشون فعال بمونه (با کاما جدا کنید)" dir="ltr">
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+            💡 برای این افراد، تیک آبی به صورت عادی کار می‌کنه و حالت شبح روی اونا اعمال نمی‌شه.
+          </div>
+        </div>
+
+        <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid var(--accent-amber-border); border-radius: var(--radius-md); padding: 14px; margin-top: 14px;">
+          <div style="font-size: 0.8rem; color: var(--accent-amber); line-height: 1.7;">
+            ⚠️ <b>نکته مهم:</b> حالت شبح فقط زمانی کار می‌کنه که پیام‌ها رو از طریق <b>ربات</b> بخونید. اگر چت رو مستقیم توی اپلیکیشن تلگرام باز کنید، تیک آبی از طرف اپلیکیشن ارسال می‌شه.
+          </div>
+        </div>
+      </div>
+
+      <!-- 🤖 تب ۷: پاسخ هوشمند مبتنی بر AI (Smart AI Auto-Reply) -->
+      <div id="studioPaneAI" class="hidden">
+        <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(244, 63, 94, 0.12) 100%); border: 1px solid var(--accent-purple-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+          <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+            <span>🤖</span> <span>پاسخ هوشمند مبتنی بر هوش مصنوعی (AI Smart Reply)</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.7;">
+            به جای یک پیام ثابت AFK، هوش مصنوعی <b>متناسب با محتوای پیام</b> به مخاطبین پاسخ می‌دهد. هر کاربر API Key خودش رو وارد می‌کنه و هزینه‌ای برای سرور نداره.
+          </div>
+        </div>
+
+        <div class="toggle-row" style="margin-bottom:18px;">
+          <div>
+            <div class="toggle-label">فعال‌سازی پاسخ هوشمند AI (جایگزین AFK ثابت)</div>
+            <div class="toggle-desc">وقتی فعال باشه، AI به جای پیام ثابت منشی، هوشمندانه پاسخ می‌دهد</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="aiReplyToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">سرویس‌دهنده هوش مصنوعی (AI Provider)</label>
+          <select id="aiProviderSelect" class="input-field" style="background:var(--bg-input);">
+            <option value="gemini" selected>Google Gemini (رایگان — پیشنهادی)</option>
+            <option value="openai">OpenAI (GPT-4o / GPT-3.5)</option>
+            <option value="custom">Custom API (سرویس سفارشی)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">کلید API هوش مصنوعی (API Key)</label>
+          <input type="password" id="aiApiKeyInput" class="input-field mono" placeholder="کلید API خود را از پنل Gemini یا OpenAI دریافت و اینجا وارد کنید" dir="ltr">
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+            💡 <b>Gemini:</b> از <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--accent-blue);">اینجا</a> رایگان دریافت کنید | <b>OpenAI:</b> از <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--accent-blue);">اینجا</a>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">شخصیت و دستورالعمل AI (System Prompt)</label>
+          <textarea id="aiSystemPromptInput" class="input-field" rows="3" placeholder="به AI بگویید چطور رفتار کنه (مثلاً: مؤدبانه و رسمی پاسخ بده، از اطلاعات خصوصی صحبت نکنه)"></textarea>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+            💡 حداکثر ۵۰۰ کاراکتر. این متن شخصیت AI را تعیین می‌کند.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">اطلاعات پایه برای AI (زمینه و کانتکست)</label>
+          <textarea id="aiContextInput" class="input-field" rows="3" placeholder="اطلاعاتی که AI اجازه داره بگه (مثلاً: ساعت کاری من ۹ تا ۵ هست، برنامه‌نویس هستم)"></textarea>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+            💡 AI از این اطلاعات برای پاسخ دقیق‌تر استفاده می‌کند.
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; min-width:140px;">
+            <label class="form-label">حداکثر تعداد پاسخ به هر شخص</label>
+            <select id="aiMaxRepliesSelect" class="input-field" style="background:var(--bg-input);">
+              <option value="1">فقط ۱ پاسخ</option>
+              <option value="2">حداکثر ۲ پاسخ</option>
+              <option value="3" selected>حداکثر ۳ پاسخ (پیشنهادی)</option>
+              <option value="5">حداکثر ۵ پاسخ</option>
+              <option value="10">حداکثر ۱۰ پاسخ</option>
+              <option value="20">نامحدود (۲۰ پاسخ)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1; min-width:140px;">
+            <label class="form-label">فاصله زمانی بین پاسخ‌ها (کول‌داون)</label>
+            <select id="aiCooldownSelect" class="input-field" style="background:var(--bg-input);">
+              <option value="1">هر ۱ دقیقه</option>
+              <option value="3">هر ۳ دقیقه</option>
+              <option value="5" selected>هر ۵ دقیقه (پیشنهادی)</option>
+              <option value="10">هر ۱۰ دقیقه</option>
+              <option value="30">هر ۳۰ دقیقه</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid var(--accent-green-border); border-radius: var(--radius-md); padding: 14px; margin-top: 10px;">
+          <div style="font-size: 0.8rem; color: var(--accent-green); line-height: 1.7;">
+            ✅ <b>نکته:</b> وقتی پاسخ هوشمند AI فعال باشد، اولویت بالاتری نسبت به منشی خودکار (AFK) دارد و به جای پیام ثابت، پاسخ هوشمند متناسب با سوال مخاطب ارسال می‌شود.
+          </div>
+        </div>
+      </div>
+
+      <!-- 🤖 تب ۸: ربات اختصاصی و لاگر پیشرفته تلگرام (Telegram Mini App & Loggers) -->
       <div id="studioPaneBot" class="hidden">
         <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%); border: 1px solid var(--border-specular); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
           <div style="font-size: 0.98rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
@@ -4649,7 +4790,9 @@ export function panelHTML(env) {
       { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk', title: 'منشی خودکار', icon: '🤖' },
       { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute', title: 'فیلتر سکوت', icon: '🔇' },
       { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation', title: 'حالت خواب', icon: '🌙' },
-      { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot', title: 'ربات و لاگر', icon: '⚡' }
+      { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot', title: 'ربات و لاگر', icon: '⚡' },
+      { id: 'ghost', btn: 'studioTabGhost', pane: 'studioPaneGhost', title: 'حالت شبح', icon: '👻' },
+      { id: 'ai', btn: 'studioTabAI', pane: 'studioPaneAI', title: 'پاسخ هوشمند AI', icon: '🤖' }
     ];
 
     var currentStudioTabIndex = 0;
@@ -4912,6 +5055,17 @@ export function panelHTML(env) {
           muteEnabled: hasMutedUsers ? true : muteToggleChecked,
           mutedUsers: rawMutedUsers,
           antiTtlEnabled: document.getElementById('botForwardTtlToggle') ? document.getElementById('botForwardTtlToggle').checked : true,
+          // 👻 Ghost Mode
+          ghostMode: document.getElementById('ghostModeToggle') ? document.getElementById('ghostModeToggle').checked : false,
+          ghostExcludeList: (document.getElementById('ghostExcludeInput') && document.getElementById('ghostExcludeInput').value) || '',
+          // 🤖 AI Smart Reply
+          aiReplyEnabled: document.getElementById('aiReplyToggle') ? document.getElementById('aiReplyToggle').checked : false,
+          aiProvider: document.getElementById('aiProviderSelect') ? document.getElementById('aiProviderSelect').value : 'gemini',
+          aiApiKey: (document.getElementById('aiApiKeyInput') && document.getElementById('aiApiKeyInput').value.trim()) || '',
+          aiSystemPrompt: (document.getElementById('aiSystemPromptInput') && document.getElementById('aiSystemPromptInput').value) || '',
+          aiContext: (document.getElementById('aiContextInput') && document.getElementById('aiContextInput').value) || '',
+          aiMaxReplies: document.getElementById('aiMaxRepliesSelect') ? parseInt(document.getElementById('aiMaxRepliesSelect').value, 10) : 3,
+          aiCooldown: document.getElementById('aiCooldownSelect') ? parseInt(document.getElementById('aiCooldownSelect').value, 10) : 5,
           bot: {
             token: (document.getElementById('botTokenInput') && document.getElementById('botTokenInput').value.trim()) || (window.currentBotToken || ''),
             antiDeleteEnabled: document.getElementById('botAntiDeleteToggle') ? document.getElementById('botAntiDeleteToggle').checked : true,
@@ -5050,7 +5204,7 @@ export function panelHTML(env) {
     };
 
     // ذخیره آنی و خودکار تغییر وضعیت سوئیچ‌های استودیو (نجات مدیا، منشی، سکوت، بیوگرافی، خواب و ربات)
-    ['afkEnabledToggle', 'muteEnabledToggle', 'bioEnabledToggle', 'sleepEnabledToggle', 'toggle12h', 'botAntiDeleteToggle', 'botAntiEditToggle', 'botForwardTtlToggle'].forEach(function(toggleId) {
+    ['afkEnabledToggle', 'muteEnabledToggle', 'bioEnabledToggle', 'sleepEnabledToggle', 'toggle12h', 'botAntiDeleteToggle', 'botAntiEditToggle', 'botForwardTtlToggle', 'ghostModeToggle', 'aiReplyToggle'].forEach(function(toggleId) {
       var el = document.getElementById(toggleId);
       if (el) {
         el.addEventListener('change', function() {
@@ -5254,6 +5408,19 @@ export function panelHTML(env) {
             var hasSavedMuted = Array.isArray(data.mutedUsers) ? (data.mutedUsers.length > 0) : Boolean(data.mutedUsers && data.mutedUsers.trim());
             setSafeChecked('muteEnabledToggle', !!data.muteEnabled || hasSavedMuted);
             setSafeValue('mutedUsersInput', Array.isArray(data.mutedUsers) ? data.mutedUsers.join(', ') : (data.mutedUsers || ''));
+
+            // 👻 بارگذاری حالت شبح (Ghost Mode)
+            setSafeChecked('ghostModeToggle', !!data.ghostMode);
+            setSafeValue('ghostExcludeInput', Array.isArray(data.ghostExcludeList) ? data.ghostExcludeList.join(', ') : (data.ghostExcludeList || ''));
+
+            // 🤖 بارگذاری پاسخ هوشمند AI
+            setSafeChecked('aiReplyToggle', !!data.aiReplyEnabled);
+            if (data.aiProvider) setSafeValue('aiProviderSelect', data.aiProvider);
+            setSafeValue('aiApiKeyInput', data.aiApiKey || '');
+            setSafeValue('aiSystemPromptInput', data.aiSystemPrompt || '');
+            setSafeValue('aiContextInput', data.aiContext || '');
+            if (data.aiMaxReplies !== undefined) setSafeValue('aiMaxRepliesSelect', String(data.aiMaxReplies));
+            if (data.aiCooldown !== undefined) setSafeValue('aiCooldownSelect', String(data.aiCooldown));
 
             // 🤖 بارگذاری ربات تلگرام اختصاصی و تنظیمات لاگر
             if (data.bot) {
