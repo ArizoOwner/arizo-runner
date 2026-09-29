@@ -21,6 +21,7 @@ export function panelHTML(env) {
         var urlParams = new URLSearchParams(window.location.search);
         var ssoToken = urlParams.get('token');
         if (ssoToken) {
+          localStorage.setItem('selfbot_token', ssoToken);
           localStorage.setItem('arizo_token', ssoToken);
           window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -3936,10 +3937,17 @@ export function panelHTML(env) {
       setTimeout(function() { t.className = ''; }, 4500);
     }
 
-    function getAuthToken() { return localStorage.getItem('selfbot_token') || ''; }
+    function getAuthToken() {
+      return localStorage.getItem('selfbot_token') || localStorage.getItem('arizo_token') || '';
+    }
     function setAuthToken(token) {
-      if (token) localStorage.setItem('selfbot_token', token);
-      else localStorage.removeItem('selfbot_token');
+      if (token) {
+        localStorage.setItem('selfbot_token', token);
+        localStorage.setItem('arizo_token', token);
+      } else {
+        localStorage.removeItem('selfbot_token');
+        localStorage.removeItem('arizo_token');
+      }
     }
 
     function getAdminToken() { return localStorage.getItem('admin_token') || ''; }
@@ -4051,7 +4059,8 @@ export function panelHTML(env) {
       }
     };
 
-    window.logoutAdmin = function() {
+    window.logoutAdmin = async function() {
+      try { await fetch('/api/admin/logout', { method: 'POST', headers: adminHeaders() }); } catch (_) {}
       setAdminToken('');
       closeAdminPortal();
     };
