@@ -1575,6 +1575,13 @@ export default {
                 }
                 await env.KV.put('user:' + item.username, JSON.stringify(u));
               }
+            } else if (!item.error) {
+              const u = await env.KV.get('user:' + item.username, 'json');
+              if (u && u.status?.error) {
+                u.status.error = null;
+                u.status.lastUpdate = item.lastUpdate || Date.now();
+                await env.KV.put('user:' + item.username, JSON.stringify(u));
+              }
             }
           }
         }
