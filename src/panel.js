@@ -5590,6 +5590,7 @@ export function panelHTML(env) {
     // ==========================================
     // 🔄 بارگذاری وضعیت داشبورد
     // ==========================================
+    window.loadUserDashboard = loadUserDashboard;
     async function loadUserDashboard() {
       var token = getAuthToken();
       var adminNav = document.getElementById('adminPortalNavBtn');
@@ -5744,9 +5745,11 @@ export function panelHTML(env) {
             if (data.aiMaxReplies !== undefined) setSafeValue('aiMaxRepliesSelect', String(data.aiMaxReplies));
             if (data.aiCooldown !== undefined) setSafeValue('aiCooldownSelect', String(data.aiCooldown));
 
-            // 🔐 بارگذاری وضعیت ۲FA
+            // 🔐 بارگذاری وضعیت ۲FA (تنها در صورتی که کاربر وسط راه‌اندازی و اسکن ۲FA نباشد)
             if (window.updateTotpUI) {
-              window.updateTotpUI(!!data.totpEnabled, data.totpBackupCodes);
+              if (data.totpEnabled || !window.isSettingUpTotp) {
+                window.updateTotpUI(!!data.totpEnabled, data.totpBackupCodes);
+              }
             }
 
             // 🤖 بارگذاری ربات تلگرام اختصاصی و تنظیمات لاگر
@@ -5860,6 +5863,7 @@ export function panelHTML(env) {
     // 🔐 توابع مدیریت امنیت، ۲FA و پشتیبان‌گیری
     // ==========================================
     window.currentBackupCodes = [];
+    window.isSettingUpTotp = false;
 
     window.updateTotpUI = function(enabled, backupCodes) {
       window.isTotpEnabled = !!enabled;
@@ -5874,6 +5878,7 @@ export function panelHTML(env) {
         badge.style.borderColor = enabled ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
       }
       if (enabled) {
+        window.isSettingUpTotp = false;
         if (inactBox) inactBox.classList.add('hidden');
         if (modalBox) modalBox.classList.add('hidden');
         if (actBox) actBox.classList.remove('hidden');
@@ -5888,9 +5893,15 @@ export function panelHTML(env) {
           }
         }
       } else {
-        if (inactBox) inactBox.classList.remove('hidden');
-        if (modalBox) modalBox.classList.add('hidden');
         if (actBox) actBox.classList.add('hidden');
+        // اگر کاربر در حال راه‌اندازی و اسکن کیو‌آر کد است، هرگز نباید باکس کیو‌آر بسته شود
+        if (window.isSettingUpTotp) {
+          if (inactBox) inactBox.classList.add('hidden');
+          if (modalBox) modalBox.classList.remove('hidden');
+        } else {
+          if (inactBox) inactBox.classList.remove('hidden');
+          if (modalBox) modalBox.classList.add('hidden');
+        }
       }
     };
 
@@ -5907,9 +5918,12 @@ export function panelHTML(env) {
         });
         var data = await res.json();
         if (!data.ok) {
+          window.isSettingUpTotp = false;
           showToast(data.error || 'خطا در راه‌اندازی ۲FA', 'error');
           return;
         }
+
+        window.isSettingUpTotp = true;
 
         // ۱. درج تصویر بارکد QR اختصاصی
         var qrBox = document.getElementById('totpQrContainer');
@@ -5944,10 +5958,13 @@ export function panelHTML(env) {
           setTimeout(function() { verifyInp.focus(); }, 200);
         }
 
-        document.getElementById('totpSetupModalBox').classList.remove('hidden');
-        document.getElementById('totpSetupInactiveBox').classList.add('hidden');
+        var modalBox = document.getElementById('totpSetupModalBox');
+        var inactBox = document.getElementById('totpSetupInactiveBox');
+        if (modalBox) modalBox.classList.remove('hidden');
+        if (inactBox) inactBox.classList.add('hidden');
         showToast('بارکد QR و کلید اختصاصی با موفقیت ساخته شد 📷', 'info');
       } catch (e) {
+        window.isSettingUpTotp = false;
         showToast('خطای شبکه در ارتباط با سرور', 'error');
       } finally {
         if (btn) {
@@ -5958,8 +5975,11 @@ export function panelHTML(env) {
     };
 
     window.cancelTotpSetup = function() {
-      document.getElementById('totpSetupModalBox').classList.add('hidden');
-      document.getElementById('totpSetupInactiveBox').classList.remove('hidden');
+      window.isSettingUpTotp = false;
+      var modalBox = document.getElementById('totpSetupModalBox');
+      var inactBox = document.getElementById('totpSetupInactiveBox');
+      if (modalBox) modalBox.classList.add('hidden');
+      if (inactBox) inactBox.classList.remove('hidden');
     };
 
     window.copyTotpSecret = function() {
@@ -6008,6 +6028,7 @@ export function panelHTML(env) {
           showToast(data.error || 'کد وارد شده نادرست یا منقضی است. لطفاً کد جدید اپلیکیشن را وارد کنید.', 'error');
           return;
         }
+        window.isSettingUpTotp = false;
         showToast('احراز هویت دو مرحله‌ای با موفقیت فعال شد! 🎉', 'success');
         updateTotpUI(true, data.backupCodes);
       } catch (e) {
@@ -6036,6 +6057,7 @@ export function panelHTML(env) {
         });
         var data = await res.json();
         if (data.ok) {
+          window.isSettingUpTotp = false;
           showToast('احراز هویت ۲FA غیرفعال شد', 'info');
           updateTotpUI(false);
         } else {
