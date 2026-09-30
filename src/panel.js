@@ -3923,15 +3923,15 @@ export function panelHTML(env) {
 
       function createParticles() {
         particles = [];
-        var count = Math.min(45, Math.max(20, Math.floor((width * height) / 28000)));
+        var count = Math.min(20, Math.max(10, Math.floor((width * height) / 45000)));
         for (var i = 0; i < count; i++) {
           particles.push({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.6,
-            vy: (Math.random() - 0.5) * 0.6,
-            radius: Math.random() * 1.8 + 1.2,
-            baseAlpha: Math.random() * 0.35 + 0.3,
+            vx: (Math.random() - 0.5) * 0.45,
+            vy: (Math.random() - 0.5) * 0.45,
+            radius: Math.random() * 1.5 + 1.0,
+            baseAlpha: Math.random() * 0.25 + 0.25,
             colorShift: Math.random()
           });
         }
@@ -3965,8 +3965,8 @@ export function panelHTML(env) {
         }
       });
 
-      var maxDistSq = 120 * 120;
-      var mouseDistSq = 130 * 130;
+      var maxDistSq = 110 * 110;
+      var mouseDistSq = 120 * 120;
 
       function render() {
         if (!isRunning) return;
@@ -3975,6 +3975,7 @@ export function panelHTML(env) {
         var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
         var pLen = particles.length;
 
+        // رسم ذرات
         for (var i = 0; i < pLen; i++) {
           var p = particles[i];
           p.x += p.vx;
@@ -3990,41 +3991,38 @@ export function panelHTML(env) {
             var dy = mouse.y - p.y;
             var d2 = dx * dx + dy * dy;
             if (d2 < mouseDistSq) {
-              var force = (1 - Math.sqrt(d2) / 130) * 0.35;
-              p.x += dx * force * 0.05;
-              p.y += dy * force * 0.05;
+              p.x += dx * 0.015;
+              p.y += dy * 0.015;
             }
           }
 
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          if (isDark) {
-            ctx.fillStyle = p.colorShift > 0.5 ? 'rgba(168, 85, 247, ' + p.baseAlpha + ')' : 'rgba(56, 189, 248, ' + p.baseAlpha + ')';
-          } else {
-            ctx.fillStyle = p.colorShift > 0.5 ? 'rgba(99, 102, 241, ' + (p.baseAlpha * 0.8) + ')' : 'rgba(2, 132, 199, ' + (p.baseAlpha * 0.8) + ')';
-          }
+          ctx.fillStyle = isDark
+            ? (p.colorShift > 0.5 ? 'rgba(168, 85, 247, 0.4)' : 'rgba(56, 189, 248, 0.4)')
+            : (p.colorShift > 0.5 ? 'rgba(99, 102, 241, 0.3)' : 'rgba(2, 132, 199, 0.3)');
           ctx.fill();
+        }
 
+        // رسم یکپارچه خطوط اتصال با یک بار stroke بهینه
+        ctx.beginPath();
+        for (var i = 0; i < pLen; i++) {
+          var p1 = particles[i];
           for (var j = i + 1; j < pLen; j++) {
             var p2 = particles[j];
-            var diffX = p.x - p2.x;
-            var diffY = p.y - p2.y;
+            var diffX = p1.x - p2.x;
+            var diffY = p1.y - p2.y;
             var distSq = diffX * diffX + diffY * diffY;
 
             if (distSq < maxDistSq) {
-              var d = Math.sqrt(distSq);
-              var lineAlpha = (1 - d / 120) * (isDark ? 0.25 : 0.18);
-              ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
+              ctx.moveTo(p1.x, p1.y);
               ctx.lineTo(p2.x, p2.y);
-              ctx.strokeStyle = isDark 
-                ? 'rgba(168, 85, 247, ' + lineAlpha + ')' 
-                : 'rgba(99, 102, 241, ' + lineAlpha + ')';
-              ctx.lineWidth = 1;
-              ctx.stroke();
             }
           }
         }
+        ctx.strokeStyle = isDark ? 'rgba(168, 85, 247, 0.12)' : 'rgba(99, 102, 241, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
         animFrameId = requestAnimationFrame(render);
       }
@@ -6002,17 +6000,7 @@ export function panelHTML(env) {
     initStudioNavDots();
     loadUserDashboard();
 
-    // 🌟 نمایش خودکار پاپ‌آپ معرفی امکانات به هر کاربری که وارد سایت می‌شود
-    (function checkAutoShowFeatures() {
-      try {
-        var isDismissed = localStorage.getItem('arizo_features_intro_dismissed');
-        if (!isDismissed) {
-          setTimeout(function() {
-            window.openFeaturesModal();
-          }, 450);
-        }
-      } catch (e) {}
-    })();
+    // پاپ‌آپ معرفی امکانات تنها در صورت کلیک کاربر روی دکمه راهنما باز می‌شود
 
     // ⌨️ بستن پاپ‌آپ‌ها با فشردن کلید Escape
     document.addEventListener('keydown', function(e) {
