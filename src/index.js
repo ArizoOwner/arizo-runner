@@ -13,6 +13,10 @@ import {
   decryptSession,
   validatePasswordStrength
 } from './crypto.js';
+import { isHoneypot } from './security/rateLimiter.js';
+import { logSecurityEvent, getRecentSecurityEvents, AUDIT_EVENT_TYPES, AUDIT_SEVERITY } from './security/auditLogger.js';
+import { generateTotpSecret, generateTotpCode, verifyTotpToken, generateBackupCodes, getTotpAuthUri } from './security/totp.js';
+import { BackupManager } from './modules/backupManager.js';
 
 // هدرهای امنیتی درجه سازمانی (Enterprise Security & CSP)
 const SECURITY_HEADERS = {
@@ -317,6 +321,24 @@ export default {
 
     const clientIP = getClientIP(request);
 
+    // سپر امنیتی هانی‌پات جهت به دام انداختن و مسدودسازی فوری اسکنرهای آسیب‌پذیری
+    if (isHoneypot(url.pathname)) {
+      await logSecurityEvent(env, AUDIT_EVENT_TYPES.HONEYPOT_TRIGGERED, {
+        ip: clientIP,
+        user: 'scanner',
+        details: { path: url.pathname, method: request.method },
+        userAgent: request.headers.get('user-agent') || ''
+      }, AUDIT_SEVERITY.CRITICAL);
+      return new Response('Access Denied (Honeypot Defense Activated)', {
+        status: 403,
+        headers: {
+          ...SECURITY_HEADERS,
+          'X-Security-Policy': 'Zero-Trust-Honeypot-Armed',
+          'Retry-After': '86400'
+        }
+      });
+    }
+
     // ۱. سرو رابط کاربری پنل با تزریق هدرهای امنیتی و ضد کش (Anti-Cache)
     if (url.pathname === '/') {
       return new Response(panelHTML(env), {
@@ -418,6 +440,19 @@ export default {
         });
       } catch (err) {
         return json({ error: 'خطا در دریافت آمار' }, 500);
+      }
+    }
+
+    // دریافت تاریخچه رویدادها و لاگ‌های امنیتی سیستم (Audit Logs)
+    if (url.pathname === '/api/admin/audit-logs' && request.method === 'GET') {
+      const isAdmin = await getAdminAuth(request, env);
+      if (!isAdmin) return json({ error: 'دسترسی غیرمجاز' }, 401);
+
+      try {
+        const events = await getRecentSecurityEvents(env);
+        return json({ ok: true, events });
+      } catch (err) {
+        return json({ error: 'خطا در دریافت لاگ‌های امنیتی' }, 500);
       }
     }
 
@@ -867,19 +902,44 @@ export default {
       }
 
       try {
-        const { username, password } = await request.json();
+        const { username, password, totpCode } = await request.json();
         const cleanUser = String(username || '').trim().toLowerCase();
         const rawPass = String(password || '');
 
         const userData = await env.KV.get('user:' + cleanUser, 'json');
         if (!userData || !userData.passwordHash || !userData.salt) {
+          await logSecurityEvent(env, AUDIT_EVENT_TYPES.AUTH_FAILURE, { ip: clientIP, user: cleanUser, details: { reason: 'user_not_found' } }, AUDIT_SEVERITY.WARNING);
           return json({ error: 'نام کاربری یا رمز عبور اشتباه است.' }, 400);
         }
 
         const isValid = await verifyPassword(rawPass, userData.salt, userData.passwordHash);
         if (!isValid) {
+          await logSecurityEvent(env, AUDIT_EVENT_TYPES.AUTH_FAILURE, { ip: clientIP, user: cleanUser, details: { reason: 'invalid_password' } }, AUDIT_SEVERITY.WARNING);
           return json({ error: 'نام کاربری یا رمز عبور اشتباه است.' }, 400);
         }
+
+        // بررسی احراز هویت دو مرحله‌ای (2FA) در صورت فعال بودن
+        if (userData.totp && userData.totp.enabled) {
+          if (!totpCode) {
+            return json({ ok: false, requires2FA: true, message: 'کد تایید دو مرحله‌ای (2FA) الزامی است.' });
+          }
+          const cleanCode = String(totpCode).trim();
+          const isTotpValid = await verifyTotpToken(cleanCode, userData.totp.secret);
+          const isBackupValid = Array.isArray(userData.totp.backupCodes) && userData.totp.backupCodes.includes(cleanCode);
+
+          if (!isTotpValid && !isBackupValid) {
+            await logSecurityEvent(env, AUDIT_EVENT_TYPES.AUTH_FAILURE, { ip: clientIP, user: cleanUser, details: { reason: 'invalid_totp' } }, AUDIT_SEVERITY.WARNING);
+            return json({ error: 'کد تایید دو مرحله‌ای (2FA) یا کد بازیابی نادرست است.' }, 401);
+          }
+
+          if (isBackupValid) {
+            // سوزاندن کد بازیابی اضطراری مصرف‌شده
+            userData.totp.backupCodes = userData.totp.backupCodes.filter(c => c !== cleanCode);
+            await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          }
+        }
+
+        await logSecurityEvent(env, AUDIT_EVENT_TYPES.AUTH_SUCCESS, { ip: clientIP, user: cleanUser, details: { method: userData.totp?.enabled ? 'password+2fa' : 'password' } }, AUDIT_SEVERITY.INFO);
 
         const token = generateRandomHex(32);
         await env.KV.put('token:' + token, JSON.stringify({
@@ -1089,8 +1149,209 @@ export default {
         aiCooldown: auth.user.telegram?.aiCooldown ?? 5,
         userId: auth.user.telegram?.userId || null,
         bot: auth.user.telegram?.bot || null,
+        totpEnabled: !!auth.user.totp?.enabled,
         status: liveStatus
       });
+    }
+
+    // ==========================================
+    // 🛡️ تایید دو مرحله‌ای (2FA / TOTP)
+    // ==========================================
+
+    // راه‌اندازی و تولید کلید محرمانه 2FA
+    if (url.pathname === '/api/user/2fa/setup' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+
+      try {
+        const secret = generateTotpSecret(20);
+        const backupCodes = generateBackupCodes(8);
+        const otpauthUri = getTotpAuthUri(auth.username, secret, 'Arizo Studio');
+
+        await env.KV.put('temp_totp_setup:' + auth.username, JSON.stringify({
+          secret,
+          backupCodes,
+          createdAt: Date.now()
+        }), { expirationTtl: 600 });
+
+        return json({
+          ok: true,
+          secret,
+          backupCodes,
+          otpauthUri
+        });
+      } catch (err) {
+        return json({ error: 'خطا در ایجاد تنظیمات 2FA' }, 500);
+      }
+    }
+
+    // تایید و فعال‌سازی نهایی 2FA
+    if (url.pathname === '/api/user/2fa/enable' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+
+      try {
+        const { code } = await request.json();
+        const pending = await env.KV.get('temp_totp_setup:' + auth.username, 'json');
+        if (!pending || !pending.secret) {
+          return json({ error: 'مهلت فعال‌سازی به پایان رسیده است. مجدداً اقدام کنید.' }, 400);
+        }
+
+        const isValid = await verifyTotpToken(code, pending.secret);
+        if (!isValid) {
+          return json({ error: 'کد ۶ رقمی وارد شده نامعتبر است.' }, 400);
+        }
+
+        auth.user.totp = {
+          enabled: true,
+          secret: pending.secret,
+          backupCodes: pending.backupCodes,
+          enabledAt: Date.now()
+        };
+
+        await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+        await env.KV.delete('temp_totp_setup:' + auth.username);
+
+        await logSecurityEvent(env, AUDIT_EVENT_TYPES.TOTP_ENABLED, {
+          ip: clientIP,
+          user: auth.username,
+          details: { method: 'totp_setup' }
+        }, AUDIT_SEVERITY.INFO);
+
+        return json({ ok: true, enabled: true, backupCodes: pending.backupCodes });
+      } catch (err) {
+        return json({ error: 'خطا در فعال‌سازی 2FA' }, 500);
+      }
+    }
+
+    // غیرفعال‌سازی 2FA
+    if (url.pathname === '/api/user/2fa/disable' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+
+      try {
+        const { password, code } = await request.json();
+        const isPassValid = await verifyPassword(String(password || ''), auth.user.salt, auth.user.passwordHash);
+        let isCodeValid = false;
+        if (code && auth.user.totp?.secret) {
+          isCodeValid = await verifyTotpToken(code, auth.user.totp.secret);
+        }
+
+        if (!isPassValid && !isCodeValid) {
+          return json({ error: 'جهت غیرفعال‌سازی، ورود رمز عبور حساب یا کد معتبر الزامی است.' }, 400);
+        }
+
+        auth.user.totp = { enabled: false };
+        await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+
+        await logSecurityEvent(env, AUDIT_EVENT_TYPES.TOTP_DISABLED, {
+          ip: clientIP,
+          user: auth.username,
+          details: { method: 'user_action' }
+        }, AUDIT_SEVERITY.WARNING);
+
+        return json({ ok: true, disabled: true });
+      } catch (err) {
+        return json({ error: 'خطا در غیرفعال‌سازی 2FA' }, 500);
+      }
+    }
+
+    // ==========================================
+    // 💾 پشتیبان‌گیری رمزنگاری‌شده و بازیابی (Backup Manager)
+    // ==========================================
+
+    // استخراج نسخه پشتیبان امن رمزنگاری‌شده
+    if (url.pathname === '/api/user/backup/export' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+
+      try {
+        const { password } = await request.json();
+        if (!password || password.length < 8) {
+          return json({ error: 'رمز عبور پشتیبان باید حداقل ۸ کاراکتر باشد.' }, 400);
+        }
+
+        const safeData = {
+          username: auth.username,
+          plan: auth.user.plan,
+          planName: auth.user.planName,
+          telegram: {
+            enabled: auth.user.telegram?.enabled,
+            digits: auth.user.telegram?.digits,
+            colon: auth.user.telegram?.colon,
+            prefix: auth.user.telegram?.prefix,
+            suffix: auth.user.telegram?.suffix,
+            is12h: auth.user.telegram?.is12h,
+            bioEnabled: auth.user.telegram?.bioEnabled,
+            bioTemplate: auth.user.telegram?.bioTemplate,
+            sleepEnabled: auth.user.telegram?.sleepEnabled,
+            sleepStart: auth.user.telegram?.sleepStart,
+            sleepEnd: auth.user.telegram?.sleepEnd,
+            sleepText: auth.user.telegram?.sleepText,
+            afkEnabled: auth.user.telegram?.afkEnabled,
+            afkMessage: auth.user.telegram?.afkMessage,
+            afkCooldown: auth.user.telegram?.afkCooldown,
+            mutedUsers: auth.user.telegram?.mutedUsers,
+            ghostMode: auth.user.telegram?.ghostMode,
+            antiTtlEnabled: auth.user.telegram?.antiTtlEnabled
+          }
+        };
+
+        const encryptedBackup = await BackupManager.exportEncryptedBackup(safeData, password);
+
+        await logSecurityEvent(env, AUDIT_EVENT_TYPES.CONFIG_MUTATED, {
+          ip: clientIP,
+          user: auth.username,
+          details: { action: 'backup_export' }
+        }, AUDIT_SEVERITY.INFO);
+
+        return json({
+          ok: true,
+          backup: encryptedBackup,
+          fileName: `arizo-backup-${auth.username}-${new Date().toISOString().slice(0, 10)}.json`
+        });
+      } catch (err) {
+        return json({ error: err.message || 'خطا در خروجی پشتیبان' }, 500);
+      }
+    }
+
+    // بازگردانی نسخه پشتیبان امن
+    if (url.pathname === '/api/user/backup/import' && request.method === 'POST') {
+      const auth = await getAuthUser(request, env);
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+
+      try {
+        const { backupData, password } = await request.json();
+        if (!backupData || !password) {
+          return json({ error: 'محتوای فایل پشتیبان و رمز عبور الزامی است.' }, 400);
+        }
+
+        const restored = await BackupManager.importEncryptedBackup(String(backupData), String(password));
+        if (!restored || !restored.telegram) {
+          return json({ error: 'فایل پشتیبان فاقد تنظیمات معتبر است.' }, 400);
+        }
+
+        // ادغام تنظیمات بازیابی‌شده با کاربر جاری با حفظ سشن اتصال
+        auth.user.telegram = {
+          ...auth.user.telegram,
+          ...restored.telegram,
+          sessionEncrypted: auth.user.telegram?.sessionEncrypted,
+          userId: auth.user.telegram?.userId,
+          bot: auth.user.telegram?.bot
+        };
+
+        await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
+
+        await logSecurityEvent(env, AUDIT_EVENT_TYPES.CONFIG_MUTATED, {
+          ip: clientIP,
+          user: auth.username,
+          details: { action: 'backup_import' }
+        }, AUDIT_SEVERITY.INFO);
+
+        return json({ ok: true, restored: true });
+      } catch (err) {
+        return json({ error: err.message || 'خطا در بازگردانی پشتیبان' }, 400);
+      }
     }
 
     // ==========================================
