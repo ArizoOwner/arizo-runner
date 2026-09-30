@@ -3198,6 +3198,10 @@ export function panelHTML(env) {
           </label>
         </div>
 
+        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 18px; font-size: 0.8rem; color: var(--text-main); line-height: 1.7;">
+          🛡️ <b>پایش هوشمند وضعیت آنلاین:</b> هوش مصنوعی تنها در زمان <b>آفلاین بودن</b> به پیوی‌ها پاسخ می‌دهد. به محض اینکه آنلاین شوید، پیامی بخوانید یا در حال چت با مخاطبان باشید، منشی خودکار فوراً متوقف می‌شود.
+        </div>
+
         <div class="form-group">
           <label class="form-label">سرویس‌دهنده هوش مصنوعی (AI Provider)</label>
           <select id="aiProviderSelect" class="input-field" style="background:var(--bg-input);">
@@ -3267,7 +3271,7 @@ export function panelHTML(env) {
 
         <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid var(--accent-green-border); border-radius: var(--radius-md); padding: 14px; margin-top: 10px;">
           <div style="font-size: 0.8rem; color: var(--accent-green); line-height: 1.7;">
-            ✅ <b>نکته:</b> وقتی پاسخ هوشمند AI فعال باشد، اولویت بالاتری نسبت به منشی خودکار (AFK) دارد و به جای پیام ثابت، پاسخ هوشمند متناسب با سوال مخاطب ارسال می‌شود.
+            ✅ <b>نکته:</b> وقتی پاسخ هوشمند AI فعال باشد، اولویت بالاتری نسبت به منشی خودکار (AFK) دارد و فقط در صورت <b>آفلاین بودن شما</b>، متناسب با سوال مخاطب پاسخ می‌دهد.
           </div>
         </div>
       </div>
