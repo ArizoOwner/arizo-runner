@@ -3441,48 +3441,87 @@ export function panelHTML(env) {
             </button>
           </div>
 
-          <!-- بخش مراحل راه‌اندازی -->
-          <div id="totpSetupModalBox" class="hidden" style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--border-subtle);">
-            <div style="background:rgba(99, 102, 241, 0.08); border:1px solid var(--accent-indigo-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:16px;">
-              <div style="font-weight:700; font-size:0.84rem; color:var(--accent-indigo); margin-bottom:6px;">گام ۱: اسکن یا ثبت کلید محرمانه اختصاصی</div>
-              <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.6; margin-bottom:12px;">
-                اپلیکیشن Authenticator را باز کنید و کلید اختصاصی زیر را در بخش دستی (Manual Key) اضافه نمایید:
+          <!-- بخش مراحل راه‌اندازی ۲FA (هم کیو‌آر کد و هم کلید دستی) -->
+          <div id="totpSetupModalBox" class="hidden" style="margin-top:18px; padding-top:18px; border-top:1px dashed var(--border-subtle);">
+            <div style="background:rgba(99, 102, 241, 0.06); border:1px solid var(--accent-indigo-border); border-radius:var(--radius-md); padding:18px; margin-bottom:18px;">
+              <div style="font-weight:800; font-size:0.9rem; color:var(--accent-indigo); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                <span>📷</span> <span>گام ۱: اسکن تصویر QR یا کپی کلید دستی</span>
               </div>
+              
+              <!-- تصویر کیو آر کد با پس‌زمینه سفید واضح و کادر زیبا -->
+              <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; margin:10px 0 16px 0;">
+                <div style="background:#ffffff; padding:12px; border-radius:16px; box-shadow:0 12px 36px rgba(0,0,0,0.25); display:inline-flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.8);" id="totpQrCard">
+                  <div id="totpQrContainer" style="width:200px; height:200px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                    <span class="spinner"></span>
+                  </div>
+                </div>
+                <div style="font-size:0.76rem; color:var(--text-muted); margin-top:10px; text-align:center;">
+                  اپلیکیشن Google Authenticator یا 2FAS را باز کرده و این بارکد را اسکن کنید.
+                </div>
+                <div style="margin-top:8px;">
+                  <a id="totpDirectAppLink" href="#" class="btn btn-secondary" style="font-size:0.76rem; padding:6px 14px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                    <span>📱 باز کردن مستقیم در Authenticator (ویژه موبایل)</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- کلید دستی برای کاربرانی که امکان اسکن ندارند -->
+              <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:12px; margin-top:12px;">
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">یا کلید محرمانه ۳۲ کاراکتری را دستی وارد نمایید:</div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                  <input type="text" id="totpSecretDisplay" class="input-field mono" readonly style="font-weight:800; letter-spacing:2px; text-align:center; flex:1; min-width:200px; font-size:0.92rem; background:transparent;" title="کلید دستی">
+                  <button type="button" class="btn btn-secondary" onclick="copyTotpSecret()" style="font-size:0.8rem; padding:8px 14px; white-space:nowrap;">
+                    <span>📋 کپی کلید دستی</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- گام ۲: وارد کردن کد تایید -->
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-weight:800; color:var(--accent-indigo); margin-bottom:6px;">
+                <span>🔢</span> <span>گام ۲: کد ۶ رقمی تولید شده در اپلیکیشن را وارد کنید</span>
+              </label>
               <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <input type="text" id="totpSecretDisplay" class="input-field mono" readonly style="font-weight:700; letter-spacing:2px; text-align:center; max-width:280px; background:var(--bg-input);">
-                <button class="btn btn-secondary" onclick="copyTotpSecret()" style="font-size:0.8rem; padding:8px 14px;">
-                  <span>📋 کپی کلید</span>
+                <input type="text" id="totpVerifyCodeInput" class="input-field mono" maxlength="6" inputmode="numeric" placeholder="مثال: 123456" style="text-align:center; font-size:1.3rem; letter-spacing:6px; max-width:200px; font-weight:800;" onkeypress="if(event.key==='Enter') confirmEnableTotp();">
+                <button type="button" class="btn btn-primary" id="btnConfirmTotp" onclick="confirmEnableTotp()" style="white-space:nowrap; padding:10px 22px;">
+                  <span>تأیید نهایی و فعال‌سازی ۲FA</span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="cancelTotpSetup()" style="font-size:0.82rem; padding:8px 14px;">
+                  <span>انصراف</span>
                 </button>
               </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">گام ۲: کد ۶ رقمی تولید شده در اپلیکیشن را وارد کنید</label>
-              <div style="display:flex; gap:10px; align-items:center; max-width:320px;">
-                <input type="text" id="totpVerifyCodeInput" class="input-field mono" maxlength="6" placeholder="مثال: 123456" style="text-align:center; font-size:1.2rem; letter-spacing:4px;">
-                <button class="btn btn-primary" onclick="confirmEnableTotp()" style="white-space:nowrap;">
-                  <span>تأیید نهایی</span>
-                </button>
-              </div>
-            </div>
-
-            <div id="totpBackupCodesBox" class="hidden" style="margin-top:16px; background:rgba(16, 185, 129, 0.08); border:1px solid var(--accent-green-border); border-radius:var(--radius-sm); padding:14px;">
-              <div style="font-weight:700; font-size:0.84rem; color:var(--accent-green); margin-bottom:6px;">کدهای بازیابی اضطراری (Backup Codes)</div>
-              <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
-                ⚠️ این کدهای اضطراری را در جایی امن یادداشت کنید. اگر دسترسی به اپلیکیشن Authenticator را از دست بدهید، با این کدها می‌توانید وارد شوید:
-              </div>
-              <div id="totpBackupCodesList" style="font-family:monospace; font-size:0.85rem; display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:6px; background:var(--bg-input); padding:10px; border-radius:8px;"></div>
             </div>
           </div>
 
-          <!-- بخش وضعیت فعال ۲FA -->
+          <!-- بخش وضعیت فعال ۲FA و نمایش کدهای بازیابی اضطراری -->
           <div id="totpActiveBox" class="hidden">
-            <div style="background:rgba(16, 185, 129, 0.08); border:1px solid var(--accent-green-border); border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:14px; font-size:0.8rem; color:var(--accent-green);">
-              ✅ احراز هویت دو مرحله‌ای برای حساب کاربری شما فعال است و ورودهای جدید مستلزم ارائه کد TOTP هستند.
+            <div style="background:rgba(16, 185, 129, 0.08); border:1px solid var(--accent-green-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div style="font-weight:700; font-size:0.85rem; color:var(--accent-green); display:flex; align-items:center; gap:6px;">
+                  <span>✅</span> <span>احراز هویت دو مرحله‌ای (2FA) برای حساب شما فعال است.</span>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="promptDisableTotp()" style="color:#ef4444; border-color:rgba(239,68,68,0.3); font-size:0.78rem; padding:6px 12px;">
+                  <span>❌ غیرفعال‌سازی ۲FA</span>
+                </button>
+              </div>
             </div>
-            <button class="btn btn-secondary" onclick="promptDisableTotp()" style="color:#ef4444; border-color:rgba(239,68,68,0.3); font-size:0.82rem;">
-              <span>❌ غیرفعال‌سازی تایید دو مرحله‌ای</span>
-            </button>
+
+            <!-- کدهای اضطراری بازیابی (Backup Codes) -->
+            <div id="totpActiveBackupCodesBox" style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                <div style="font-weight:700; font-size:0.82rem; color:var(--accent-amber);">
+                  <span>🔑 کدهای بازیابی اضطراری (Emergency Backup Codes)</span>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="copyAllBackupCodes()" style="font-size:0.75rem; padding:4px 10px;">
+                  <span>📋 کپی تمام کدها</span>
+                </button>
+              </div>
+              <div style="font-size:0.74rem; color:var(--text-muted); margin-bottom:10px; line-height:1.6;">
+                در صورت عدم دسترسی به گوشی یا اپ Authenticator، با هر یک از این کدهای یک‌بار مصرف می‌توانید وارد حساب شوید:
+              </div>
+              <div id="totpActiveBackupCodesList" style="font-family:monospace; font-size:0.88rem; display:grid; grid-template-columns:repeat(auto-fill, minmax(115px, 1fr)); gap:6px;"></div>
+            </div>
           </div>
         </div>
 
@@ -5707,7 +5746,7 @@ export function panelHTML(env) {
 
             // 🔐 بارگذاری وضعیت ۲FA
             if (window.updateTotpUI) {
-              window.updateTotpUI(!!data.totpEnabled);
+              window.updateTotpUI(!!data.totpEnabled, data.totpBackupCodes);
             }
 
             // 🤖 بارگذاری ربات تلگرام اختصاصی و تنظیمات لاگر
@@ -5820,7 +5859,9 @@ export function panelHTML(env) {
     // ==========================================
     // 🔐 توابع مدیریت امنیت، ۲FA و پشتیبان‌گیری
     // ==========================================
-    window.updateTotpUI = function(enabled) {
+    window.currentBackupCodes = [];
+
+    window.updateTotpUI = function(enabled, backupCodes) {
       window.isTotpEnabled = !!enabled;
       var badge = document.getElementById('totpStatusBadge');
       var inactBox = document.getElementById('totpSetupInactiveBox');
@@ -5836,6 +5877,16 @@ export function panelHTML(env) {
         if (inactBox) inactBox.classList.add('hidden');
         if (modalBox) modalBox.classList.add('hidden');
         if (actBox) actBox.classList.remove('hidden');
+
+        if (Array.isArray(backupCodes) && backupCodes.length > 0) {
+          window.currentBackupCodes = backupCodes;
+          var bcList = document.getElementById('totpActiveBackupCodesList');
+          if (bcList) {
+            bcList.innerHTML = backupCodes.map(function(c) {
+              return '<span style="padding:6px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:6px; text-align:center; letter-spacing:1px; color:var(--text-main); font-weight:700;">' + c + '</span>';
+            }).join('');
+          }
+        }
       } else {
         if (inactBox) inactBox.classList.remove('hidden');
         if (modalBox) modalBox.classList.add('hidden');
@@ -5844,6 +5895,11 @@ export function panelHTML(env) {
     };
 
     window.startTotpSetup = async function() {
+      var btn = document.getElementById('btnStartTotp');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> ایجاد بارکد QR...';
+      }
       try {
         var res = await fetch('/api/user/2fa/setup', {
           method: 'POST',
@@ -5854,13 +5910,56 @@ export function panelHTML(env) {
           showToast(data.error || 'خطا در راه‌اندازی ۲FA', 'error');
           return;
         }
-        document.getElementById('totpSecretDisplay').value = data.secret;
+
+        // ۱. درج تصویر بارکد QR اختصاصی
+        var qrBox = document.getElementById('totpQrContainer');
+        if (qrBox) {
+          if (data.qrSvg) {
+            qrBox.innerHTML = data.qrSvg;
+            var svgEl = qrBox.querySelector('svg');
+            if (svgEl) {
+              svgEl.style.width = '100%';
+              svgEl.style.height = '100%';
+              svgEl.style.display = 'block';
+            }
+          } else if (data.otpauthUri) {
+            qrBox.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.otpauthUri) + '" width="200" height="200" alt="QR Code" style="display:block; border-radius:8px;">';
+          }
+        }
+
+        // ۲. درج کلید دستی ۳۲ کاراکتری
+        var secretInp = document.getElementById('totpSecretDisplay');
+        if (secretInp) secretInp.value = data.secret || '';
+
+        // ۳. لینک مستقیم برای باز کردن اپ Authenticator در گوشی
+        var directLink = document.getElementById('totpDirectAppLink');
+        if (directLink && data.otpauthUri) {
+          directLink.href = data.otpauthUri;
+        }
+
+        // ۴. پاکسازی و فوکوس روی فیلد کد تایید
+        var verifyInp = document.getElementById('totpVerifyCodeInput');
+        if (verifyInp) {
+          verifyInp.value = '';
+          setTimeout(function() { verifyInp.focus(); }, 200);
+        }
+
         document.getElementById('totpSetupModalBox').classList.remove('hidden');
         document.getElementById('totpSetupInactiveBox').classList.add('hidden');
-        showToast('کلید محرمانه تولید شد. کد ۶ رقمی را تایید کنید', 'info');
+        showToast('بارکد QR و کلید اختصاصی با موفقیت ساخته شد 📷', 'info');
       } catch (e) {
         showToast('خطای شبکه در ارتباط با سرور', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>🔐 راه‌اندازی و فعال‌سازی ۲FA</span>';
+        }
       }
+    };
+
+    window.cancelTotpSetup = function() {
+      document.getElementById('totpSetupModalBox').classList.add('hidden');
+      document.getElementById('totpSetupInactiveBox').classList.remove('hidden');
     };
 
     window.copyTotpSecret = function() {
@@ -5873,57 +5972,74 @@ export function panelHTML(env) {
       });
     };
 
-    window.confirmEnableTotp = async function() {
-      var code = document.getElementById('totpVerifyCodeInput').value.trim();
-      if (!code || code.length < 6) {
-        showToast('لطفاً کد ۶ رقمی را به درستی وارد کنید', 'error');
+    window.copyAllBackupCodes = function() {
+      if (!window.currentBackupCodes || window.currentBackupCodes.length === 0) {
+        showToast('کد بازیابی موجود نیست', 'error');
         return;
+      }
+      var text = "کدهای بازیابی اضطراری Arizo Self (2FA Recovery Codes):\\n" + window.currentBackupCodes.join("\\n");
+      navigator.clipboard.writeText(text).then(function() {
+        showToast('تمامی کدهای اضطراری کپی شدند 📋', 'success');
+      }).catch(function() {
+        showToast('خطا در کپی کدها', 'error');
+      });
+    };
+
+    window.confirmEnableTotp = async function() {
+      var rawCode = (document.getElementById('totpVerifyCodeInput') && document.getElementById('totpVerifyCodeInput').value) || '';
+      var cleanCode = rawCode.replace(/\D/g, '');
+      if (!cleanCode || cleanCode.length !== 6) {
+        showToast('لطفاً کد ۶ رقمی تولیدشده در اپلیکیشن را به درستی وارد کنید', 'error');
+        return;
+      }
+      var btn = document.getElementById('btnConfirmTotp');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> درحال اعتبارسنجی...';
       }
       try {
         var res = await fetch('/api/user/2fa/enable', {
           method: 'POST',
           headers: authHeaders(),
-          body: JSON.stringify({ code: code })
+          body: JSON.stringify({ code: cleanCode })
         });
         var data = await res.json();
         if (!data.ok) {
-          showToast(data.error || 'کد وارد شده نامعتبر یا منقضی است', 'error');
+          showToast(data.error || 'کد وارد شده نادرست یا منقضی است. لطفاً کد جدید اپلیکیشن را وارد کنید.', 'error');
           return;
         }
         showToast('احراز هویت دو مرحله‌ای با موفقیت فعال شد! 🎉', 'success');
-        updateTotpUI(true);
-        if (Array.isArray(data.backupCodes) && data.backupCodes.length > 0) {
-          var bcBox = document.getElementById('totpBackupCodesBox');
-          var bcList = document.getElementById('totpBackupCodesList');
-          if (bcBox && bcList) {
-            bcBox.classList.remove('hidden');
-            bcList.innerHTML = data.backupCodes.map(function(c) {
-              return '<span style="padding:4px 8px; background:rgba(255,255,255,0.05); border-radius:4px;">' + c + '</span>';
-            }).join('');
-          }
-        }
+        updateTotpUI(true, data.backupCodes);
       } catch (e) {
-        showToast('خطای شبکه', 'error');
+        showToast('خطای شبکه در برقراری ارتباط', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>تأیید نهایی و فعال‌سازی ۲FA</span>';
+        }
       }
     };
 
     window.promptDisableTotp = async function() {
-      var code = prompt('برای غیرفعال‌سازی، کد ۶ رقمی Authenticator را وارد کنید:');
-      if (!code) return;
-      var pass = prompt('رمز عبور حساب کاربری خود را وارد کنید:');
-      if (!pass) return;
+      var pass = prompt('برای غیرفعال‌سازی ۲FA، رمز عبور حساب کاربری یا کد ۶ رقمی Authenticator را وارد کنید:');
+      if (!pass || !pass.trim()) return;
+      var cleanInput = pass.trim();
+      var payload = cleanInput.length === 6 && /^\d{6}$/.test(cleanInput)
+        ? { code: cleanInput }
+        : { password: cleanInput };
+
       try {
         var res = await fetch('/api/user/2fa/disable', {
           method: 'POST',
           headers: authHeaders(),
-          body: JSON.stringify({ code: code.trim(), password: pass })
+          body: JSON.stringify(payload)
         });
         var data = await res.json();
         if (data.ok) {
           showToast('احراز هویت ۲FA غیرفعال شد', 'info');
           updateTotpUI(false);
         } else {
-          showToast(data.error || 'کد یا رمز عبور نامعتبر است', 'error');
+          showToast(data.error || 'رمز عبور یا کد نامعتبر است', 'error');
         }
       } catch (e) {
         showToast('خطای سرور', 'error');
