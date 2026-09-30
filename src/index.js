@@ -17,6 +17,7 @@ import { isHoneypot } from './security/rateLimiter.js';
 import { logSecurityEvent, getRecentSecurityEvents, AUDIT_EVENT_TYPES, AUDIT_SEVERITY } from './security/auditLogger.js';
 import { generateTotpSecret, generateTotpCode, verifyTotpToken, generateBackupCodes, getTotpAuthUri } from './security/totp.js';
 import { BackupManager } from './modules/backupManager.js';
+import QRCode from 'qrcode';
 
 // هدرهای امنیتی درجه سازمانی (Enterprise Security & CSP)
 const SECURITY_HEADERS = {
@@ -1151,6 +1152,7 @@ export default {
         userId: auth.user.telegram?.userId || null,
         bot: auth.user.telegram?.bot || null,
         totpEnabled: !!auth.user.totp?.enabled,
+        totpBackupCodes: (auth.user.totp?.enabled && Array.isArray(auth.user.totp?.backupCodes)) ? auth.user.totp.backupCodes : [],
         status: liveStatus
       });
     }
@@ -1169,6 +1171,13 @@ export default {
         const backupCodes = generateBackupCodes(8);
         const otpauthUri = getTotpAuthUri(auth.username, secret, 'Arizo Studio');
 
+        let qrSvg = '';
+        try {
+          qrSvg = await QRCode.toString(otpauthUri, { type: 'svg', width: 200, margin: 1 });
+        } catch (qrErr) {
+          console.error('QR generation error:', qrErr);
+        }
+
         await env.KV.put('temp_totp_setup:' + auth.username, JSON.stringify({
           secret,
           backupCodes,
@@ -1179,7 +1188,8 @@ export default {
           ok: true,
           secret,
           backupCodes,
-          otpauthUri
+          otpauthUri,
+          qrSvg
         });
       } catch (err) {
         return json({ error: 'خطا در ایجاد تنظیمات 2FA' }, 500);
