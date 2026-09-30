@@ -1,10 +1,11 @@
 {
   "name": "arizo-self",
-  "version": "3.5.0",
+  "version": "3.6.0-PRO",
   "description": "⚡ Arizo Self — Cloudflare Workers Telegram Selfbot Studio",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
+    "test": "node tests/test-runner.js",
     "dev": "npx wrangler dev",
     "deploy": "npx wrangler deploy",
     "tail": "npx wrangler tail"
