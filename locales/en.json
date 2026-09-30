@@ -1,0 +1,44 @@
+{
+  "app": {
+    "name": "Arizo Self Studio",
+    "subtitle": "Next-Gen Edge Telegram Selfbot & Profile Assistant on Cloudflare Workers",
+    "status": "System Status",
+    "active": "Active & Online",
+    "inactive": "Inactive",
+    "ping": "Response Latency",
+    "uptime": "Server Uptime"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "clock": "Clock & Dynamic Bio",
+    "automation": "Automation & AFK",
+    "antiTtl": "Anti-TTL Media Vault",
+    "antiDelete": "Anti-Delete Monitor",
+    "ghost": "Ghost & Stealth Mode",
+    "security": "Security & 2FA",
+    "logs": "Live Audit Logs",
+    "backup": "Backup & Disaster Recovery"
+  },
+  "clock": {
+    "title": "Sub-40ms Atomic Telegram Clock",
+    "digitStyle": "Digit Typography Style",
+    "colonStyle": "Time Separator Colon",
+    "prefix": "Name Prefix",
+    "suffix": "Name Suffix",
+    "is12h": "12-Hour Format (AM/PM)",
+    "bioTemplate": "Dynamic Bio Template",
+    "sleepEnabled": "Night Sleep Schedule",
+    "sleepStart": "Sleep Start Hour",
+    "sleepEnd": "Sleep Wakeup Hour",
+    "sleepText": "Sleep Status Text"
+  },
+  "security": {
+    "twoFactorTitle": "Two-Factor Authentication (2FA)",
+    "twoFactorDesc": "Protect your account using RFC 6238 TOTP (Google Authenticator)",
+    "enableTotp": "Enable 2FA",
+    "verifyCode": "Enter 6-digit Code",
+    "backupCodesTitle": "Emergency Recovery Codes",
+    "rateLimiter": "Adaptive Sliding-Window Rate Limiting Active",
+    "honeypotShield": "Zero-Trust Honeypot Trap Armed"
+  }
+}
