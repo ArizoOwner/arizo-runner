@@ -2807,7 +2807,7 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
             await env.KV.put('user:' + targetUsername, JSON.stringify(u));
 
             const stateTxt = newAi
-              ? `🤖 <b>پاسخ هوشمند هوش مصنوعی فعال شد! 🟢</b>\n\nسرویس انتخابی: <code>${u.telegram?.aiProvider || 'gemini'}</code>\nهوش مصنوعی به جای منشی ثابت، به صورت هوشمندانه متناسب با پیام‌های مخاطبان در پیوی پاسخ می‌دهد.\n\n💡 جهت آزمایش زنده پاسخ هوش مصنوعی، دستور زیر را ارسال کنید:\n<code>/ai_test سلام وقت بخیر</code>`
+              ? `🤖 <b>پاسخ هوشمند هوش مصنوعی فعال شد! 🟢</b>\n\nسرویس انتخابی: <code>${u.telegram?.aiProvider || 'gemini'}</code>\nهوش مصنوعی تنها در زمان <b>آفلاین بودن شما</b>، به صورت هوشمندانه متناسب با پیام‌های مخاطبان در پیوی پاسخ می‌دهد.\n\n💡 جهت آزمایش زنده پاسخ هوش مصنوعی، دستور زیر را ارسال کنید:\n<code>/ai_test سلام وقت بخیر</code>`
               : `🤖 <b>پاسخ هوشمند AI غیرفعال شد! ⚪</b>\n\nمنشی ثابت (AFK) در صورت فعال بودن جایگزین خواهد شد.`;
 
             await fetch(`https://api.telegram.org/bot${actualBotToken}/sendMessage`, {
