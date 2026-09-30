@@ -313,11 +313,12 @@ let activeUsersCacheTime = 0;
 
 export default {
   async fetch(request, env) {
-    initEnvStorage(env);
-    const url = new URL(request.url);
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: { ...CORS_HEADERS, ...SECURITY_HEADERS } });
-    }
+    try {
+      initEnvStorage(env);
+      const url = new URL(request.url);
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { headers: { ...CORS_HEADERS, ...SECURITY_HEADERS } });
+      }
 
     const clientIP = getClientIP(request);
 
@@ -4011,7 +4012,11 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
       }
     }
 
-    return new Response('Not Found', { status: 404, headers: SECURITY_HEADERS });
+      return new Response('Not Found', { status: 404, headers: SECURITY_HEADERS });
+    } catch (unhandledErr) {
+      console.error('Unhandled Worker Error:', unhandledErr);
+      return json({ error: 'خطای سیستمی رخ داد. لطفاً چند لحظه بعد مجدداً تلاش فرمایید.' }, 500);
+    }
   },
 
   // ==========================================
