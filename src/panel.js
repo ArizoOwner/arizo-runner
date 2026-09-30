@@ -4695,7 +4695,7 @@ export function panelHTML(env) {
         if (data.requires2FA) {
           btn.disabled = false;
           btn.innerHTML = '<span>ورود به داشبورد Arizo Self</span>';
-          var code = prompt('حساب شما مجهز به تایید دو مرحله‌ای (2FA) است.\nلطفاً کد ۶ رقمی Google Authenticator یا کد بازیابی اضطراری را وارد نمایید:');
+          var code = prompt('حساب شما مجهز به تایید دو مرحله‌ای (2FA) است. لطفاً کد ۶ رقمی Google Authenticator یا کد بازیابی را وارد نمایید:');
           if (!code) {
             showToast('کد تایید دو مرحله‌ای وارد نشد', 'error');
             return;
