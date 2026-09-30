@@ -1980,6 +1980,7 @@ export function panelHTML(env) {
     #studioPaneBot:not(.hidden),
     #studioPaneGhost:not(.hidden),
     #studioPaneAI:not(.hidden),
+    #studioPaneSecurity:not(.hidden),
     #adminTabContentStats:not(.hidden),
     #adminTabContentCodes:not(.hidden),
     #adminTabContentUsers:not(.hidden),
@@ -2938,6 +2939,9 @@ export function panelHTML(env) {
         <button id="studioTabAI" class="studio-tab-btn" onclick="switchStudioTab('ai')">
           <span>🤖</span> <span>پاسخ AI</span>
         </button>
+        <button id="studioTabSecurity" class="studio-tab-btn" onclick="switchStudioTab('security')">
+          <span>🔐</span> <span>امنیت و ۲FA</span>
+        </button>
       </div>
 
       <!-- 🕒 تب ۱: فونت و استایل ساعت -->
@@ -3018,8 +3022,15 @@ export function panelHTML(env) {
           <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; align-items:center;">
             <span style="font-size:0.75rem; color:var(--text-muted);">افزودن متغیر با کلیک:</span>
             <button type="button" class="var-chip" onclick="insertBioVar('{time}')">⏰ {time} (ساعت)</button>
-            <button type="button" class="var-chip" onclick="insertBioVar('{date}')">🗓️ {date} (تاریخ خورشیدی)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{date}')">🗓️ {date} (تاریخ)</button>
             <button type="button" class="var-chip" onclick="insertBioVar('{day}')">☀️ {day} (روز هفته)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{battery}')">🔋 {battery} (باتری زمان)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{zodiac}')">♈ {zodiac} (برج فلکی)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{season}')">🌸 {season} (فصل)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{mood}')">🎭 {mood} (مود زمان)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{occasion}')">🎉 {occasion} (مناسبت)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{quote}')">💬 {quote} (جمله انگیزشی)</button>
+            <button type="button" class="var-chip" onclick="insertBioVar('{en_day}')">🌐 {en_day} (روز انگلیسی)</button>
           </div>
         </div>
 
@@ -3029,6 +3040,8 @@ export function panelHTML(env) {
           <div class="bio-preset-pill" onclick="applyBioTemplate('⏳ {time} | 📅 {date} | ⚡ Arizo')">⏳ {time} | 📅 {date} | ⚡ Arizo</div>
           <div class="bio-preset-pill" onclick="applyBioTemplate('⚡ {time} • {day} • Always Online')">⚡ {time} • {day} • Always Online</div>
           <div class="bio-preset-pill" onclick="applyBioTemplate('『 {time} 』✨ {date} ✨')">『 {time} 』✨ {date} ✨</div>
+          <div class="bio-preset-pill" onclick="applyBioTemplate('🕒 {time} | 🔋 {battery} | {zodiac} | {mood}')">🕒 {time} | 🔋 {battery} | {zodiac} | {mood}</div>
+          <div class="bio-preset-pill" onclick="applyBioTemplate('⏳ {time} | 🌸 {season} | 💬 {quote}')">⏳ {time} | 🌸 {season} | 💬 {quote}</div>
         </div>
       </div>
 
@@ -3391,6 +3404,152 @@ export function panelHTML(env) {
         </div>
       </div>
 
+      <!-- 🔐 تب ۹: امنیت پیشرفته، احراز هویت دو مرحله‌ای (2FA) و مدیریت پشتیبان -->
+      <div id="studioPaneSecurity" class="hidden">
+        <!-- هدر معرفی بخش امنیت -->
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(16, 185, 129, 0.12) 100%); border: 1px solid var(--accent-indigo-border); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+          <div style="font-size: 0.98rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+            <span>🛡️</span> <span>سپر امنیتی پیشرفته Arizo Self & Zero-Trust</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.7;">
+            حساب کاربری شما تحت حفاظت لایه‌های دفاعی چندگانه شامل رمزنگاری کوانتوم‌امن، تله‌های دفاعی Honeypot، سنسورهای تشخیص نفوذ و احراز هویت دوعاملی (TOTP) قرار دارد.
+          </div>
+        </div>
+
+        <!-- کارت ۱: تایید دو مرحله‌ای (2FA / Google Authenticator) -->
+        <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.3rem;">📱</span>
+              <div>
+                <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">احراز هویت دو مرحله‌ای (Google Authenticator / 2FA)</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">محافظت از حساب در برابر نفوذ با کدهای ۶ رقمی زمان‌محور</div>
+              </div>
+            </div>
+            <div id="totpStatusBadge" style="padding:4px 12px; border-radius:999px; font-size:0.78rem; font-weight:700; background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.3);">
+              غیرفعال ❌
+            </div>
+          </div>
+
+          <!-- بخش فعال‌سازی اولیه ۲FA (زمانی که غیرفعال است) -->
+          <div id="totpSetupInactiveBox">
+            <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.7; margin-bottom:14px;">
+              با فعال‌سازی ۲FA، هنگام هر بار ورود به پنل، علاوه بر رمز عبور، به کد یکبار مصرف اپلیکیشن Google Authenticator یا 2FAS نیز احتیاج خواهید داشت.
+            </p>
+            <button class="btn btn-primary" id="btnStartTotp" onclick="startTotpSetup()">
+              <span>🔐 راه‌اندازی و فعال‌سازی ۲FA</span>
+            </button>
+          </div>
+
+          <!-- بخش مراحل راه‌اندازی -->
+          <div id="totpSetupModalBox" class="hidden" style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--border-subtle);">
+            <div style="background:rgba(99, 102, 241, 0.08); border:1px solid var(--accent-indigo-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:16px;">
+              <div style="font-weight:700; font-size:0.84rem; color:var(--accent-indigo); margin-bottom:6px;">گام ۱: اسکن یا ثبت کلید محرمانه اختصاصی</div>
+              <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.6; margin-bottom:12px;">
+                اپلیکیشن Authenticator را باز کنید و کلید اختصاصی زیر را در بخش دستی (Manual Key) اضافه نمایید:
+              </div>
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="totpSecretDisplay" class="input-field mono" readonly style="font-weight:700; letter-spacing:2px; text-align:center; max-width:280px; background:var(--bg-input);">
+                <button class="btn btn-secondary" onclick="copyTotpSecret()" style="font-size:0.8rem; padding:8px 14px;">
+                  <span>📋 کپی کلید</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">گام ۲: کد ۶ رقمی تولید شده در اپلیکیشن را وارد کنید</label>
+              <div style="display:flex; gap:10px; align-items:center; max-width:320px;">
+                <input type="text" id="totpVerifyCodeInput" class="input-field mono" maxlength="6" placeholder="مثال: 123456" style="text-align:center; font-size:1.2rem; letter-spacing:4px;">
+                <button class="btn btn-primary" onclick="confirmEnableTotp()" style="white-space:nowrap;">
+                  <span>تأیید نهایی</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="totpBackupCodesBox" class="hidden" style="margin-top:16px; background:rgba(16, 185, 129, 0.08); border:1px solid var(--accent-green-border); border-radius:var(--radius-sm); padding:14px;">
+              <div style="font-weight:700; font-size:0.84rem; color:var(--accent-green); margin-bottom:6px;">کدهای بازیابی اضطراری (Backup Codes)</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+                ⚠️ این کدهای اضطراری را در جایی امن یادداشت کنید. اگر دسترسی به اپلیکیشن Authenticator را از دست بدهید، با این کدها می‌توانید وارد شوید:
+              </div>
+              <div id="totpBackupCodesList" style="font-family:monospace; font-size:0.85rem; display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:6px; background:var(--bg-input); padding:10px; border-radius:8px;"></div>
+            </div>
+          </div>
+
+          <!-- بخش وضعیت فعال ۲FA -->
+          <div id="totpActiveBox" class="hidden">
+            <div style="background:rgba(16, 185, 129, 0.08); border:1px solid var(--accent-green-border); border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:14px; font-size:0.8rem; color:var(--accent-green);">
+              ✅ احراز هویت دو مرحله‌ای برای حساب کاربری شما فعال است و ورودهای جدید مستلزم ارائه کد TOTP هستند.
+            </div>
+            <button class="btn btn-secondary" onclick="promptDisableTotp()" style="color:#ef4444; border-color:rgba(239,68,68,0.3); font-size:0.82rem;">
+              <span>❌ غیرفعال‌سازی تایید دو مرحله‌ای</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- کارت ۲: مدیریت بکاپ رمزنگاری‌شده (Encrypted Backup Manager) -->
+        <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+            <span style="font-size:1.3rem;">💾</span>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">پشتیبان‌گیری رمزنگاری شده (Encrypted Backup & Restore)</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">دانلود نسخه پشتیبان امن از تمام تنظیمات و سشن، یا بازیابی آن روی سرور</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+            <!-- دانلود بکاپ -->
+            <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:14px;">
+              <div style="font-weight:700; font-size:0.82rem; margin-bottom:8px; color:var(--accent-indigo);">📥 ایجاد و دریافت خروجی امن</div>
+              <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.6; margin-bottom:10px;">
+                تمام تنظیمات ساعت، بیوگرافی، منشی، بلاک‌لیست و سشن تلگرام شما با الگوریتم AES-GCM و رمز شما قفل شده و به شکل فایل دانلود می‌شود.
+              </p>
+              <div class="form-group" style="margin-bottom:10px;">
+                <input type="password" id="backupExportPass" class="input-field" placeholder="رمز عبور حساب برای رمزنگاری فایل">
+              </div>
+              <button class="btn btn-secondary" onclick="downloadBackupFile()" style="width:100%; font-size:0.82rem;">
+                <span>💾 خروجی پشتیبان (Export)</span>
+              </button>
+            </div>
+
+            <!-- بازیابی بکاپ -->
+            <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:14px;">
+              <div style="font-weight:700; font-size:0.82rem; margin-bottom:8px; color:var(--accent-purple);">📤 بازیابی فایل پشتیبان (Restore)</div>
+              <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.6; margin-bottom:10px;">
+                فایل بکاپ دانلود شده را انتخاب و رمزی که با آن قفل شده را وارد نمایید تا تنظیمات بازگردانی شوند:
+              </p>
+              <div class="form-group" style="margin-bottom:8px;">
+                <input type="file" id="backupFileInput" accept=".json" class="input-field" style="padding:6px; font-size:0.78rem;">
+              </div>
+              <div class="form-group" style="margin-bottom:10px;">
+                <input type="password" id="backupImportPass" class="input-field" placeholder="رمز عبور استفاده شده هنگام بکاپ">
+              </div>
+              <button class="btn btn-secondary" onclick="restoreBackupFile()" style="width:100%; font-size:0.82rem; color:var(--accent-purple); border-color:var(--accent-purple-border);">
+                <span>🔄 بازیابی اطلاعات (Restore)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- کارت ۳: سنسورهای Zero-Trust Honeypot و دفاع سایبری -->
+        <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.3rem;">🍯</span>
+              <div>
+                <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">تله‌های دفاعی و حسگر هانی‌پات (Zero-Trust Honeypot)</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">مسدودسازی خودکار آی‌پی‌های مشکوک و پویشگران آسیب‌پذیری وب</div>
+              </div>
+            </div>
+            <div style="padding:4px 12px; border-radius:999px; font-size:0.78rem; font-weight:700; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.3);">
+              فعال و هوشیار 🟢
+            </div>
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.7;">
+            ترافیک‌های اسکنر مانند تلاش برای دسترسی به مسیرهای فرضی ادمین، کدهای شل، فایل‌های دات‌ان‌وی و باگ‌های شناخته‌شده، بلافاصله در لبه شبکه Cloudflare مسدود شده و در لاگ‌های امنیتی ثبت می‌گردند.
+          </div>
+        </div>
+      </div>
+
       <!-- 🧭 نوار پیمایش هوشمند بین قابلیت‌های استودیو (Studio Feature Stepper & Navigator) -->
       <div class="studio-nav-bar">
         <button type="button" class="studio-nav-btn prev" id="studioNavPrev" onclick="navigateStudioStep(-1)">
@@ -3404,7 +3563,7 @@ export function panelHTML(env) {
         <div class="studio-nav-center">
           <div class="studio-nav-counter">
             <span id="studioNavCurrentTitle" style="color:var(--text-main); font-weight:800; font-size:0.83rem;">🕒 ساعت و استایل</span>
-            <span style="opacity:0.6; font-size:0.75rem;"> (<span id="studioNavCurrentStep">۱</span> از ۶)</span>
+            <span style="opacity:0.6; font-size:0.75rem;"> (<span id="studioNavCurrentStep">۱</span> از ۹)</span>
           </div>
           <div class="studio-nav-dots" id="studioNavDots"></div>
         </div>
@@ -3902,17 +4061,38 @@ export function panelHTML(env) {
     // 🎨 پریست‌های فونت و استایل ساعت
     // ==========================================
     var presets = {
-      bold:         { name: 'بولد لوکس', digits: ['𝟎','𝟏','𝟐','𝟑','𝟒','𝟓','𝟔','𝟕','𝟖','𝟗'] },
-      sansBold:     { name: 'سنس مدرن', digits: ['𝟬','𝟭','𝟮','𝟯','𝟰','𝟱','𝟲','𝟳','𝟴','𝟵'] },
-      mono:         { name: 'مونو رترو', digits: ['𝟶','𝟷','𝟸','𝟹','𝟺','𝟻','𝟼','𝟽','𝟾','𝟿'] },
-      double:       { name: 'دابل استروک', digits: ['𝟘','𝟙','𝟚','𝟛','𝟜','𝟝','𝟞','𝟟','𝟠','𝟡'] },
-      circled:      { name: 'حلقه‌ای مینیمال', digits: ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨'] },
-      blackCircled: { name: 'دایره مشکی نئون', digits: ['⓿','➊','➋','➌','➍','➎','➏','➐','➑','➒'] },
-      persian:      { name: 'فارسی اصیل', digits: ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'] },
-      subscript:    { name: 'اندیس فانتزی', digits: ['₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'] },
-      superscript:  { name: 'بالانویس مینی', digits: ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'] },
-      bracket:      { name: 'سلطنتی براکت', digits: ['⟦0⟧','⟦1⟧','⟦2⟧','⟦3⟧','⟦4⟧','⟦5⟧','⟦6⟧','⟦7⟧','⟦8⟧','⟦9⟧'] },
-      normal:       { name: 'کلاسیک ساده', digits: ['0','1','2','3','4','5','6','7','8','9'] }
+      bold:           { name: 'بولد لوکس', digits: ['𝟎', '𝟏', '𝟐', '𝟑', '𝟒', '𝟓', '𝟔', '𝟕', '𝟖', '𝟗'] },
+      sansBold:       { name: 'سنس مدرن', digits: ['𝟬', '𝟭', '𝟮', '𝟯', '𝟰', '𝟱', '𝟲', '𝟳', '𝟴', '𝟵'] },
+      mono:           { name: 'مونو رترو', digits: ['𝟶', '𝟷', '𝟸', '𝟹', '𝟺', '𝟻', '𝟼', '𝟽', '𝟾', '𝟿'] },
+      double:         { name: 'دابل استروک', digits: ['𝟘', '𝟙', '𝟚', '𝟛', '𝟜', '𝟝', '𝟞', '𝟟', '𝟠', '𝟡'] },
+      bubble:         { name: 'حباب توخالی', digits: ['⓪', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'] },
+      blackCircled:   { name: 'دایره مشکی نئون', digits: ['⓿', '➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', '➒'] },
+      persian:        { name: 'فارسی اصیل', digits: ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'] },
+      arabic:         { name: 'عربی شرقی', digits: ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'] },
+      subscript:      { name: 'اندیس فانتزی', digits: ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] },
+      superscript:    { name: 'بالانویس مینی', digits: ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'] },
+      bracket:        { name: 'سلطنتی براکت', digits: ['⟦0⟧', '⟦1⟧', '⟦2⟧', '⟦3⟧', '⟦4⟧', '⟦5⟧', '⟦6⟧', '⟦7⟧', '⟦8⟧', '⟦9⟧'] },
+      japaneseBracket:{ name: 'براکت ژاپنی', digits: ['【0】', '【1】', '【2】', '【3】', '【4】', '【5】', '【6】', '【7】', '【8】', '【9】'] },
+      fullwidth:      { name: 'تمام‌پهنا (سایبر)', digits: ['０', '１', '２', '３', '۴', '۵', '۶', '۷', '۸', '۹'] },
+      parenthesized:  { name: 'پرانتز دایره‌ای', digits: ['⑽', '⑴', '⑵', '⑶', '⑷', '⑸', '⑹', '⑺', '⑻', '⑼'] },
+      dotted:         { name: 'نقطه‌دار رسمی', digits: ['0.', '⒈', '⒉', '⒊', '⒋', '⒌', '⒍', '⒎', '⒏', '⒐'] },
+      underlined:     { name: 'خط زیرین فانتزی', digits: ['0̲', '1̲', '2̲', '3̲', '4̲', '5̲', '6̲', '7̲', '8̲', '9̲'] },
+      strike:         { name: 'خط‌خورده مینیمال', digits: ['0̶', '1̶', '2̶', '3̶', '4̶', '5̶', '6̶', '7̶', '8̶', '9̶'] },
+      slashed:        { name: 'اسلش مورب', digits: ['0̷', '1̷', '2̷', '3̷', '4̷', '5̷', '6̷', '7̷', '8̷', '9̷'] },
+      neonGlow:       { name: 'نئون درخشان', digits: ['𝟢', '𝟣', '𝟤', '𝟥', '𝟦', '𝟧', '𝟨', '𝟩', '𝟪', '𝟫'] },
+      sansItalic:     { name: 'سنس ایتالیک', digits: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] },
+      serifBold:      { name: 'سریف سلطنتی', digits: ['𝟎', '𝟏', '𝟐', '𝟑', '𝟒', '𝟓', '𝟔', '𝟕', '𝟖', '𝟗'] },
+      spooky:         { name: 'وحشت هالووینی', digits: ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] },
+      heartAdorned:   { name: 'قلب عاشقانه', digits: ['0♡', '1♡', '2♡', '3♡', '4♡', '5♡', '6♡', '7♡', '8♡', '9♡'] },
+      sparkle:        { name: 'ستاره و درخشش', digits: ['0✨', '1✨', '2✨', '3✨', '4✨', '5✨', '6✨', '7✨', '8✨', '9✨'] },
+      fire:           { name: 'آتشین متحرک', digits: ['0🔥', '1🔥', '2🔥', '3🔥', '4🔥', '5🔥', '6🔥', '7🔥', '8🔥', '9🔥'] },
+      crystal:        { name: 'کریستال یخ', digits: ['0❄️', '1❄️', '2❄️', '3❄️', '4❄️', '5❄️', '6❄️', '7❄️', '8❄️', '9❄️'] },
+      boxedSquare:    { name: 'باکس مربعی', digits: ['[0]', '[1]', '[2]', '[3]', '[4]', '[5]', '[6]', '[7]', '[8]', '[9]'] },
+      curvedBrace:    { name: 'آکولاد فانتزی', digits: ['{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}'] },
+      chevron:        { name: 'پیکانی نئون', digits: ['«0»', '«1»', '«2»', '«3»', '«4»', '«5»', '«6»', '«7»', '«8»', '«9»'] },
+      persianSup:     { name: 'فارسی بالانویس', digits: ['۰', '¹', '²', '³', '⁴', '۵', '۶', '۷', '۸', '۹'] },
+      digital7:       { name: 'ساعت دیجیتال', digits: ['O', 'I', 'Z', 'E', 'h', 'S', 'b', 'L', 'B', 'q'] },
+      normal:         { name: 'کلاسیک استاندارد', digits: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] }
     };
 
     var selectedDigits = presets.bold.digits;
@@ -4514,6 +4694,33 @@ export function panelHTML(env) {
           body: JSON.stringify({ username: uname, password: pass })
         });
         var data = await res.json();
+        if (data.requires2FA) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>ورود به داشبورد Arizo Self</span>';
+          var code = prompt('حساب شما مجهز به تایید دو مرحله‌ای (2FA) است.\nلطفاً کد ۶ رقمی Google Authenticator یا کد بازیابی اضطراری را وارد نمایید:');
+          if (!code) {
+            showToast('کد تایید دو مرحله‌ای وارد نشد', 'error');
+            return;
+          }
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner"></span> بررسی کد ۲FA...';
+          var res2 = await fetch('/api/user/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: uname, password: pass, totpCode: code.trim() })
+          });
+          var data2 = await res2.json();
+          if (data2.ok && data2.token) {
+            setAuthToken(data2.token);
+            window.currentUserIsAdmin = !!data2.isAdmin;
+            showToast('خوش آمدید! ورود دو مرحله‌ای موفقیت‌آمیز بود ✅', 'success');
+            await loadUserDashboard();
+            return;
+          } else {
+            showToast(data2.error || 'کد ۲FA نادرست است', 'error');
+            return;
+          }
+        }
         if (data.ok && data.token) {
           setAuthToken(data.token);
           window.currentUserIsAdmin = !!data.isAdmin;
@@ -4826,7 +5033,8 @@ export function panelHTML(env) {
       { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation', title: 'حالت خواب', icon: '🌙' },
       { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot', title: 'ربات و لاگر', icon: '⚡' },
       { id: 'ghost', btn: 'studioTabGhost', pane: 'studioPaneGhost', title: 'حالت شبح', icon: '👻' },
-      { id: 'ai', btn: 'studioTabAI', pane: 'studioPaneAI', title: 'پاسخ هوشمند AI', icon: '🤖' }
+      { id: 'ai', btn: 'studioTabAI', pane: 'studioPaneAI', title: 'پاسخ هوشمند AI', icon: '🤖' },
+      { id: 'security', btn: 'studioTabSecurity', pane: 'studioPaneSecurity', title: 'امنیت و ۲FA', icon: '🔐' }
     ];
 
     var currentStudioTabIndex = 0;
@@ -5499,6 +5707,11 @@ export function panelHTML(env) {
             if (data.aiMaxReplies !== undefined) setSafeValue('aiMaxRepliesSelect', String(data.aiMaxReplies));
             if (data.aiCooldown !== undefined) setSafeValue('aiCooldownSelect', String(data.aiCooldown));
 
+            // 🔐 بارگذاری وضعیت ۲FA
+            if (window.updateTotpUI) {
+              window.updateTotpUI(!!data.totpEnabled);
+            }
+
             // 🤖 بارگذاری ربات تلگرام اختصاصی و تنظیمات لاگر
             if (data.bot) {
               if (data.bot.token) {
@@ -5605,6 +5818,186 @@ export function panelHTML(env) {
         }
       });
     }
+
+    // ==========================================
+    // 🔐 توابع مدیریت امنیت، ۲FA و پشتیبان‌گیری
+    // ==========================================
+    window.updateTotpUI = function(enabled) {
+      window.isTotpEnabled = !!enabled;
+      var badge = document.getElementById('totpStatusBadge');
+      var inactBox = document.getElementById('totpSetupInactiveBox');
+      var modalBox = document.getElementById('totpSetupModalBox');
+      var actBox = document.getElementById('totpActiveBox');
+      if (badge) {
+        badge.textContent = enabled ? 'فعال و محافظت‌شده 🟢' : 'غیرفعال ❌';
+        badge.style.background = enabled ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+        badge.style.color = enabled ? '#10b981' : '#ef4444';
+        badge.style.borderColor = enabled ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+      }
+      if (enabled) {
+        if (inactBox) inactBox.classList.add('hidden');
+        if (modalBox) modalBox.classList.add('hidden');
+        if (actBox) actBox.classList.remove('hidden');
+      } else {
+        if (inactBox) inactBox.classList.remove('hidden');
+        if (modalBox) modalBox.classList.add('hidden');
+        if (actBox) actBox.classList.add('hidden');
+      }
+    };
+
+    window.startTotpSetup = async function() {
+      try {
+        var res = await fetch('/api/user/2fa/setup', {
+          method: 'POST',
+          headers: authHeaders()
+        });
+        var data = await res.json();
+        if (!data.ok) {
+          showToast(data.error || 'خطا در راه‌اندازی ۲FA', 'error');
+          return;
+        }
+        document.getElementById('totpSecretDisplay').value = data.secret;
+        document.getElementById('totpSetupModalBox').classList.remove('hidden');
+        document.getElementById('totpSetupInactiveBox').classList.add('hidden');
+        showToast('کلید محرمانه تولید شد. کد ۶ رقمی را تایید کنید', 'info');
+      } catch (e) {
+        showToast('خطای شبکه در ارتباط با سرور', 'error');
+      }
+    };
+
+    window.copyTotpSecret = function() {
+      var el = document.getElementById('totpSecretDisplay');
+      if (!el || !el.value) return;
+      navigator.clipboard.writeText(el.value).then(function() {
+        showToast('کلید محرمانه ۲FA کپی شد 📋', 'success');
+      }).catch(function() {
+        showToast('خطا در کپی کلید', 'error');
+      });
+    };
+
+    window.confirmEnableTotp = async function() {
+      var code = document.getElementById('totpVerifyCodeInput').value.trim();
+      if (!code || code.length < 6) {
+        showToast('لطفاً کد ۶ رقمی را به درستی وارد کنید', 'error');
+        return;
+      }
+      try {
+        var res = await fetch('/api/user/2fa/enable', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ code: code })
+        });
+        var data = await res.json();
+        if (!data.ok) {
+          showToast(data.error || 'کد وارد شده نامعتبر یا منقضی است', 'error');
+          return;
+        }
+        showToast('احراز هویت دو مرحله‌ای با موفقیت فعال شد! 🎉', 'success');
+        updateTotpUI(true);
+        if (Array.isArray(data.backupCodes) && data.backupCodes.length > 0) {
+          var bcBox = document.getElementById('totpBackupCodesBox');
+          var bcList = document.getElementById('totpBackupCodesList');
+          if (bcBox && bcList) {
+            bcBox.classList.remove('hidden');
+            bcList.innerHTML = data.backupCodes.map(function(c) {
+              return '<span style="padding:4px 8px; background:rgba(255,255,255,0.05); border-radius:4px;">' + c + '</span>';
+            }).join('');
+          }
+        }
+      } catch (e) {
+        showToast('خطای شبکه', 'error');
+      }
+    };
+
+    window.promptDisableTotp = async function() {
+      var code = prompt('برای غیرفعال‌سازی، کد ۶ رقمی Authenticator را وارد کنید:');
+      if (!code) return;
+      var pass = prompt('رمز عبور حساب کاربری خود را وارد کنید:');
+      if (!pass) return;
+      try {
+        var res = await fetch('/api/user/2fa/disable', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ code: code.trim(), password: pass })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('احراز هویت ۲FA غیرفعال شد', 'info');
+          updateTotpUI(false);
+        } else {
+          showToast(data.error || 'کد یا رمز عبور نامعتبر است', 'error');
+        }
+      } catch (e) {
+        showToast('خطای سرور', 'error');
+      }
+    };
+
+    window.downloadBackupFile = async function() {
+      var pass = document.getElementById('backupExportPass').value;
+      if (!pass) {
+        showToast('رمز عبور حساب برای رمزنگاری فایل بکاپ الزامی است', 'error');
+        return;
+      }
+      try {
+        var res = await fetch('/api/user/backup/export', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ password: pass })
+        });
+        var data = await res.json();
+        if (!data.ok) {
+          showToast(data.error || 'خطا در ایجاد بکاپ', 'error');
+          return;
+        }
+        var blob = new Blob([JSON.stringify(data.backup, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = data.fileName || 'arizo-backup.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('فایل پشتیبان رمزنگاری‌شده دانلود شد ✅', 'success');
+      } catch (e) {
+        showToast('خطا در دریافت بکاپ', 'error');
+      }
+    };
+
+    window.restoreBackupFile = async function() {
+      var fileInput = document.getElementById('backupFileInput');
+      var pass = document.getElementById('backupImportPass').value;
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showToast('لطفاً ابتدا فایل بکاپ (.json) را انتخاب کنید', 'error');
+        return;
+      }
+      if (!pass) {
+        showToast('رمز عبور فایل بکاپ را وارد کنید', 'error');
+        return;
+      }
+      var file = fileInput.files[0];
+      var reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          var backupContent = e.target.result;
+          var res = await fetch('/api/user/backup/import', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ backupData: backupContent, password: pass })
+          });
+          var data = await res.json();
+          if (data.ok) {
+            showToast('بازیابی نسخه پشتیبان با موفقیت انجام شد! 🔄', 'success');
+            setTimeout(function() { location.reload(); }, 1200);
+          } else {
+            showToast(data.error || 'خطا در بازیابی (رمز اشتباه است یا فایل دستکاری شده)', 'error');
+          }
+        } catch (err) {
+          showToast('خطا در پردازش فایل بکاپ', 'error');
+        }
+      };
+      reader.readAsText(file);
+    };
 
     initStudioNavDots();
     loadUserDashboard();
