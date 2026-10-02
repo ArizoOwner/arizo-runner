@@ -2510,6 +2510,138 @@ export function panelHTML(env) {
         justify-content: center;
       }
     }
+
+    /* ==========================================================================
+       🔍 Arizo Self — User Inspector & Live Telemetry Modal (Admin Suite)
+       ========================================================================== */
+    .admin-inspector-container {
+      width: 95%;
+      max-width: 860px;
+      padding: clamp(16px, 2.5vw, 24px);
+      background: #090d1a;
+      background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.18) 0%, rgba(9, 13, 26, 0.98) 75%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 24px;
+      box-shadow: 0 32px 100px -10px rgba(0, 0, 0, 0.95), 0 0 50px -10px rgba(59, 130, 246, 0.3);
+      position: relative;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      color: #e2e8f0;
+      box-sizing: border-box;
+      overflow: hidden;
+      animation: modalPop 0.35s var(--spring-physics) both;
+    }
+    .inspector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .inspector-header-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .inspector-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(59, 130, 246, 0.35));
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .inspector-scroll-area {
+      overflow-y: auto;
+      padding-top: 14px;
+      padding-bottom: 8px;
+      padding-right: 4px;
+      flex: 1;
+    }
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 14px;
+    }
+    .telemetry-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+    .telemetry-card:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+      background: rgba(255, 255, 255, 0.045);
+    }
+    .telemetry-card-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 8px;
+    }
+    .telemetry-card-title span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .telemetry-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      gap: 8px;
+    }
+    .telemetry-item:last-child {
+      border-bottom: none;
+    }
+    .telemetry-item-label {
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .telemetry-item-value {
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: left;
+      word-break: break-all;
+    }
+    .telemetry-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+    @media (max-width: 680px) {
+      .telemetry-grid {
+        grid-template-columns: 1fr;
+      }
+      .admin-inspector-container {
+        padding: 14px 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2706,24 +2838,65 @@ export function panelHTML(env) {
 
         <!-- 👥 تب ۳: مدیریت کاربران و کنترل سلف‌بات‌ها -->
         <div id="adminTabContentUsers" class="hidden">
-          <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-            <span>👥 فهرست کاربران پلتفرم و وضعیت اجرای ربات‌ها</span>
-            <button class="btn-nav-action" onclick="loadAdminData()">🔄 رفرش</button>
+          <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
+            <span>👥 مانیتورینگ زنده کاربران، ربات‌های کمکی و امنیت ۲FA</span>
+            <button class="btn-nav-action" onclick="loadAdminData()">🔄 رفرش سریع</button>
           </div>
-          <div class="table-responsive-wrapper" style="max-height: 340px;">
+
+          <!-- کارت‌های آمار زنده بخش کاربران -->
+          <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 14px;">
+            <div class="stat-card" style="padding: 10px 14px;">
+              <div class="stat-value" id="adminUsersCount" style="font-size: 1.25rem; color: var(--accent-purple);">0</div>
+              <div class="stat-label" style="font-size: 0.72rem;">👥 کل کاربران</div>
+            </div>
+            <div class="stat-card" style="padding: 10px 14px;">
+              <div class="stat-value" id="adminBotUsersCount" style="font-size: 1.25rem; color: var(--accent-blue);">0</div>
+              <div class="stat-label" style="font-size: 0.72rem;">🤖 دارای ربات کمکی</div>
+            </div>
+            <div class="stat-card" style="padding: 10px 14px;">
+              <div class="stat-value" id="admin2faUsersCount" style="font-size: 1.25rem; color: var(--accent-green);">0</div>
+              <div class="stat-label" style="font-size: 0.72rem;">🔐 تایید ۲FA فعال</div>
+            </div>
+            <div class="stat-card" style="padding: 10px 14px;">
+              <div class="stat-value" id="adminSelfbotUsersCount" style="font-size: 1.25rem; color: var(--accent-amber);">0</div>
+              <div class="stat-label" style="font-size: 0.72rem;">📱 سلف‌بات فعال</div>
+            </div>
+          </div>
+
+          <!-- نوار جستجو و فیلتر پیشرفته -->
+          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px; background:rgba(255,255,255,0.02); padding:10px 14px; border-radius:12px; border:1px solid var(--border-subtle);">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; flex:1; min-width:240px;">
+              <input type="text" id="adminUserSearchInput" class="input-field" placeholder="🔍 جستجو بر اساس نام کاربری، شناسه تلگرام یا ربات..." style="padding:7px 12px; font-size:0.8rem; flex:1; min-width:180px;" oninput="filterAdminUsers()">
+              <select id="adminUserFilterSelect" class="input-field" style="padding:7px 10px; font-size:0.8rem; width:auto; cursor:pointer;" onchange="filterAdminUsers()">
+                <option value="all">🌐 همه کاربران</option>
+                <option value="bot">🤖 دارای ربات کمکی اختصاصی</option>
+                <option value="no_bot">⚪ فاقد ربات کمکی</option>
+                <option value="2fa_on">🔐 تایید ۲FA فعال</option>
+                <option value="2fa_off">🔓 تایید ۲FA خاموش</option>
+                <option value="tg_active">🟢 سلف‌بات متصل و فعال</option>
+                <option value="suspended">⏸️ معلق یا منقضی‌شده</option>
+                <option value="admin">🛡️ مدیران ارشد سیستم</option>
+              </select>
+            </div>
+            <button class="btn-nav-action" onclick="loadAdminData()" title="تازه‌سازی لیست">🔄 بروزرسانی</button>
+          </div>
+
+          <div class="table-responsive-wrapper" style="max-height: 420px;">
             <table class="admin-table">
               <thead>
                 <tr>
                   <th>نام کاربری</th>
-                  <th>سطح دسترسی</th>
-                  <th>پلن و اعتبار</th>
+                  <th>دسترسی</th>
+                  <th>ربات کمکی</th>
+                  <th>امنیت ۲FA</th>
                   <th>تلگرام</th>
-                  <th>وضعیت تعلیق</th>
+                  <th>پلن و اعتبار</th>
+                  <th>وضعیت</th>
                   <th>عملیات</th>
                 </tr>
               </thead>
               <tbody id="usersTableBody">
-                <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:18px;">درحال بارگذاری کاربران...</td></tr>
+                <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:18px;">درحال بارگذاری کاربران...</td></tr>
               </tbody>
             </table>
           </div>
@@ -4072,6 +4245,46 @@ export function panelHTML(env) {
     </div>
   </div>
 
+  <!-- 🔍 مودال مانیتورینگ جامع و کنترل پیشرفته کاربران (User Inspector Modal) -->
+  <div id="adminUserInspectorModal" class="modal-backdrop hidden" onclick="if(event.target === this) closeUserInspector();">
+    <div class="admin-inspector-container" onclick="event.stopPropagation();">
+      <div class="inspector-header">
+        <div class="inspector-header-info">
+          <div class="inspector-avatar" id="inspectorAvatar">👤</div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span id="inspectorUsername" style="font-size:1.1rem; font-weight:800; color:var(--text-main);">کاربر</span>
+              <span id="inspectorRoleBadge"></span>
+              <span id="inspectorPlanBadge"></span>
+              <span id="inspectorSuspendBadge"></span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;">
+              <span>ثبت‌نام: </span><span id="inspectorCreatedAt">-</span>
+              <span style="margin: 0 6px;">•</span>
+              <span>کد لایسنس: </span><span id="inspectorLicenseCode" class="mono">-</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-close" onclick="closeUserInspector()">&times;</button>
+      </div>
+
+      <div class="inspector-scroll-area">
+        <div class="telemetry-grid" id="inspectorTelemetryGrid">
+          <!-- کارت‌های ۴ گانه مانیتورینگ به صورت داینامیک اینجا رندر می‌شوند -->
+        </div>
+      </div>
+
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:0.75rem; color:var(--text-dim); display:flex; align-items:center; gap:6px;">
+          <span>💡 تمامی تغییرات بلافاصله در حافظه Edge Cloudflare ذخیره و اعمال می‌گردند.</span>
+        </div>
+        <button class="btn btn-secondary" onclick="closeUserInspector()" style="padding:6px 14px; font-size:0.8rem;">
+          <span>بستن پنجره</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast"></div>
 
   <!-- 🚀 منطق جاوااسکریپت و بوم الگوریتمی کلاینت -->
@@ -4456,6 +4669,9 @@ export function panelHTML(env) {
         var uData = await uRes.json();
         if (uData.ok) {
           renderUsersTable(uData.users);
+          if (window.activeInspectedUser) {
+            openUserInspector(window.activeInspectedUser);
+          }
         }
       } catch (e) {}
     }
@@ -4485,60 +4701,429 @@ export function panelHTML(env) {
     }
 
     function renderUsersTable(users) {
+      window.cachedAdminUsers = users || [];
+      filterAdminUsers();
+    }
+
+    window.filterAdminUsers = function() {
+      var allUsers = window.cachedAdminUsers || [];
+      var searchEl = document.getElementById('adminUserSearchInput');
+      var filterEl = document.getElementById('adminUserFilterSelect');
+      var search = (searchEl && searchEl.value ? searchEl.value : '').trim().toLowerCase();
+      var filter = (filterEl && filterEl.value) ? filterEl.value : 'all';
+
+      // بروزرسانی کارت‌های آمار زنده
+      var countTotal = allUsers.length;
+      var countBot = allUsers.filter(function(u) { return !!u.hasBot; }).length;
+      var count2fa = allUsers.filter(function(u) { return !!u.has2FA; }).length;
+      var countTg = allUsers.filter(function(u) { return u.hasTelegram && u.enabled && !u.isSuspended; }).length;
+
+      var elTotal = document.getElementById('adminUsersCount');
+      var elBot = document.getElementById('adminBotUsersCount');
+      var el2fa = document.getElementById('admin2faUsersCount');
+      var elTg = document.getElementById('adminSelfbotUsersCount');
+      if (elTotal) elTotal.textContent = countTotal;
+      if (elBot) elBot.textContent = countBot;
+      if (el2fa) el2fa.textContent = count2fa;
+      if (elTg) elTg.textContent = countTg;
+
+      var filtered = allUsers.filter(function(u) {
+        if (!u || u.exists === false) return false;
+
+        if (search) {
+          var uName = (u.username || '').toLowerCase();
+          var bName = (u.botUsername || '').toLowerCase();
+          var tgId = String(u.telegramUserId || '');
+          if (uName.indexOf(search) === -1 && bName.indexOf(search) === -1 && tgId.indexOf(search) === -1) {
+            return false;
+          }
+        }
+
+        if (filter === 'bot') return !!u.hasBot;
+        if (filter === 'no_bot') return !u.hasBot;
+        if (filter === '2fa_on') return !!u.has2FA;
+        if (filter === '2fa_off') return !u.has2FA;
+        if (filter === 'tg_active') return u.hasTelegram && u.enabled && !u.isSuspended;
+        if (filter === 'suspended') return !!u.isSuspended || !!u.isExpired;
+        if (filter === 'admin') return !!u.isAdmin || !!u.isOwner || u.role === 'admin';
+
+        return true;
+      });
+
       var tbody = document.getElementById('usersTableBody');
-      var validUsers = (users || []).filter(function(u) { return u && u.exists !== false; });
-      if (!validUsers.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:18px;">کاربری یافت نشد.</td></tr>';
+      if (!tbody) return;
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:24px;">کاربری با این مشخصات یافت نشد.</td></tr>';
         return;
       }
-      tbody.innerHTML = validUsers.map(function(u) {
-        var tgStatus = u.hasTelegram 
-          ? (u.enabled ? '<span style="color:var(--accent-green);">🟢 فعال</span>' : '<span style="color:var(--accent-amber);">⏸️ متوقف</span>')
-          : '<span style="color:var(--text-muted);">قطع</span>';
 
-        var suspendBadge = u.isSuspended 
-          ? '<span class="status-badge used" style="color:var(--accent-rose); background:var(--accent-rose-bg);">⏸️ معلق</span>'
-          : '<span class="status-badge unused" style="color:var(--accent-green); background:var(--accent-green-bg);">🟢 فعال</span>';
-
+      tbody.innerHTML = filtered.map(function(u) {
         var isOwner = !!u.isOwner || u.username.toLowerCase() === 'amirmaster' || u.username.toLowerCase() === 'admin';
         var isAdm = isOwner || !!u.isAdmin || u.role === 'admin';
         var roleBadge = isOwner
-          ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:3px 8px; border-radius:6px; font-weight:800; font-size:0.75rem;">👑 مالک اصلی سامانه</span>'
+          ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:2px 7px; border-radius:6px; font-weight:800; font-size:0.72rem;">👑 مالک</span>'
           : (isAdm
-            ? '<span style="color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:3px 8px; border-radius:6px; font-weight:800; font-size:0.75rem;">🛡️ مدیر ارشد</span>'
-            : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:3px 8px; border-radius:6px; font-size:0.75rem;">👤 کاربر عادی</span>');
+            ? '<span style="color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:2px 7px; border-radius:6px; font-weight:800; font-size:0.72rem;">🛡️ مدیر</span>'
+            : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:2px 7px; border-radius:6px; font-size:0.72rem;">👤 کاربر</span>');
 
-        var roleBtnTitle = isAdm ? 'تنزل به کاربر عادی' : 'ارتقا به مدیر ارشد';
-        var roleBtnText = isAdm ? '👤 تنزل' : '👑 ارتقا به مدیر';
-        var roleBtnColor = isAdm ? 'var(--text-dim)' : 'var(--accent-amber)';
+        // ربات کمکی
+        var botBadge = u.hasBot
+          ? '<span style="color:var(--accent-blue); background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap;" title="شناسه ربات: ' + (u.botUsername ? '@' + u.botUsername : 'متصل') + '">🤖 ' + (u.botUsername ? '@' + u.botUsername : 'متصل') + '</span>'
+          : '<span style="color:var(--text-dim); font-size:0.72rem;">⚪ بدون ربات</span>';
 
-        var planCol = '<div style="font-weight:700;">' + (u.planName || u.plan || 'استاندارد') + '</div>' +
-          '<div style="font-size:0.75rem; color:' + (u.isExpired ? 'var(--danger)' : 'var(--accent-blue)') + ';">' + (u.remainingText || '') + '</div>';
+        // تایید دو مرحله‌ای ۲FA
+        var totpBadge = u.has2FA
+          ? '<span style="color:var(--accent-green); background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap;" title="۲FA فعال - ' + (u.backupCodesCount || 0) + ' کد پشتیبان">🔐 فعال (' + (u.backupCodesCount || 0) + ')</span>'
+          : '<span style="color:var(--text-dim); font-size:0.72rem;">⚪ خاموش</span>';
 
-        var suspendBtnTitle = u.isSuspended ? 'خروج از تعلیق' : 'تعلیق کاربر';
-        var suspendBtnIcon = u.isSuspended ? '🔓' : '🔒';
+        // وضعیت تلگرام سلف‌بات
+        var tgStatus = u.hasTelegram 
+          ? (u.enabled 
+              ? '<span style="color:var(--accent-green); font-size:0.75rem; font-weight:700;">🟢 فعال' + (u.ghostMode ? ' 👻' : '') + (u.aiReplyEnabled ? ' 🤖' : '') + '</span>' 
+              : '<span style="color:var(--accent-amber); font-size:0.75rem;">⏸️ مکث</span>')
+          : '<span style="color:var(--text-muted); font-size:0.75rem;">🔴 قطع</span>';
 
-        var actionBtns = isOwner
-          ? '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 8px; font-size:0.74rem;" title="تغییر نوع اشتراک و روزها">⭐ اشتراک</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" title="سوئیچ فعال/مکث ربات">⏸️/▶️</button> ' +
-            '<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; color:var(--accent-amber); font-weight:700; padding:4px 8px; background:rgba(245, 158, 11, 0.1); border-radius:6px; border:1px solid rgba(245, 158, 11, 0.25);" title="مالک اصلی سامانه غیرقابل تعلیق یا حذف است">🔒 غیرقابل حذف</span>'
-          : '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 8px; font-size:0.74rem;" title="تغییر نوع اشتراک و روزها">⭐ اشتراک</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + roleBtnColor + '; padding:4px 8px; font-size:0.74rem;" title="' + roleBtnTitle + '">' + roleBtnText + '</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" title="سوئیچ فعال/مکث ربات">⏸️/▶️</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + ';" title="' + suspendBtnTitle + '">' + suspendBtnIcon + '</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="disconnect" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-amber);" title="قطع تلگرام">🔌</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-rose);" title="حذف کاربر">🗑️</button>';
+        // پلن و اعتبار
+        var planCol = '<div style="font-weight:700; font-size:0.8rem;">' + (u.planName || u.plan || 'استاندارد') + '</div>' +
+          '<div style="font-size:0.72rem; color:' + (u.isExpired ? 'var(--danger)' : 'var(--accent-blue)') + ';">' + (u.remainingText || '') + '</div>';
+
+        // وضعیت تعلیق
+        var suspendBadge = u.isSuspended 
+          ? '<span class="status-badge used" style="color:var(--accent-rose); background:var(--accent-rose-bg); font-size:0.72rem;">⏸️ معلق</span>'
+          : '<span class="status-badge unused" style="color:var(--accent-green); background:var(--accent-green-bg); font-size:0.72rem;">🟢 فعال</span>';
+
+        // دکمه‌های عملیاتی
+        var inspectBtn = '<button class="btn-nav-action" data-user="' + u.username + '" onclick="openUserInspector(this.dataset.user)" style="color:var(--accent-indigo); background:rgba(99,102,241,0.12); border-color:rgba(99,102,241,0.35); font-weight:700; padding:4px 9px; font-size:0.74rem;" title="مانیتورینگ کامل ۳۶۰ درجه و کنترل کاربر">🔍 مانیتورینگ</button> ';
+        var planBtn = '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 7px; font-size:0.74rem;" title="تغییر نوع اشتراک">⭐</button> ';
+        var pauseBtn = '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="padding:4px 7px; font-size:0.74rem;" title="سوئیچ فعال/مکث سلف‌بات">⏸️/▶️</button> ';
+
+        var extraBtns = '';
+        if (!isOwner) {
+          var suspendBtnIcon = u.isSuspended ? '🔓' : '🔒';
+          extraBtns = 
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + '; padding:4px 7px; font-size:0.74rem;" title="' + (u.isSuspended ? 'خروج از تعلیق' : 'تعلیق کاربر') + '">' + suspendBtnIcon + '</button> ' +
+            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-rose); padding:4px 7px; font-size:0.74rem;" title="حذف کامل کاربر">🗑️</button>';
+        }
 
         return '<tr>' +
-          '<td style="font-weight:bold;">' + u.username + '</td>' +
+          '<td style="font-weight:bold; font-size:0.84rem;">' + u.username + '</td>' +
           '<td>' + roleBadge + '</td>' +
-          '<td>' + planCol + '</td>' +
+          '<td>' + botBadge + '</td>' +
+          '<td>' + totpBadge + '</td>' +
           '<td>' + tgStatus + '</td>' +
+          '<td>' + planCol + '</td>' +
           '<td>' + suspendBadge + '</td>' +
-          '<td>' + actionBtns + '</td>' +
+          '<td><div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">' + inspectBtn + planBtn + pauseBtn + extraBtns + '</div></td>' +
         '</tr>';
       }).join('');
-    }
+    };
+
+    window.closeUserInspector = function() {
+      var modal = document.getElementById('adminUserInspectorModal');
+      if (modal) modal.classList.add('hidden');
+      window.activeInspectedUser = null;
+    };
+
+    window.openUserInspector = function(uname) {
+      var users = window.cachedAdminUsers || [];
+      var u = users.find(function(x) { return x.username.toLowerCase() === String(uname).toLowerCase(); });
+      if (!u) {
+        showToast('اطلاعات کاربر یافت نشد', 'error');
+        return;
+      }
+      window.activeInspectedUser = u.username;
+
+      var isOwner = !!u.isOwner || u.username.toLowerCase() === 'amirmaster' || u.username.toLowerCase() === 'admin';
+      var isAdm = isOwner || !!u.isAdmin || u.role === 'admin';
+
+      document.getElementById('inspectorAvatar').textContent = isOwner ? '👑' : (isAdm ? '🛡️' : '👤');
+      document.getElementById('inspectorUsername').textContent = u.username;
+
+      document.getElementById('inspectorRoleBadge').innerHTML = isOwner
+        ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.72rem;">👑 مالک سامانه</span>'
+        : (isAdm
+          ? '<span style="color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.72rem;">🛡️ مدیر ارشد</span>'
+          : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:2px 8px; border-radius:6px; font-size:0.72rem;">👤 کاربر عادی</span>');
+
+      document.getElementById('inspectorPlanBadge').innerHTML = 
+        '<span style="color:var(--accent-blue); background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); padding:2px 8px; border-radius:6px; font-weight:700; font-size:0.72rem;">⭐ ' + (u.planName || u.plan || 'استاندارد') + '</span>';
+
+      document.getElementById('inspectorSuspendBadge').innerHTML = u.isSuspended
+        ? '<span style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); padding:2px 8px; border-radius:6px; font-size:0.72rem;">⏸️ معلق</span>'
+        : '<span style="color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); padding:2px 8px; border-radius:6px; font-size:0.72rem;">🟢 فعال</span>';
+
+      document.getElementById('inspectorCreatedAt').textContent = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fa-IR') : 'نامشخص';
+      document.getElementById('inspectorLicenseCode').textContent = u.licenseCode || 'بدون کد';
+
+      var grid = document.getElementById('inspectorTelemetryGrid');
+
+      // کارت ۱: مانیتورینگ ربات کمکی تلگرام
+      var botStatusHtml = u.hasBot
+        ? '<span style="color:var(--accent-green); font-weight:700;">🟢 متصل (@' + (u.botUsername || 'ربات') + ')</span>'
+        : '<span style="color:var(--text-dim);">⚪ غیرمتصل</span>';
+
+      var botActionBtns = u.hasBot
+        ? '<button class="btn btn-secondary" onclick="adminDisconnectUserBot(window.activeInspectedUser)" style="color:var(--accent-rose); border-color:rgba(239,68,68,0.35); font-size:0.75rem; padding:6px 12px; width:100%; justify-content:center;">🔌 قطع اتصال ربات و پاکسازی وب‌هوک</button>'
+        : '<span style="font-size:0.74rem; color:var(--text-dim);">کاربر هنوز ربات کمکی اختصاصی متصل نکرده است.</span>';
+
+      var botCard = 
+        '<div class="telemetry-card">' +
+          '<div class="telemetry-card-title">' +
+            '<span>🤖 مانیتورینگ ربات کمکی تلگرام</span>' +
+            (u.hasBot ? '<span style="font-size:0.7rem; color:var(--accent-blue); background:rgba(59,130,246,0.12); padding:2px 6px; border-radius:4px;">اختصاصی</span>' : '') +
+          '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت اتصال:</span><span class="telemetry-item-value">' + botStatusHtml + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">نام کاربری ربات:</span><span class="telemetry-item-value mono">' + (u.botUsername ? ('@' + u.botUsername) : '-') + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">شناسه ربات در تلگرام:</span><span class="telemetry-item-value mono">' + (u.botId || '-') + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">شناسه انحصاری مالک (قفل‌شده):</span><span class="telemetry-item-value mono">' + (u.botOwnerId || 'تنظیم نشده') + '</span></div>' +
+          '<div class="telemetry-item">' +
+            '<span class="telemetry-item-label">ماژول ضد حذف پیام:</span>' +
+            '<span class="telemetry-item-value">' + 
+              (u.botAntiDelete ? '<span style="color:var(--accent-green);">🟢 فعال</span>' : '<span style="color:var(--accent-rose);">🔴 خاموش</span>') +
+              (u.hasBot ? ' <button class="btn-nav-action" data-feat="antiDelete" onclick="adminToggleBotFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
+            '</span>' +
+          '</div>' +
+          '<div class="telemetry-item">' +
+            '<span class="telemetry-item-label">ماژول ضد ویرایش پیام:</span>' +
+            '<span class="telemetry-item-value">' + 
+              (u.botAntiEdit ? '<span style="color:var(--accent-green);">🟢 فعال</span>' : '<span style="color:var(--accent-rose);">🔴 خاموش</span>') +
+              (u.hasBot ? ' <button class="btn-nav-action" data-feat="antiEdit" onclick="adminToggleBotFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
+            '</span>' +
+          '</div>' +
+          '<div class="telemetry-item">' +
+            '<span class="telemetry-item-label">ارسال مدیاهای تایمردار (TTL):</span>' +
+            '<span class="telemetry-item-value">' + 
+              (u.botForwardTtl ? '<span style="color:var(--accent-green);">🟢 فعال</span>' : '<span style="color:var(--accent-rose);">🔴 خاموش</span>') +
+              (u.hasBot ? ' <button class="btn-nav-action" data-feat="forwardTtl" onclick="adminToggleBotFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
+            '</span>' +
+          '</div>' +
+          '<div class="telemetry-actions">' + botActionBtns + '</div>' +
+        '</div>';
+
+      // کارت ۲: امنیت و ۲FA
+      var totpStatusHtml = u.has2FA
+        ? '<span style="color:var(--accent-green); font-weight:700;">🟢 فعال (Google Authenticator)</span>'
+        : '<span style="color:var(--text-dim);">⚪ غیرفعال (فقط رمز عبور)</span>';
+
+      var totpActionBtn = u.has2FA
+        ? '<button class="btn btn-secondary" onclick="adminDisableUser2FA(window.activeInspectedUser)" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.35); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center;">🔓 ریست و غیرفعال‌سازی ۲FA</button>'
+        : '';
+
+      var passActionBtn = '<button class="btn btn-secondary" onclick="adminResetUserPassword(window.activeInspectedUser)" style="color:var(--accent-indigo); border-color:rgba(99,102,241,0.35); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center;">🔑 تغییر کلمه عبور کاربر</button>';
+
+      var secCard = 
+        '<div class="telemetry-card">' +
+          '<div class="telemetry-card-title">' +
+            '<span>🔐 امنیت و تایید دو مرحله‌ای (2FA)</span>' +
+            (u.has2FA ? '<span style="font-size:0.7rem; color:var(--accent-green); background:rgba(34,197,94,0.12); padding:2px 6px; border-radius:4px;">امن</span>' : '') +
+          '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت ورود دو مرحله‌ای:</span><span class="telemetry-item-value">' + totpStatusHtml + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">کدهای پشتیبان باقی‌مانده:</span><span class="telemetry-item-value mono">' + (u.has2FA ? (u.backupCodesCount + ' کد آماده مصرف') : 'ندارد') + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">رمزنگاری نشست‌ها:</span><span class="telemetry-item-value" style="color:var(--accent-purple);">AES-256-GCM 🛡️</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت حساب کاربری:</span><span class="telemetry-item-value">' + (u.isSuspended ? '<span style="color:var(--accent-rose);">حساب معلق است</span>' : '<span style="color:var(--accent-green);">حساب مجاز و فعال</span>') + '</span></div>' +
+          '<div class="telemetry-actions">' + totpActionBtn + passActionBtn + '</div>' +
+        '</div>';
+
+      // کارت ۳: مانیتورینگ سلف‌بات تلگرام
+      var tgStatusHtml = u.hasTelegram
+        ? '<span style="color:var(--accent-green); font-weight:700;">🟢 متصل (سشن رمزنگاری‌شده)</span>'
+        : '<span style="color:var(--accent-rose);">🔴 قطع</span>';
+
+      var tgRunStatusHtml = u.enabled
+        ? '<span style="color:var(--accent-green);">🟢 درحال اجرا و پردازش</span>'
+        : '<span style="color:var(--accent-amber);">⏸️ متوقف‌شده توسط کاربر</span>';
+
+      var tgCard = 
+        '<div class="telemetry-card">' +
+          '<div class="telemetry-card-title">' +
+            '<span>📱 مانیتورینگ سلف‌بات تلگرام (MTProto)</span>' +
+            '<span style="font-size:0.7rem; color:var(--accent-purple); background:var(--accent-purple-bg); padding:2px 6px; border-radius:4px;">سشن امن</span>' +
+          '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت سشن تلگرام:</span><span class="telemetry-item-value">' + tgStatusHtml + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت اجرای سلف‌بات:</span><span class="telemetry-item-value">' + tgRunStatusHtml + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">شناسه عددی کاربر در تلگرام:</span><span class="telemetry-item-value mono">' + (u.telegramUserId || 'نامشخص') + '</span></div>' +
+          '<div class="telemetry-item">' +
+            '<span class="telemetry-item-label">حالت شبح و خواندن مخفی (Ghost):</span>' +
+            '<span class="telemetry-item-value">' + 
+              (u.ghostMode ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-dim);">⚪ خاموش</span>') +
+              (u.hasTelegram ? ' <button class="btn-nav-action" data-feat="ghostMode" onclick="adminToggleFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
+            '</span>' +
+          '</div>' +
+          '<div class="telemetry-item">' +
+            '<span class="telemetry-item-label">پاسخ هوشمند هوش مصنوعی (AI):</span>' +
+            '<span class="telemetry-item-value">' + 
+              (u.aiReplyEnabled ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-dim);">⚪ خاموش</span>') +
+              (u.hasTelegram ? ' <button class="btn-nav-action" data-feat="aiReplyEnabled" onclick="adminToggleFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
+            '</span>' +
+          '</div>' +
+          '<div class="telemetry-item">' +
+            '<span class="telemetry-item-label">ساعت فونتی و بیو داینامیک:</span>' +
+            '<span class="telemetry-item-value">' + 
+              (u.bioEnabled ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-dim);">⚪ خاموش</span>') +
+              (u.hasTelegram ? ' <button class="btn-nav-action" data-feat="bioEnabled" onclick="adminToggleFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
+            '</span>' +
+          '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت عدم حضور (AFK):</span><span class="telemetry-item-value">' + (u.afkEnabled ? ('🟢 فعال' + (u.afkReason ? ' (' + u.afkReason + ')' : '')) : '<span style="color:var(--text-dim);">⚪ خاموش</span>') + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">کاربران بی‌صدا / مسدود شده:</span><span class="telemetry-item-value mono">' + (u.mutedCount || 0) + ' کاربر</span></div>' +
+          '<div class="telemetry-actions">' +
+            '<button class="btn-nav-action" data-act="toggle" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.75rem; padding:6px 10px; flex:1; justify-content:center;">⏸️/▶️ سوئیچ فعال/مکث</button>' +
+            (u.hasTelegram ? '<button class="btn-nav-action" data-act="disconnect" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="color:var(--accent-amber); font-size:0.75rem; padding:6px 10px; flex:1; justify-content:center;">🔌 قطع سشن تلگرام</button>' : '') +
+          '</div>' +
+        '</div>';
+
+      // کارت ۴: عیب‌یابی سلامت و لاگ‌ها
+      var healthHtml = u.error
+        ? '<div style="color:var(--accent-rose); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:6px 10px; font-size:0.75rem; word-break:break-all; margin-top:4px;">⚠️ ' + u.error + '</div>'
+        : '<span style="color:var(--accent-green); font-size:0.78rem;">سیستم کاملاً سالم، پایدار و بدون خطاست 🟢</span>';
+
+      var healthCard = 
+        '<div class="telemetry-card">' +
+          '<div class="telemetry-card-title">' +
+            '<span>🩺 عیب‌یابی سلامت، لاگ‌ها و اشتراک</span>' +
+            '<span style="font-size:0.7rem; color:var(--accent-amber); background:var(--accent-amber-bg); padding:2px 6px; border-radius:4px;">Cloudflare Edge</span>' +
+          '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">آخرین همگام‌سازی (Heartbeat):</span><span class="telemetry-item-value mono">' + (u.lastUpdate ? new Date(u.lastUpdate).toLocaleString('fa-IR') : (u.lastTime || 'بدون لاگ')) + '</span></div>' +
+          '<div class="telemetry-item" style="flex-direction:column; align-items:stretch; gap:4px;"><span class="telemetry-item-label">وضعیت سلامت و خطاها:</span>' + healthHtml + '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">پلن اشتراک فعلی:</span><span class="telemetry-item-value">' + (u.planName || u.plan || 'استاندارد') + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">مدت اعتبار باقی‌مانده:</span><span class="telemetry-item-value" style="color:' + (u.isExpired ? 'var(--danger)' : 'var(--accent-blue)') + ';">' + (u.remainingText || '-') + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">کد لایسنس مصرف‌شده:</span><span class="telemetry-item-value mono">' + (u.licenseCode || '-') + '</span></div>' +
+          '<div class="telemetry-actions">' +
+            '<button class="btn-nav-action" onclick="adminClearUserError(window.activeInspectedUser)" style="color:var(--accent-green); border-color:rgba(34,197,94,0.35); font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center;">🔄 پاکسازی خطاها</button>' +
+            '<button class="btn-nav-action" onclick="doChangeUserPlan(window.activeInspectedUser)" style="color:var(--accent-blue); border-color:rgba(59,130,246,0.35); font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center;">⭐ تغییر یا ارتقای اشتراک</button>' +
+          '</div>' +
+        '</div>';
+
+      grid.innerHTML = botCard + secCard + tgCard + healthCard;
+
+      var modal = document.getElementById('adminUserInspectorModal');
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.adminDisableUser2FA = async function(uname) {
+      if (!confirm('آیا از غیرفعال‌سازی تایید دو مرحله‌ای (۲FA) برای کاربر ' + uname + ' اطمینان دارید؟ کاربر می‌تواند بدون نیاز به کد Authenticator با رمز عبور خود وارد شود.')) return;
+      try {
+        var res = await fetch('/api/admin/users/action', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({ username: uname, action: 'disable_2fa' })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('۲FA کاربر ' + uname + ' با موفقیت غیرفعال و ریست شد 🎉', 'success');
+          await loadAdminData();
+          if (window.activeInspectedUser === uname) openUserInspector(uname);
+        } else {
+          showToast(data.error || 'خطا در غیرفعال‌سازی ۲FA', 'error');
+        }
+      } catch (e) {
+        showToast('خطای شبکه', 'error');
+      }
+    };
+
+    window.adminDisconnectUserBot = async function(uname) {
+      if (!confirm('آیا از قطع اتصال کامل ربات کمکی تلگرام برای کاربر ' + uname + ' و حذف وب‌هوک اطمینان دارید؟')) return;
+      try {
+        var res = await fetch('/api/admin/users/action', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({ username: uname, action: 'disconnect_bot' })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('ربات کمکی کاربر ' + uname + ' قطع و حافظه آزاد شد ✨', 'success');
+          await loadAdminData();
+          if (window.activeInspectedUser === uname) openUserInspector(uname);
+        } else {
+          showToast(data.error || 'خطا در قطع ربات', 'error');
+        }
+      } catch (e) {
+        showToast('خطای شبکه', 'error');
+      }
+    };
+
+    window.adminToggleBotFeature = async function(uname, feature) {
+      try {
+        var res = await fetch('/api/admin/users/action', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({ username: uname, action: 'toggle_bot_feature', feature: feature })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('قابلیت ربات با موفقیت تغییر یافت ✨', 'success');
+          await loadAdminData();
+          if (window.activeInspectedUser === uname) openUserInspector(uname);
+        } else {
+          showToast(data.error || 'خطا در تغییر قابلیت ربات', 'error');
+        }
+      } catch (e) {
+        showToast('خطای شبکه', 'error');
+      }
+    };
+
+    window.adminToggleFeature = async function(uname, feature) {
+      try {
+        var res = await fetch('/api/admin/users/action', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({ username: uname, action: 'toggle_feature', feature: feature })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('قابلیت سلف‌بات تغییر یافت ✨', 'success');
+          await loadAdminData();
+          if (window.activeInspectedUser === uname) openUserInspector(uname);
+        } else {
+          showToast(data.error || 'خطا در تغییر قابلیت', 'error');
+        }
+      } catch (e) {
+        showToast('خطای شبکه', 'error');
+      }
+    };
+
+    window.adminClearUserError = async function(uname) {
+      try {
+        var res = await fetch('/api/admin/users/action', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({ username: uname, action: 'clear_error' })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('خطاهای کاربر ' + uname + ' پاکسازی شد 🧹', 'success');
+          await loadAdminData();
+          if (window.activeInspectedUser === uname) openUserInspector(uname);
+        } else {
+          showToast(data.error || 'خطا در پاکسازی', 'error');
+        }
+      } catch (e) {
+        showToast('خطای شبکه', 'error');
+      }
+    };
+
+    window.adminResetUserPassword = async function(uname) {
+      var newPass = prompt('کلمه عبور جدید را برای کاربر ' + uname + ' وارد کنید (حداقل ۶ کاراکتر):');
+      if (!newPass) return;
+      if (newPass.length < 6) {
+        showToast('کلمه عبور باید حداقل ۶ کاراکتر باشد', 'error');
+        return;
+      }
+      try {
+        var res = await fetch('/api/admin/users/action', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({ username: uname, action: 'reset_password', newPassword: newPass })
+        });
+        var data = await res.json();
+        if (data.ok) {
+          showToast('رمز عبور کاربر ' + uname + ' با موفقیت به روز شد 🔑', 'success');
+        } else {
+          showToast(data.error || 'خطا در تغییر رمز', 'error');
+        }
+      } catch (e) {
+        showToast('خطای شبکه', 'error');
+      }
+    };
 
     window.copyCodeToClipboard = function(code) {
       navigator.clipboard.writeText(code).then(function() {
@@ -4663,6 +5248,9 @@ export function panelHTML(env) {
         var data = await res.json();
         if (data.ok) {
           showToast('عملیات ' + actName + ' انجام شد', 'success');
+          if (act === 'delete' && window.activeInspectedUser === uname) {
+            closeUserInspector();
+          }
           loadAdminData();
         } else {
           showToast(data.error || 'خطا در اجرای عملیات', 'error');
