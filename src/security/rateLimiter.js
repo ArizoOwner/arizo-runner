@@ -90,6 +90,15 @@ export function checkRateLimit(ip = '127.0.0.1', path = '/', options = {}) {
   let record = memoryIpStore.get(recordKey);
 
   if (!record || (now - record.startTime) > windowMs) {
+    if (memoryIpStore.size > 1500) {
+      let pruned = 0;
+      for (const [k, v] of memoryIpStore.entries()) {
+        if (pruned++ > 300) break;
+        if (!v.expiresAt || now > v.expiresAt) {
+          memoryIpStore.delete(k);
+        }
+      }
+    }
     record = { startTime: now, count: 1 };
     memoryIpStore.set(recordKey, record);
     return { allowed: true, remaining: maxLimit - 1, resetIn: 60 };
