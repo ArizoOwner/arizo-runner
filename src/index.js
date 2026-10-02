@@ -394,24 +394,14 @@ export default {
       });
     }
 
-    // ۱. سرو رابط کاربری پنل با اعتبارسنجی ETag و پاسخ فوق‌سریع ۳۰۴ (کاهش بار CPU و پهنای باند)
+    // ۱. سرو رابط کاربری پنل با جلوگیری از کش شدن فایل کهنه در مرورگر
     if (url.pathname === '/') {
-      const panelEtag = 'W/"arizo-v3.5-pro"';
-      if (request.headers.get('If-None-Match') === panelEtag) {
-        return new Response(null, {
-          status: 304,
-          headers: {
-            'ETag': panelEtag,
-            'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-            ...SECURITY_HEADERS
-          }
-        });
-      }
       return new Response(panelHTML(env), {
         headers: {
           'Content-Type': 'text/html;charset=utf-8',
-          'ETag': panelEtag,
-          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
           ...SECURITY_HEADERS
         },
       });
