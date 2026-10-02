@@ -2683,8 +2683,8 @@ export function panelHTML(env) {
           <span class="theme-text" style="font-weight:700;">راهنمای امکانات</span>
         </button>
 
-        <!-- 👑 دکمه طلایی دسترسی به پنل مدیریت (فقط برای ادمین‌ها پس از لاگین نمایان می‌شود) -->
-        <button class="btn-admin-highlight hidden" id="adminPortalNavBtn" onclick="openAdminPortal()" title="ورود به پنل مدیریت ارشد">
+        <!-- 👑 دکمه طلایی دسترسی به پنل مدیریت -->
+        <button class="btn-admin-highlight" id="adminPortalNavBtn" onclick="openAdminPortal()" title="ورود به پنل مدیریت ارشد و مانیتورینگ">
           <span>👑</span> <span>پنل مدیریت</span>
         </button>
 
@@ -2935,6 +2935,12 @@ export function panelHTML(env) {
         <button class="btn btn-primary" id="loginBtn" onclick="doUserLogin()">
           <span>ورود به داشبورد Arizo Self</span>
         </button>
+
+        <div style="margin-top: 14px; text-align: center;">
+          <button type="button" class="btn-nav-action" onclick="openAdminPortal()" style="color: var(--accent-amber); font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border: 1px dashed var(--accent-amber-border); border-radius: 999px; background: var(--accent-amber-bg); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <span>👑</span> <span>ورود مستقیم به پنل مدیریت ارشد و مانیتورینگ</span>
+          </button>
+        </div>
       </div>
 
       <!-- فرم ثبت‌نام کاربران با کد لایسنس -->
@@ -2968,6 +2974,12 @@ export function panelHTML(env) {
         <button class="btn btn-primary" id="regBtn" onclick="doUserRegister()">
           <span>ثبت‌نام و فعال‌سازی اشتراک Arizo Self</span>
         </button>
+
+        <div style="margin-top: 14px; text-align: center;">
+          <button type="button" class="btn-nav-action" onclick="openAdminPortal()" style="color: var(--accent-amber); font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border: 1px dashed var(--accent-amber-border); border-radius: 999px; background: var(--accent-amber-bg); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <span>👑</span> <span>ورود مستقیم به پنل مدیریت ارشد و مانیتورینگ</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -4558,10 +4570,6 @@ export function panelHTML(env) {
     // 👑 پنل مدیریت ادمین Arizo Self و کنترل تب‌ها
     // ==========================================
     window.openAdminPortal = function() {
-      if (!window.currentUserIsAdmin && !getAdminToken()) {
-        showToast('دسترسی به پنل مدیریت فقط برای ادمین‌ها مجاز است.', 'error');
-        return;
-      }
       document.getElementById('adminPanelSection').classList.remove('hidden');
       document.getElementById('userAuthSection').classList.add('hidden');
       document.getElementById('clockHeroCard').classList.add('hidden');
@@ -5607,8 +5615,6 @@ export function panelHTML(env) {
       if (!confirm('آیا مایل به خروج از حساب کاربری Arizo هستید؟')) return;
       try { await fetch('/api/user/logout', { method: 'POST', headers: authHeaders() }); } catch (e) {}
       window.currentUserIsAdmin = false;
-      var adminNav = document.getElementById('adminPortalNavBtn');
-      if (adminNav) adminNav.classList.add('hidden');
       setAuthToken('');
       location.reload();
     };
@@ -6320,9 +6326,9 @@ export function panelHTML(env) {
     async function loadUserDashboard() {
       var token = getAuthToken();
       var adminNav = document.getElementById('adminPortalNavBtn');
+      if (adminNav) adminNav.classList.remove('hidden');
       if (!token) {
         window.currentUserIsAdmin = false;
-        if (adminNav) adminNav.classList.add('hidden');
         document.getElementById('userHeaderBadge').classList.add('hidden');
         document.getElementById('userAuthSection').classList.remove('hidden');
         document.getElementById('clockHeroCard').classList.add('hidden');
@@ -6338,7 +6344,6 @@ export function panelHTML(env) {
 
         if (!data.ok) {
           window.currentUserIsAdmin = false;
-          if (adminNav) adminNav.classList.add('hidden');
           setAuthToken('');
           loadUserDashboard();
           return;
@@ -6346,10 +6351,9 @@ export function panelHTML(env) {
 
         window.currentUserIsAdmin = !!data.isAdmin;
         if (adminNav) {
+          adminNav.classList.remove('hidden');
           if (data.isAdmin) {
-            adminNav.classList.remove('hidden');
-          } else {
-            adminNav.classList.add('hidden');
+            adminNav.style.boxShadow = '0 0 16px rgba(245, 158, 11, 0.45)';
           }
         }
 
