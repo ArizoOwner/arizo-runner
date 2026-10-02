@@ -140,9 +140,27 @@ function getUnifiedStorage(env) {
           await env.DB.prepare(
             'INSERT OR REPLACE INTO kv_store (key, value, expires_at, updated_at) VALUES (?, ?, ?, ?)'
           ).bind(key, valStr, exp, now).run();
-          d1Success = true;
         } catch (dbErr) {
-          console.error(`[Storage] D1 put error for ${key}:`, dbErr);
+          if (dbErr.message && dbErr.message.includes('no such table')) {
+            try {
+              await env.DB.exec(`
+                CREATE TABLE IF NOT EXISTS kv_store (
+                  key TEXT PRIMARY KEY,
+                  value TEXT,
+                  expires_at INTEGER,
+                  updated_at INTEGER
+                );
+                CREATE INDEX IF NOT EXISTS idx_kv_expires ON kv_store(expires_at);
+              `);
+              await env.DB.prepare(
+                'INSERT OR REPLACE INTO kv_store (key, value, expires_at, updated_at) VALUES (?, ?, ?, ?)'
+              ).bind(key, valStr, exp, now).run();
+              d1Success = true;
+            } catch (_) {}
+          }
+          if (!d1Success) {
+            console.error(`[Storage] D1 put error for ${key}:`, dbErr);
+          }
         }
       }
 
@@ -395,9 +413,57 @@ export default {
       });
     }
 
+    // ⚡ فاوا آیکون با کیفیت برداری اختصاصی Arizo (Favicon Handler)
+    if (url.pathname === '/favicon.ico' || url.pathname === '/favicon.svg') {
+      const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="none" stroke="url(#neon)" stroke-width="2" opacity="0.6"/>
+  <path d="M35 8 L18 34 L31 34 L27 56 L46 28 L33 28 Z" fill="url(#neon)" filter="url(#glow)"/>
+</svg>`;
+      return new Response(faviconSvg, {
+        headers: {
+          'Content-Type': 'image/svg+xml;charset=utf-8',
+          'Cache-Control': 'public, max-age=86400, immutable',
+          ...SECURITY_HEADERS
+        }
+      });
+    }
+
     // ۱. سرو رابط کاربری پنل با جلوگیری از کش شدن فایل کهنه در مرورگر
     if (url.pathname === '/') {
       return new Response(panelHTML(env), {
+        headers: {
+          'Content-Type': 'text/html;charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          ...SECURITY_HEADERS
+        },
+      });
+    }
+
+    // 👑 ۲. ورود مستقیم و اختصاصی به پنل ارشد مانیتورینگ (/admin)
+    if (url.pathname === '/admin' || url.pathname === '/admin/') {
+      return new Response(panelHTML(env, { autoOpenAdmin: true }), {
         headers: {
           'Content-Type': 'text/html;charset=utf-8',
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
@@ -426,28 +492,63 @@ export default {
       const isKvReady = !!(env.KV_RAW || env.KV);
       const isD1Ready = !!env.DB;
       let d1TableExists = false;
+      let d1RowCount = 0;
       if (env.DB) {
         try {
           const check = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='kv_store'").first();
           d1TableExists = !!check;
+          if (d1TableExists) {
+            const countRow = await env.DB.prepare("SELECT count(*) as cnt FROM kv_store").first();
+            d1RowCount = countRow ? Number(countRow.cnt || 0) : 0;
+          }
         } catch (_) {}
       }
 
       return json({
         success: true,
         workerUrl: url.origin,
+        timestamp: Date.now(),
         status: {
           kvBound: isKvReady,
           d1Bound: isD1Ready,
           d1TableExists: d1TableExists,
+          d1RowCount: d1RowCount,
           apiIdSet: !!env.API_ID,
           apiHashSet: !!env.API_HASH,
           adminPasswordSet: !!env.ADMIN_PASSWORD,
           runnerSecretSet: !!env.RUNNER_SECRET,
           cronsConfigured: true,
-          nodeCompat: true
+          nodeCompat: true,
+          envName: env.ENVIRONMENT || 'production'
         }
       });
+    }
+
+    // مقداردهی و ساخت خودکار جداول دیتابیس D1 با یک کلیک (Initialize D1 Database)
+    if (url.pathname === '/api/setup/init-db' && request.method === 'POST') {
+      if (!env.DB) {
+        return json({
+          success: false,
+          error: 'پایگاه داده Cloudflare D1 به این ورکر متصل نیست (DB binding تعریف نشده). لطفاً ابتدا wrangler.toml را پیکربندی و دیپلوی کنید.'
+        }, 400);
+      }
+      try {
+        await env.DB.exec(`
+          CREATE TABLE IF NOT EXISTS kv_store (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            expires_at INTEGER,
+            updated_at INTEGER
+          );
+          CREATE INDEX IF NOT EXISTS idx_kv_expires ON kv_store(expires_at);
+        `);
+        return json({
+          success: true,
+          message: 'جداول پایگاه داده D1 (kv_store و اندیس‌ها) با موفقیت ساخته و آماده استفاده شدند.'
+        });
+      } catch (err) {
+        return json({ success: false, error: 'خطا در ساخت جداول D1: ' + err.message }, 500);
+      }
     }
 
     // تست و اعتبارسنجی آنلاین توکن ربات تلگرام (Telegram Bot Token Live Validator)
@@ -479,6 +580,36 @@ export default {
         }
       } catch (err) {
         return json({ success: false, error: 'خطا در ارتباط با سرور تلگرام: ' + err.message }, 500);
+      }
+    }
+
+    // تست ارسال پیام توسط ربات تلگرام (Telegram Bot Test Message Ping)
+    if (url.pathname === '/api/setup/test-bot-message' && request.method === 'POST') {
+      try {
+        const { token, chatId } = await request.json();
+        if (!token || !chatId) {
+          return json({ success: false, error: 'توکن ربات و شناسه چت (عددی) الزامی هستند.' }, 400);
+        }
+        const cleanToken = String(token).trim();
+        const cleanChat = String(chatId).trim();
+        const msgText = '⚡ *Arizo Self Setup Wizard*\n\nربات کمکی شما با موفقیت به استودیوی ابری سلف‌بات متصل شد! 🎉\nاکنون می‌توانید از تمامی امکانات ضدحذف، لاگین و اعلانات امنیتی استفاده کنید.';
+        const tgRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(cleanToken)}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: cleanChat,
+            text: msgText,
+            parse_mode: 'Markdown'
+          })
+        });
+        const tgData = await tgRes.json();
+        if (tgData && tgData.ok) {
+          return json({ success: true, message: 'پیام تست با موفقیت به چت تلگرام ارسال شد.' });
+        } else {
+          return json({ success: false, error: tgData.description || 'خطا در ارسال پیام تلگرام.' }, 400);
+        }
+      } catch (err) {
+        return json({ success: false, error: 'خطا در ارتباط با تلگرام: ' + err.message }, 500);
       }
     }
 
