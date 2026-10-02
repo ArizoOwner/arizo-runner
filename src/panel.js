@@ -4686,13 +4686,25 @@ export function panelHTML(env, options = {}) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    window.closeAdminPortal = function() {
+    window.closeAdminPortal = function(preventHistory) {
+      window.START_IN_ADMIN = false;
       document.title = '⚡ Arizo Self | پلتفرم استودیوی سلف‌بات هوشمند تلگرام و پنل مدیریت';
-      if (window.location.pathname.startsWith('/admin')) {
+      if (!preventHistory && window.location.pathname.startsWith('/admin')) {
         try { window.history.pushState({}, document.title, '/'); } catch (_) {}
       }
-      document.getElementById('adminPanelSection').classList.add('hidden');
+      document.getElementById('adminPanelSection')?.classList.add('hidden');
+      document.getElementById('clockHeroCard')?.classList.remove('hidden');
+      
+      // بازیابی نمایش بخش‌های کاربری
+      if (window.lastKnownHasTelegram) {
+        document.getElementById('dashboardSection')?.classList.remove('hidden');
+        document.getElementById('telegramConnectSection')?.classList.add('hidden');
+      } else {
+        document.getElementById('telegramConnectSection')?.classList.remove('hidden');
+        document.getElementById('dashboardSection')?.classList.add('hidden');
+      }
       loadUserDashboard();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.addEventListener('popstate', function(e) {
@@ -4700,11 +4712,10 @@ export function panelHTML(env, options = {}) {
         if (window.currentUserIsAdmin) {
           openAdminPortal();
         } else {
-          closeAdminPortal();
+          closeAdminPortal(true);
         }
       } else {
-        document.getElementById('adminPanelSection').classList.add('hidden');
-        loadUserDashboard();
+        closeAdminPortal(true);
       }
     });
 
@@ -6540,6 +6551,7 @@ export function panelHTML(env, options = {}) {
         }
 
         window.currentUserIsAdmin = !!data.isAdmin;
+        window.lastKnownHasTelegram = !!data.hasTelegram;
         if (adminNav) {
           if (data.isAdmin) {
             adminNav.classList.remove('hidden');
@@ -6549,11 +6561,14 @@ export function panelHTML(env, options = {}) {
           }
         }
 
-        if (window.location.pathname.startsWith('/admin') || window.START_IN_ADMIN) {
+        // تنها در لود اولیه صفحه در صورت درخواست روت اختصاصی /admin
+        if (window.START_IN_ADMIN) {
+          window.START_IN_ADMIN = false;
           if (data.isAdmin) {
             openAdminPortal();
+            return;
           } else {
-            closeAdminPortal();
+            try { window.history.replaceState({}, document.title, '/'); } catch (_) {}
           }
         }
 
