@@ -792,7 +792,7 @@ export default {
         const isRootOwner = cleanUser === 'amirmaster' || cleanUser === 'admin' || (usersList.length > 0 && cleanUser === usersList[0].toLowerCase());
 
         // 🛡️ گارد امنیتی غیرقابل نفوذ: جلوگیری از حذف، تعلیق یا تنزل ادمین اولیه / مالک اصلی
-        if (isRootOwner && (action === 'delete' || action === 'toggle_role' || action === 'toggle_suspend')) {
+        if (isRootOwner && (action === 'delete' || action === 'toggle_role' || action === 'demote_admin' || action === 'toggle_suspend')) {
           return json({ error: 'خطای امنیتی: حذف، تعلیق یا تغییر سطح دسترسی مدیر ارشد و مالک اصلی سامانه امکان‌پذیر نیست.' }, 403);
         }
 
@@ -832,10 +832,24 @@ export default {
           return json({ ok: true, isSuspended: userData.isSuspended });
         }
 
-        if (action === 'toggle_role') {
+        if (action === 'toggle_role' || action === 'promote_admin' || action === 'demote_admin') {
           const currentRole = userData.role || (cleanUser === 'amirmaster' || cleanUser === 'admin' ? 'admin' : 'user');
-          userData.role = currentRole === 'admin' ? 'user' : 'admin';
+          if (action === 'promote_admin') {
+            userData.role = 'admin';
+          } else if (action === 'demote_admin') {
+            userData.role = 'user';
+          } else {
+            userData.role = currentRole === 'admin' ? 'user' : 'admin';
+          }
           await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          if (username && cleanUser !== username) {
+            await env.KV.put('user:' + username, JSON.stringify(userData));
+          }
+          await logSecurityEvent(env, AUDIT_EVENT_TYPES.CONFIG_MUTATED, {
+            ip: clientIP,
+            user: cleanUser,
+            details: { roleChange: userData.role, action }
+          }, AUDIT_SEVERITY.INFO);
           return json({ ok: true, role: userData.role, isAdmin: userData.role === 'admin' });
         }
 
