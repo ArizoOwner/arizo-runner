@@ -20,18 +20,36 @@ export class MediaSaverVault {
   static isTtlMedia(message) {
     if (!message || !message.media) return false;
 
-    // ۱. بررسی ویژگی ttlSeconds مستقیم در رسانه
+    // ۱. استثنای قطعی: رسانه‌های نابودشونده فقط در چت خصوصی (پیوی) وجود دارند
+    const isGroupOrChannel = Boolean(
+      message.isGroup ||
+      message.isChannel ||
+      message.peerId?.className === 'PeerChannel' ||
+      message.peerId?.className === 'PeerChat' ||
+      (message.chatId && !message.isPrivate && message.peerId?.className !== 'PeerUser')
+    );
+    if (isGroupOrChannel) return false;
+
+    // ۲. بررسی ویژگی ttlSeconds مستقیم در رسانه
     if (message.media.ttlSeconds && message.media.ttlSeconds > 0) return true;
 
-    // ۲. بررسی فلگ‌های عکس/فیلم نابودشونده
-    if (message.ttlPeriod && message.ttlPeriod > 0) return true;
+    // ۳. بررسی فلگ‌های عکس/فیلم یک‌بار مصرف (View-Once)
+    const isViewOnce = Boolean(
+      (message.media.flags && (message.media.flags & 4)) ||
+      (message.media.photo?.flags && (message.media.photo.flags & 4)) ||
+      (message.media.document?.flags && (message.media.document.flags & 4)) ||
+      message.media.viewOnce ||
+      message.viewOnce
+    );
+    if (isViewOnce) return true;
 
-    // ۳. بررسی ساختار داخلی GramJS Photo / Document
+    // ۴. بررسی تایمرهای کوتاه خودتخریبی پیوی (حداکثر ۵ دقیقه، نه حذف خودکار ۲۴ ساعته)
+    if (message.ttlPeriod && message.ttlPeriod > 0 && message.ttlPeriod <= 300) return true;
+
+    // ۵. بررسی ساختار داخلی GramJS Photo / Document
     const media = message.media;
-    if (media.photo && (media.photo.hasStickers === false || media.ttlSeconds)) {
-      if (media.ttlSeconds) return true;
-    }
-    if (media.document && media.ttlSeconds) return true;
+    if (media.photo && (media.photo.ttlSeconds && media.photo.ttlSeconds > 0)) return true;
+    if (media.document && (media.document.ttlSeconds && media.document.ttlSeconds > 0)) return true;
 
     return false;
   }
