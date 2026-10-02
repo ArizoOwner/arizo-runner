@@ -15,9 +15,21 @@
 <a href="#"><img src="https://img.shields.io/badge/Response_Time-<%2040ms-a855f7?style=for-the-badge&labelColor=0d1117" alt="Response Time"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Security-2FA_TOTP_+_Honeypot-ec4899?style=for-the-badge&labelColor=0d1117" alt="Security"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Uptime-99.9%25-0ea5e9?style=for-the-badge&labelColor=0d1117" alt="Uptime"/></a>
-<a href="#"><img src="https://img.shields.io/badge/Version-3.5_PRO-f59e0b?style=for-the-badge&labelColor=0d1117" alt="Version"/></a>
+<a href="#"><img src="https://img.shields.io/badge/Version-3.6_PRO-f59e0b?style=for-the-badge&labelColor=0d1117" alt="Version"/></a>
 
 <br><br>
+
+<a href="https://arizo-self.arizosupport.workers.dev/setup"><img src="https://img.shields.io/badge/🧙‍♂️_Setup_Wizard-Live_Web_Launcher-8b5cf6?style=for-the-badge&logo=rocket&logoColor=white" alt="Live Setup Wizard"/></a>
+<a href="https://arizo-self.arizosupport.workers.dev/"><img src="https://img.shields.io/badge/🌐_Web_Studio-Live_Edge_Panel-0ea5e9?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Live Edge Panel"/></a>
+
+<br><br>
+
+> [!TIP]
+> **🚀 ویزارد راه‌اندازی سریع و هوشمند تحت وب (Online Setup Wizard):**  
+> برای راه‌اندازی و کانفیگ آسان بدون نیاز به دستورات پیچیده، مستقیماً وارد **[ویزارد راه‌اندازی ابری Arizo Self](https://arizo-self.arizosupport.workers.dev/setup)** شوید:  
+> **🔗 لینک مستقیم: [https://arizo-self.arizosupport.workers.dev/setup](https://arizo-self.arizosupport.workers.dev/setup)** (همچنین در دسترس روی مسیر `/wizard`)
+
+<br>
 
 <a href="https://workers.cloudflare.com/"><img src="https://img.shields.io/badge/Cloudflare_Workers-Edge_Serverless-f38020?style=flat-square&logo=cloudflare&logoColor=white" alt="Cloudflare"/></a>
 <img src="https://img.shields.io/badge/Telegram-MTProto_2.0-26A5E4?style=flat-square&logo=telegram&logoColor=white" alt="Telegram"/>
@@ -38,7 +50,7 @@
 
 <div align="center">
 
-### 「 ✦ ۱۶ قابلیت برتر سامانه (Core Capabilities) ✦ 」
+### 「 ✦ ۱۸ قابلیت برتر سامانه (Core Capabilities) ✦ 」
 
 </div>
 
@@ -235,6 +247,30 @@
 
 </td>
 </tr>
+<tr>
+<td width="50%">
+
+### 👑 &nbsp; ۱۷. مرکز مدیریت ارشد یکپارچه (Direct Admin Portal)
+> دسترسی بی‌واسطه و امن برای مدیران سیستم با یکپارچگی کامل نشست کاربری
+
+- 🚀 ورود مستقیم به پنل مدیریت بدون نیاز به رمز مستر یا لاگین چندباره
+- 🛡️ پنهان‌سازی ۱۰۰٪ امن دکمه پنل مدیریت از دید کاربران عادی و مهمانان
+- 📊 گزارش زنده شاخص‌های کلی (کاربران، ربات‌ها، کدهای انبار و مصرفی)
+- 🎟️ سیستم صدور، ابطال و مدیریت لایسنس‌های پیشرفته
+
+</td>
+<td width="50%">
+
+### 🔍 &nbsp; ۱۸. بازرسی و مانیتورینگ متمرکز کاربران (User Inspector)
+> مدیریت جامع و متمرکز حساب کاربران از طریق پنجره بازرس پیشرفته
+
+- 🔎 ستون عملیات خلوت با تک دکمه مدرن «🔍 مانیتورینگ»
+- 🎛️ پنجره چندستونه عملیات سریع (تغییر پلن، قطع تلگرام، ریست رمز، تعلیق و تغییر نقش)
+- 📡 نظارت بر وضعیت زنده موتور سلف، تله‌متری و رکوردهای امنیتی
+- 🚨 اعمال آنی محدودیت‌ها بدون تداخل با نشست‌های فعال
+
+</td>
+</tr>
 </table>
 
 ---
@@ -368,8 +404,16 @@ graph TD
 
 </div>
 
-> 🚀 **ویزارد گرافیکی و تعاملی تحت وب (Interactive Setup Wizard):**  
-> برای راه‌اندازی سریع، آسان و بدون دردسر برای استفاده شخصی، پس از استقرار اولیه یا اجرای محلی کافی است مسیر `/setup` را در مرورگر باز کنید (`https://your-worker.workers.dev/setup`) تا ویزارد هوشمند ۵ مرحله‌ای با **تولیدکننده خودکار `wrangler.toml`**، **تستر آنلاین توکن ربات تلگرام** و **چک‌لیست آمادگی نهایی** شما را گام‌به‌گام هدایت کند!
+> [!TIP]
+> ### 🧙‍♂️ ویزارد گرافیکی و هوشمند راه‌اندازی (Interactive Web Setup Wizard)
+> **سریع‌ترین و بی‌دردسرترین روش برای راه‌اندازی و کانفیگ کامل Arizo Self:**  
+> 🔗 **لینک ورود مستقیم:** **[https://arizo-self.arizosupport.workers.dev/setup](https://arizo-self.arizosupport.workers.dev/setup)**  
+> 
+> ویزارد هوشمند ۵ مرحله‌ای شامل امکانات زیر است:
+> - 📄 **تولیدکننده خودکار `wrangler.toml`** با مقادیر و بایندینگ‌های معتبر شما
+> - 🤖 **تستر و ولیدیتور آنلاین توکن ربات تلگرام** با اعتبارسنجی بلادرنگ
+> - 🗄️ **پایش وضعیت پایگاه‌داده D1 و حافظه KV** در لبه Cloudflare
+> - ✅ **چک‌لیست آمادگی نهایی** جهت شروع بدون نقص استقرار
 
 #### ☁️ &nbsp; روش ۱: استقرار رایگان روی Cloudflare Workers + GitHub Actions (توصیه‌شده)
 
@@ -447,7 +491,7 @@ pm2 save && pm2 startup
 
 <samp>
 
-**Arizo Self Engine v3.5 PRO** — مهندسی شده برای بالاترین سرعت، امنیت نفوذناپذیر و تجربه کاربری بی‌همتا 💎
+**Arizo Self Engine v3.6 PRO** — مهندسی شده برای بالاترین سرعت، امنیت نفوذناپذیر و تجربه کاربری بی‌همتا 💎
 
 *Engineered with precision for maximum speed, bulletproof 2FA security & pure aesthetics*
 
