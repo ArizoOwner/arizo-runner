@@ -42,13 +42,13 @@ export function panelHTML(env) {
     /* 🎨 متغیرهای جامع پالت رنگی پیشرفته (تم روز و شب) */
     :root, [data-theme="dark"] {
       --bg-dark: #070913;
-      --bg-surface: rgba(14, 18, 38, 0.72);
-      --bg-surface-elevated: rgba(22, 28, 58, 0.85);
-      --bg-surface-hover: rgba(28, 35, 72, 0.9);
+      --bg-surface: rgba(14, 18, 38, 0.76);
+      --bg-surface-elevated: rgba(22, 28, 58, 0.88);
+      --bg-surface-hover: rgba(28, 35, 72, 0.92);
       --bg-input: rgba(6, 8, 20, 0.65);
       
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --border-specular: rgba(255, 255, 255, 0.18);
+      --border-subtle: rgba(255, 255, 255, 0.09);
+      --border-specular: rgba(255, 255, 255, 0.2);
       --border-focus: rgba(168, 85, 247, 0.65);
       --border-glow: rgba(168, 85, 247, 0.4);
       --glow-ambient: 0 0 35px -5px rgba(139, 92, 246, 0.3);
@@ -104,10 +104,24 @@ export function panelHTML(env) {
       
       --card-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.07), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
       --card-shadow-hover: 0 32px 70px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(168, 85, 247, 0.3), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
-      --modal-bg: rgba(12, 15, 32, 0.94);
+      --modal-bg: rgba(12, 15, 32, 0.95);
       --table-bg: rgba(0, 0, 0, 0.32);
+      --table-th-bg: rgba(0, 0, 0, 0.28);
+      --table-hover-bg: rgba(255, 255, 255, 0.04);
       --segmented-bg: rgba(5, 7, 18, 0.7);
       --badge-bg: rgba(255, 255, 255, 0.06);
+
+      --stat-card-bg: rgba(255, 255, 255, 0.035);
+      --stat-card-border: rgba(255, 255, 255, 0.08);
+      --telemetry-card-bg: rgba(255, 255, 255, 0.025);
+      --telemetry-card-border: rgba(255, 255, 255, 0.08);
+      --inspector-bg: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.16) 0%, rgba(10, 14, 28, 0.98) 75%);
+      --filter-bar-bg: rgba(255, 255, 255, 0.02);
+      --badge-neutral-bg: rgba(255, 255, 255, 0.06);
+      --badge-neutral-color: #94a3b8;
+      --badge-neutral-border: rgba(255, 255, 255, 0.1);
+      --input-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+      --backdrop-bg: rgba(4, 6, 16, 0.78);
       
       --clock-box-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
       --clock-digits-grad: linear-gradient(135deg, #ffffff 30%, #c4b5fd 70%, #93c5fd 100%);
@@ -128,17 +142,17 @@ export function panelHTML(env) {
     }
 
     [data-theme="light"] {
-      --bg-dark: #f1f5f9;
-      --bg-surface: rgba(255, 255, 255, 0.88);
+      --bg-dark: #f8fafc;
+      --bg-surface: rgba(255, 255, 255, 0.95);
       --bg-surface-elevated: #ffffff;
-      --bg-surface-hover: #f8fafc;
-      --bg-input: #f8fafc;
+      --bg-surface-hover: #f1f5f9;
+      --bg-input: #ffffff;
       
-      --border-subtle: rgba(99, 102, 241, 0.14);
-      --border-specular: rgba(255, 255, 255, 0.9);
+      --border-subtle: rgba(203, 213, 225, 0.8);
+      --border-specular: #ffffff;
       --border-focus: rgba(99, 102, 241, 0.65);
-      --border-glow: rgba(99, 102, 241, 0.22);
-      --glow-ambient: 0 0 35px -5px rgba(99, 102, 241, 0.18);
+      --border-glow: rgba(99, 102, 241, 0.18);
+      --glow-ambient: 0 0 35px -5px rgba(99, 102, 241, 0.12);
       
       --primary: #6366f1;
       --primary-hover: #4f46e5;
@@ -161,60 +175,72 @@ export function panelHTML(env) {
       --text-dim: #64748b;
 
       --accent-purple: #7c3aed;
-      --accent-purple-bg: rgba(124, 58, 237, 0.09);
-      --accent-purple-border: rgba(124, 58, 237, 0.28);
+      --accent-purple-bg: rgba(124, 58, 237, 0.1);
+      --accent-purple-border: rgba(124, 58, 237, 0.3);
 
       --accent-blue: #0284c7;
-      --accent-blue-bg: rgba(2, 132, 199, 0.09);
-      --accent-blue-border: rgba(2, 132, 199, 0.28);
+      --accent-blue-bg: rgba(2, 132, 199, 0.1);
+      --accent-blue-border: rgba(2, 132, 199, 0.3);
 
       --accent-amber: #b45309;
-      --accent-amber-bg: rgba(217, 119, 6, 0.1);
-      --accent-amber-border: rgba(217, 119, 6, 0.32);
+      --accent-amber-bg: rgba(217, 119, 6, 0.12);
+      --accent-amber-border: rgba(217, 119, 6, 0.35);
 
       --accent-rose: #e11d48;
-      --accent-rose-bg: rgba(225, 29, 72, 0.09);
-      --accent-rose-border: rgba(225, 29, 72, 0.28);
+      --accent-rose-bg: rgba(225, 29, 72, 0.1);
+      --accent-rose-border: rgba(225, 29, 72, 0.3);
 
       --accent-green: #059669;
-      --accent-green-bg: rgba(5, 150, 105, 0.1);
-      --accent-green-border: rgba(5, 150, 105, 0.32);
+      --accent-green-bg: rgba(5, 150, 105, 0.12);
+      --accent-green-border: rgba(5, 150, 105, 0.35);
 
       --accent-indigo: #4f46e5;
-      --accent-indigo-bg: rgba(79, 70, 229, 0.09);
-      --accent-indigo-border: rgba(79, 70, 229, 0.28);
+      --accent-indigo-bg: rgba(79, 70, 229, 0.1);
+      --accent-indigo-border: rgba(79, 70, 229, 0.3);
 
-      --btn-secondary-bg: #f8fafc;
-      --btn-secondary-hover: #e2e8f0;
-      --btn-secondary-active: #cbd5e1;
-      --box-panel-bg: rgba(248, 250, 252, 0.95);
+      --btn-secondary-bg: #ffffff;
+      --btn-secondary-hover: #f1f5f9;
+      --btn-secondary-active: #e2e8f0;
+      --box-panel-bg: #ffffff;
       
-      --card-shadow: 0 20px 45px -10px rgba(99, 102, 241, 0.12), 0 4px 16px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.95);
-      --card-shadow-hover: 0 28px 55px -10px rgba(99, 102, 241, 0.2), 0 8px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
-      --modal-bg: rgba(255, 255, 255, 0.96);
-      --table-bg: rgba(248, 250, 252, 0.88);
-      --segmented-bg: rgba(226, 232, 240, 0.85);
-      --badge-bg: rgba(99, 102, 241, 0.06);
+      --card-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(203, 213, 225, 0.6);
+      --card-shadow-hover: 0 20px 40px -8px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.3);
+      --modal-bg: #ffffff;
+      --table-bg: #ffffff;
+      --table-th-bg: #f8fafc;
+      --table-hover-bg: #f1f5f9;
+      --segmented-bg: #f1f5f9;
+      --badge-bg: #f1f5f9;
+
+      --stat-card-bg: #ffffff;
+      --stat-card-border: rgba(203, 213, 225, 0.8);
+      --telemetry-card-bg: #f8fafc;
+      --telemetry-card-border: rgba(203, 213, 225, 0.8);
+      --inspector-bg: radial-gradient(circle at 50% 0%, rgba(224, 231, 255, 0.7) 0%, rgba(255, 255, 255, 0.98) 75%);
+      --filter-bar-bg: #f8fafc;
+      --badge-neutral-bg: #f1f5f9;
+      --badge-neutral-color: #475569;
+      --badge-neutral-border: rgba(203, 213, 225, 0.9);
+      --input-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+      --backdrop-bg: rgba(15, 23, 42, 0.45);
       
-      --clock-box-bg: linear-gradient(180deg, rgba(238, 242, 255, 0.85) 0%, rgba(248, 250, 252, 0.7) 100%);
+      --clock-box-bg: linear-gradient(180deg, rgba(238, 242, 255, 0.9) 0%, rgba(248, 250, 252, 0.85) 100%);
       --clock-digits-grad: linear-gradient(135deg, #1e1b4b 20%, #4338ca 65%, #0284c7 100%);
-      --clock-shadow: drop-shadow(0 0 20px rgba(99, 102, 241, 0.2));
-      --orb-opacity: 0.18;
+      --clock-shadow: drop-shadow(0 0 18px rgba(99, 102, 241, 0.18));
+      --orb-opacity: 0.12;
       
       --success: #059669;
       --warning: #d97706;
       --danger: #e11d48;
     }
 
-    /* ⚡ ریست مدرن بدون اعمال ترنزیشن مزاحم بر کل عناصر */
+    /* ⚡ ریست مدرن استاندارد */
     *, *::before, *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-    *, *::before, *::after {
-      box-sizing: border-box;
     }
 
     html {
@@ -2518,19 +2544,20 @@ export function panelHTML(env) {
       width: 95%;
       max-width: 860px;
       padding: clamp(16px, 2.5vw, 24px);
-      background: #090d1a;
-      background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.18) 0%, rgba(9, 13, 26, 0.98) 75%);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      background: var(--inspector-bg);
+      border: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-specular);
       border-radius: 24px;
-      box-shadow: 0 32px 100px -10px rgba(0, 0, 0, 0.95), 0 0 50px -10px rgba(59, 130, 246, 0.3);
+      box-shadow: var(--card-shadow);
       position: relative;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
-      color: #e2e8f0;
+      color: var(--text-main);
       box-sizing: border-box;
       overflow: hidden;
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
       animation: modalPop 0.35s var(--spring-physics) both;
     }
     .inspector-header {
@@ -2538,7 +2565,7 @@ export function panelHTML(env) {
       justify-content: space-between;
       align-items: center;
       padding-bottom: 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid var(--border-subtle);
       gap: 12px;
       flex-shrink: 0;
     }
@@ -2552,13 +2579,13 @@ export function panelHTML(env) {
       width: 44px;
       height: 44px;
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(59, 130, 246, 0.35));
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: var(--gradient-brand);
+      border: 1px solid var(--border-specular);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.4rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 16px var(--border-glow);
     }
     .inspector-scroll-area {
       overflow-y: auto;
@@ -2573,18 +2600,21 @@ export function panelHTML(env) {
       gap: 14px;
     }
     .telemetry-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--telemetry-card-bg);
+      border: 1px solid var(--telemetry-card-border);
       border-radius: 16px;
       padding: 15px;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
     }
     .telemetry-card:hover {
-      border-color: rgba(99, 102, 241, 0.35);
-      background: rgba(255, 255, 255, 0.045);
+      border-color: var(--border-focus);
+      background: var(--bg-surface-hover);
+      box-shadow: 0 6px 20px var(--border-glow);
+      transform: translateY(-2px);
     }
     .telemetry-card-title {
       font-size: 0.88rem;
@@ -2593,7 +2623,7 @@ export function panelHTML(env) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid var(--border-subtle);
       padding-bottom: 8px;
     }
     .telemetry-card-title span {
@@ -2606,15 +2636,15 @@ export function panelHTML(env) {
       align-items: center;
       justify-content: space-between;
       font-size: 0.8rem;
-      padding: 4px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border-subtle);
       gap: 8px;
     }
     .telemetry-item:last-child {
       border-bottom: none;
     }
     .telemetry-item-label {
-      color: var(--text-dim);
+      color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -2632,8 +2662,62 @@ export function panelHTML(env) {
       gap: 8px;
       margin-top: 8px;
       padding-top: 10px;
-      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      border-top: 1px dashed var(--border-subtle);
     }
+
+    /* 📊 گرید و کارت‌های آمار زنده پنل کاربران و ادمین */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat-card {
+      background: var(--stat-card-bg);
+      border: 1px solid var(--stat-card-border);
+      border-top: 1px solid var(--border-specular);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      transition: transform 0.22s var(--spring-physics), box-shadow 0.22s ease, border-color 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-focus);
+      box-shadow: 0 6px 20px var(--border-glow);
+    }
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 900;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.73rem;
+      font-weight: 700;
+    }
+    .admin-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      background: var(--filter-bar-bg);
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+    .badge-neutral {
+      background: var(--badge-neutral-bg);
+      color: var(--badge-neutral-color);
+      border: 1px solid var(--badge-neutral-border);
+      font-weight: 700;
+    }
+
     @media (max-width: 680px) {
       .telemetry-grid {
         grid-template-columns: 1fr;
@@ -2864,7 +2948,7 @@ export function panelHTML(env) {
           </div>
 
           <!-- نوار جستجو و فیلتر پیشرفته -->
-          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:14px; background:rgba(255,255,255,0.02); padding:10px 14px; border-radius:12px; border:1px solid var(--border-subtle);">
+          <div class="admin-filter-bar">
             <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; flex:1; min-width:240px;">
               <input type="text" id="adminUserSearchInput" class="input-field" placeholder="🔍 جستجو بر اساس نام کاربری، شناسه تلگرام یا ربات..." style="padding:7px 12px; font-size:0.8rem; flex:1; min-width:180px;" oninput="filterAdminUsers()">
               <select id="adminUserFilterSelect" class="input-field" style="padding:7px 10px; font-size:0.8rem; width:auto; cursor:pointer;" onchange="filterAdminUsers()">
@@ -4286,8 +4370,8 @@ export function panelHTML(env) {
         </div>
       </div>
 
-      <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <div style="font-size:0.75rem; color:var(--text-dim); display:flex; align-items:center; gap:6px;">
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
           <span>💡 تمامی تغییرات بلافاصله در حافظه Edge Cloudflare ذخیره و اعمال می‌گردند.</span>
         </div>
         <button class="btn btn-secondary" onclick="closeUserInspector()" style="padding:6px 14px; font-size:0.8rem;">
@@ -4772,17 +4856,17 @@ export function panelHTML(env) {
           ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:2px 7px; border-radius:6px; font-weight:800; font-size:0.72rem;">👑 مالک</span>'
           : (isAdm
             ? '<span style="color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:2px 7px; border-radius:6px; font-weight:800; font-size:0.72rem;">🛡️ مدیر</span>'
-            : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:2px 7px; border-radius:6px; font-size:0.72rem;">👤 کاربر</span>');
+            : '<span class="badge-neutral" style="padding:2px 7px; border-radius:6px; font-size:0.72rem;">👤 کاربر</span>');
 
         // ربات کمکی
         var botBadge = u.hasBot
-          ? '<span style="color:var(--accent-blue); background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap;" title="شناسه ربات: ' + (u.botUsername ? '@' + u.botUsername : 'متصل') + '">🤖 ' + (u.botUsername ? '@' + u.botUsername : 'متصل') + '</span>'
-          : '<span style="color:var(--text-dim); font-size:0.72rem;">⚪ بدون ربات</span>';
+          ? '<span style="color:var(--accent-blue); background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap;" title="شناسه ربات: ' + (u.botUsername ? '@' + u.botUsername : 'متصل') + '">🤖 ' + (u.botUsername ? '@' + u.botUsername : 'متصل') + '</span>'
+          : '<span class="badge-neutral" style="padding:2px 8px; border-radius:999px; font-size:0.72rem;">⚪ بدون ربات</span>';
 
         // تایید دو مرحله‌ای ۲FA
         var totpBadge = u.has2FA
-          ? '<span style="color:var(--accent-green); background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap;" title="۲FA فعال - ' + (u.backupCodesCount || 0) + ' کد پشتیبان">🔐 فعال (' + (u.backupCodesCount || 0) + ')</span>'
-          : '<span style="color:var(--text-dim); font-size:0.72rem;">⚪ خاموش</span>';
+          ? '<span style="color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap;" title="۲FA فعال - ' + (u.backupCodesCount || 0) + ' کد پشتیبان">🔐 فعال (' + (u.backupCodesCount || 0) + ')</span>'
+          : '<span class="badge-neutral" style="padding:2px 8px; border-radius:999px; font-size:0.72rem;">⚪ خاموش</span>';
 
         // وضعیت تلگرام سلف‌بات
         var tgStatus = u.hasTelegram 
@@ -4797,11 +4881,11 @@ export function panelHTML(env) {
 
         // وضعیت تعلیق
         var suspendBadge = u.isSuspended 
-          ? '<span class="status-badge used" style="color:var(--accent-rose); background:var(--accent-rose-bg); font-size:0.72rem;">⏸️ معلق</span>'
-          : '<span class="status-badge unused" style="color:var(--accent-green); background:var(--accent-green-bg); font-size:0.72rem;">🟢 فعال</span>';
+          ? '<span class="status-badge used" style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); font-size:0.72rem;">⏸️ معلق</span>'
+          : '<span class="status-badge unused" style="color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); font-size:0.72rem;">🟢 فعال</span>';
 
         // دکمه‌های عملیاتی
-        var inspectBtn = '<button class="btn-nav-action" data-user="' + u.username + '" onclick="openUserInspector(this.dataset.user)" style="color:var(--accent-indigo); background:rgba(99,102,241,0.12); border-color:rgba(99,102,241,0.35); font-weight:700; padding:4px 9px; font-size:0.74rem;" title="مانیتورینگ کامل ۳۶۰ درجه و کنترل کاربر">🔍 مانیتورینگ</button> ';
+        var inspectBtn = '<button class="btn-nav-action" data-user="' + u.username + '" onclick="openUserInspector(this.dataset.user)" style="color:var(--accent-indigo); background:var(--accent-indigo-bg); border-color:var(--accent-indigo-border); font-weight:700; padding:4px 9px; font-size:0.74rem;" title="مانیتورینگ کامل ۳۶۰ درجه و کنترل کاربر">🔍 مانیتورینگ</button> ';
         var planBtn = '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 7px; font-size:0.74rem;" title="تغییر نوع اشتراک">⭐</button> ';
         var pauseBtn = '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="padding:4px 7px; font-size:0.74rem;" title="سوئیچ فعال/مکث سلف‌بات">⏸️/▶️</button> ';
 
@@ -4854,7 +4938,7 @@ export function panelHTML(env) {
           : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:2px 8px; border-radius:6px; font-size:0.72rem;">👤 کاربر عادی</span>');
 
       document.getElementById('inspectorPlanBadge').innerHTML = 
-        '<span style="color:var(--accent-blue); background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); padding:2px 8px; border-radius:6px; font-weight:700; font-size:0.72rem;">⭐ ' + (u.planName || u.plan || 'استاندارد') + '</span>';
+        '<span style="color:var(--accent-blue); background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); padding:2px 8px; border-radius:6px; font-weight:700; font-size:0.72rem;">⭐ ' + (u.planName || u.plan || 'استاندارد') + '</span>';
 
       document.getElementById('inspectorSuspendBadge').innerHTML = u.isSuspended
         ? '<span style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); padding:2px 8px; border-radius:6px; font-size:0.72rem;">⏸️ معلق</span>'
@@ -4868,17 +4952,17 @@ export function panelHTML(env) {
       // کارت ۱: مانیتورینگ ربات کمکی تلگرام
       var botStatusHtml = u.hasBot
         ? '<span style="color:var(--accent-green); font-weight:700;">🟢 متصل (@' + (u.botUsername || 'ربات') + ')</span>'
-        : '<span style="color:var(--text-dim);">⚪ غیرمتصل</span>';
+        : '<span style="color:var(--text-muted);">⚪ غیرمتصل</span>';
 
       var botActionBtns = u.hasBot
-        ? '<button class="btn btn-secondary" onclick="adminDisconnectUserBot(window.activeInspectedUser)" style="color:var(--accent-rose); border-color:rgba(239,68,68,0.35); font-size:0.75rem; padding:6px 12px; width:100%; justify-content:center;">🔌 قطع اتصال ربات و پاکسازی وب‌هوک</button>'
-        : '<span style="font-size:0.74rem; color:var(--text-dim);">کاربر هنوز ربات کمکی اختصاصی متصل نکرده است.</span>';
+        ? '<button class="btn btn-secondary" onclick="adminDisconnectUserBot(window.activeInspectedUser)" style="color:var(--accent-rose); border-color:var(--accent-rose-border); font-size:0.75rem; padding:6px 12px; width:100%; justify-content:center;">🔌 قطع اتصال ربات و پاکسازی وب‌هوک</button>'
+        : '<span style="font-size:0.74rem; color:var(--text-muted);">کاربر هنوز ربات کمکی اختصاصی متصل نکرده است.</span>';
 
       var botCard = 
         '<div class="telemetry-card">' +
           '<div class="telemetry-card-title">' +
             '<span>🤖 مانیتورینگ ربات کمکی تلگرام</span>' +
-            (u.hasBot ? '<span style="font-size:0.7rem; color:var(--accent-blue); background:rgba(59,130,246,0.12); padding:2px 6px; border-radius:4px;">اختصاصی</span>' : '') +
+            (u.hasBot ? '<span style="font-size:0.7rem; color:var(--accent-blue); background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); padding:2px 6px; border-radius:4px;">اختصاصی</span>' : '') +
           '</div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت اتصال:</span><span class="telemetry-item-value">' + botStatusHtml + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">نام کاربری ربات:</span><span class="telemetry-item-value mono">' + (u.botUsername ? ('@' + u.botUsername) : '-') + '</span></div>' +
@@ -4911,19 +4995,19 @@ export function panelHTML(env) {
       // کارت ۲: امنیت و ۲FA
       var totpStatusHtml = u.has2FA
         ? '<span style="color:var(--accent-green); font-weight:700;">🟢 فعال (Google Authenticator)</span>'
-        : '<span style="color:var(--text-dim);">⚪ غیرفعال (فقط رمز عبور)</span>';
+        : '<span style="color:var(--text-muted);">⚪ غیرفعال (فقط رمز عبور)</span>';
 
       var totpActionBtn = u.has2FA
-        ? '<button class="btn btn-secondary" onclick="adminDisableUser2FA(window.activeInspectedUser)" style="color:var(--accent-amber); border-color:rgba(245,158,11,0.35); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center;">🔓 ریست و غیرفعال‌سازی ۲FA</button>'
+        ? '<button class="btn btn-secondary" onclick="adminDisableUser2FA(window.activeInspectedUser)" style="color:var(--accent-amber); border-color:var(--accent-amber-border); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center;">🔓 ریست و غیرفعال‌سازی ۲FA</button>'
         : '';
 
-      var passActionBtn = '<button class="btn btn-secondary" onclick="adminResetUserPassword(window.activeInspectedUser)" style="color:var(--accent-indigo); border-color:rgba(99,102,241,0.35); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center;">🔑 تغییر کلمه عبور کاربر</button>';
+      var passActionBtn = '<button class="btn btn-secondary" onclick="adminResetUserPassword(window.activeInspectedUser)" style="color:var(--accent-indigo); border-color:var(--accent-indigo-border); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center;">🔑 تغییر کلمه عبور کاربر</button>';
 
       var secCard = 
         '<div class="telemetry-card">' +
           '<div class="telemetry-card-title">' +
             '<span>🔐 امنیت و تایید دو مرحله‌ای (2FA)</span>' +
-            (u.has2FA ? '<span style="font-size:0.7rem; color:var(--accent-green); background:rgba(34,197,94,0.12); padding:2px 6px; border-radius:4px;">امن</span>' : '') +
+            (u.has2FA ? '<span style="font-size:0.7rem; color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); padding:2px 6px; border-radius:4px;">امن</span>' : '') +
           '</div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت ورود دو مرحله‌ای:</span><span class="telemetry-item-value">' + totpStatusHtml + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">کدهای پشتیبان باقی‌مانده:</span><span class="telemetry-item-value mono">' + (u.has2FA ? (u.backupCodesCount + ' کد آماده مصرف') : 'ندارد') + '</span></div>' +
@@ -4945,7 +5029,7 @@ export function panelHTML(env) {
         '<div class="telemetry-card">' +
           '<div class="telemetry-card-title">' +
             '<span>📱 مانیتورینگ سلف‌بات تلگرام (MTProto)</span>' +
-            '<span style="font-size:0.7rem; color:var(--accent-purple); background:var(--accent-purple-bg); padding:2px 6px; border-radius:4px;">سشن امن</span>' +
+            '<span style="font-size:0.7rem; color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:2px 6px; border-radius:4px;">سشن امن</span>' +
           '</div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت سشن تلگرام:</span><span class="telemetry-item-value">' + tgStatusHtml + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت اجرای سلف‌بات:</span><span class="telemetry-item-value">' + tgRunStatusHtml + '</span></div>' +
@@ -4953,25 +5037,25 @@ export function panelHTML(env) {
           '<div class="telemetry-item">' +
             '<span class="telemetry-item-label">حالت شبح و خواندن مخفی (Ghost):</span>' +
             '<span class="telemetry-item-value">' + 
-              (u.ghostMode ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-dim);">⚪ خاموش</span>') +
+              (u.ghostMode ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-muted);">⚪ خاموش</span>') +
               (u.hasTelegram ? ' <button class="btn-nav-action" data-feat="ghostMode" onclick="adminToggleFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
             '</span>' +
           '</div>' +
           '<div class="telemetry-item">' +
             '<span class="telemetry-item-label">پاسخ هوشمند هوش مصنوعی (AI):</span>' +
             '<span class="telemetry-item-value">' + 
-              (u.aiReplyEnabled ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-dim);">⚪ خاموش</span>') +
+              (u.aiReplyEnabled ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-muted);">⚪ خاموش</span>') +
               (u.hasTelegram ? ' <button class="btn-nav-action" data-feat="aiReplyEnabled" onclick="adminToggleFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
             '</span>' +
           '</div>' +
           '<div class="telemetry-item">' +
             '<span class="telemetry-item-label">ساعت فونتی و بیو داینامیک:</span>' +
             '<span class="telemetry-item-value">' + 
-              (u.bioEnabled ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-dim);">⚪ خاموش</span>') +
+              (u.bioEnabled ? '<span style="color:var(--accent-green);">🟢 روشن</span>' : '<span style="color:var(--text-muted);">⚪ خاموش</span>') +
               (u.hasTelegram ? ' <button class="btn-nav-action" data-feat="bioEnabled" onclick="adminToggleFeature(window.activeInspectedUser, this.dataset.feat)" style="font-size:0.7rem; padding:2px 6px;">سوئیچ</button>' : '') +
             '</span>' +
           '</div>' +
-          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت عدم حضور (AFK):</span><span class="telemetry-item-value">' + (u.afkEnabled ? ('🟢 فعال' + (u.afkReason ? ' (' + u.afkReason + ')' : '')) : '<span style="color:var(--text-dim);">⚪ خاموش</span>') + '</span></div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت عدم حضور (AFK):</span><span class="telemetry-item-value">' + (u.afkEnabled ? ('🟢 فعال' + (u.afkReason ? ' (' + u.afkReason + ')' : '')) : '<span style="color:var(--text-muted);">⚪ خاموش</span>') + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">کاربران بی‌صدا / مسدود شده:</span><span class="telemetry-item-value mono">' + (u.mutedCount || 0) + ' کاربر</span></div>' +
           '<div class="telemetry-actions">' +
             '<button class="btn-nav-action" data-act="toggle" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.75rem; padding:6px 10px; flex:1; justify-content:center;">⏸️/▶️ سوئیچ فعال/مکث</button>' +
@@ -4981,14 +5065,14 @@ export function panelHTML(env) {
 
       // کارت ۴: عیب‌یابی سلامت و لاگ‌ها
       var healthHtml = u.error
-        ? '<div style="color:var(--accent-rose); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:6px 10px; font-size:0.75rem; word-break:break-all; margin-top:4px;">⚠️ ' + u.error + '</div>'
+        ? '<div style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); border-radius:8px; padding:6px 10px; font-size:0.75rem; word-break:break-all; margin-top:4px;">⚠️ ' + u.error + '</div>'
         : '<span style="color:var(--accent-green); font-size:0.78rem;">سیستم کاملاً سالم، پایدار و بدون خطاست 🟢</span>';
 
       var healthCard = 
         '<div class="telemetry-card">' +
           '<div class="telemetry-card-title">' +
             '<span>🩺 عیب‌یابی سلامت، لاگ‌ها و اشتراک</span>' +
-            '<span style="font-size:0.7rem; color:var(--accent-amber); background:var(--accent-amber-bg); padding:2px 6px; border-radius:4px;">Cloudflare Edge</span>' +
+            '<span style="font-size:0.7rem; color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:2px 6px; border-radius:4px;">Cloudflare Edge</span>' +
           '</div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">آخرین همگام‌سازی (Heartbeat):</span><span class="telemetry-item-value mono">' + (u.lastUpdate ? new Date(u.lastUpdate).toLocaleString('fa-IR') : (u.lastTime || 'بدون لاگ')) + '</span></div>' +
           '<div class="telemetry-item" style="flex-direction:column; align-items:stretch; gap:4px;"><span class="telemetry-item-label">وضعیت سلامت و خطاها:</span>' + healthHtml + '</div>' +
@@ -4996,8 +5080,8 @@ export function panelHTML(env) {
           '<div class="telemetry-item"><span class="telemetry-item-label">مدت اعتبار باقی‌مانده:</span><span class="telemetry-item-value" style="color:' + (u.isExpired ? 'var(--danger)' : 'var(--accent-blue)') + ';">' + (u.remainingText || '-') + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">کد لایسنس مصرف‌شده:</span><span class="telemetry-item-value mono">' + (u.licenseCode || '-') + '</span></div>' +
           '<div class="telemetry-actions">' +
-            '<button class="btn-nav-action" onclick="adminClearUserError(window.activeInspectedUser)" style="color:var(--accent-green); border-color:rgba(34,197,94,0.35); font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center;">🔄 پاکسازی خطاها</button>' +
-            '<button class="btn-nav-action" onclick="doChangeUserPlan(window.activeInspectedUser)" style="color:var(--accent-blue); border-color:rgba(59,130,246,0.35); font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center;">⭐ تغییر یا ارتقای اشتراک</button>' +
+            '<button class="btn-nav-action" onclick="adminClearUserError(window.activeInspectedUser)" style="color:var(--accent-green); border-color:var(--accent-green-border); font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center;">🔄 پاکسازی خطاها</button>' +
+            '<button class="btn-nav-action" onclick="doChangeUserPlan(window.activeInspectedUser)" style="color:var(--accent-blue); border-color:var(--accent-blue-border); font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center;">⭐ تغییر یا ارتقای اشتراک</button>' +
           '</div>' +
         '</div>';
 
