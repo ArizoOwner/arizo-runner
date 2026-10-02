@@ -2968,7 +2968,10 @@ export function panelHTML(env) {
                 <option value="admin">🛡️ مدیران ارشد سیستم</option>
               </select>
             </div>
-            <button class="btn-nav-action" onclick="loadAdminData()" title="تازه‌سازی لیست">🔄 بروزرسانی</button>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button class="btn-nav-action" onclick="doQuickPromoteAdmin()" style="color:var(--accent-purple); background:var(--accent-purple-bg); border-color:var(--accent-purple-border); font-weight:700; padding:6px 12px; font-size:0.78rem;" title="ارتقای یک کاربر به مدیر سامانه">🛡️ ارتقا به مدیر</button>
+              <button class="btn-nav-action" onclick="loadAdminData()" title="تازه‌سازی لیست">🔄 بروزرسانی</button>
+            </div>
           </div>
 
           <div class="table-responsive-wrapper" style="max-height: 420px;">
@@ -4902,7 +4905,12 @@ export function panelHTML(env) {
         var extraBtns = '';
         if (!isOwner) {
           var suspendBtnIcon = u.isSuspended ? '🔓' : '🔒';
+          var promoteBtnHtml = isAdm
+            ? '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-amber); background:var(--accent-amber-bg); border-color:var(--accent-amber-border); font-weight:700; padding:4px 8px; font-size:0.72rem; border-radius:6px;" title="تنزل سطح دسترسی مدیر به کاربر عادی">👤 تنزل مدیر</button> '
+            : '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-purple); background:var(--accent-purple-bg); border-color:var(--accent-purple-border); font-weight:700; padding:4px 8px; font-size:0.72rem; border-radius:6px;" title="ارتقای کاربر به سطح دسترسی مدیر سامانه">🛡️ ارتقا به مدیر</button> ';
+
           extraBtns = 
+            promoteBtnHtml +
             '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + '; padding:4px 7px; font-size:0.74rem;" title="' + (u.isSuspended ? 'خروج از تعلیق' : 'تعلیق کاربر') + '">' + suspendBtnIcon + '</button> ' +
             '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-rose); padding:4px 7px; font-size:0.74rem;" title="حذف کامل کاربر">🗑️</button>';
         }
@@ -4941,11 +4949,15 @@ export function panelHTML(env) {
       document.getElementById('inspectorAvatar').textContent = isOwner ? '👑' : (isAdm ? '🛡️' : '👤');
       document.getElementById('inspectorUsername').textContent = u.username;
 
-      document.getElementById('inspectorRoleBadge').innerHTML = isOwner
+      var roleBadgeContent = isOwner
         ? '<span style="color:var(--accent-amber); background:var(--accent-amber-bg); border:1px solid var(--accent-amber-border); padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.72rem;">👑 مالک سامانه</span>'
         : (isAdm
-          ? '<span style="color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.72rem;">🛡️ مدیر ارشد</span>'
+          ? '<span style="color:var(--accent-purple); background:var(--accent-purple-bg); border:1px solid var(--accent-purple-border); padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.72rem;">🛡️ مدیر سامانه</span>'
           : '<span style="color:var(--text-muted); background:var(--badge-bg); border:1px solid var(--border-subtle); padding:2px 8px; border-radius:6px; font-size:0.72rem;">👤 کاربر عادی</span>');
+      if (!isOwner) {
+        roleBadgeContent += ' <button class="btn-nav-action" onclick="doUserAdminAction(window.activeInspectedUser, &apos;toggle_role&apos;)" style="color:' + (isAdm ? 'var(--accent-amber)' : 'var(--accent-purple)') + '; background:' + (isAdm ? 'var(--accent-amber-bg)' : 'var(--accent-purple-bg)') + '; border:1px solid ' + (isAdm ? 'var(--accent-amber-border)' : 'var(--accent-purple-border)') + '; font-size:0.72rem; padding:3px 9px; font-weight:700; border-radius:6px;" title="' + (isAdm ? 'تنزل سطح دسترسی به کاربر عادی' : 'ارتقا به مدیر سامانه') + '">' + (isAdm ? '👤 تنزل به کاربر عادی' : '🛡️ ارتقا به مدیر') + '</button>';
+      }
+      document.getElementById('inspectorRoleBadge').innerHTML = roleBadgeContent;
 
       document.getElementById('inspectorPlanBadge').innerHTML = 
         '<span style="color:var(--accent-blue); background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); padding:2px 8px; border-radius:6px; font-weight:700; font-size:0.72rem;">⭐ ' + (u.planName || u.plan || 'استاندارد') + '</span>';
@@ -5002,7 +5014,7 @@ export function panelHTML(env) {
           '<div class="telemetry-actions">' + botActionBtns + '</div>' +
         '</div>';
 
-      // کارت ۲: امنیت و ۲FA
+      // کارت ۲: امنیت، دسترسی و ۲FA
       var totpStatusHtml = u.has2FA
         ? '<span style="color:var(--accent-green); font-weight:700;">🟢 فعال (Google Authenticator)</span>'
         : '<span style="color:var(--text-muted);">⚪ غیرفعال (فقط رمز عبور)</span>';
@@ -5013,17 +5025,28 @@ export function panelHTML(env) {
 
       var passActionBtn = '<button class="btn btn-secondary" onclick="adminResetUserPassword(window.activeInspectedUser)" style="color:var(--accent-indigo); border-color:var(--accent-indigo-border); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center;">🔑 تغییر کلمه عبور کاربر</button>';
 
+      var roleDetailHtml = isOwner
+        ? '<span style="color:var(--accent-amber); font-weight:700;">👑 مالک ارشد سامانه</span>'
+        : (isAdm
+          ? '<span style="color:var(--accent-purple); font-weight:700;">🛡️ مدیر سامانه (دسترسی کامل پنل مدیریت)</span>'
+          : '<span style="color:var(--text-muted);">👤 کاربر عادی</span>');
+
+      var roleActionBtn = !isOwner
+        ? ('<button class="btn btn-secondary" onclick="doUserAdminAction(window.activeInspectedUser, &apos;toggle_role&apos;)" style="color:' + (isAdm ? 'var(--accent-amber)' : 'var(--accent-purple)') + '; border-color:' + (isAdm ? 'var(--accent-amber-border)' : 'var(--accent-purple-border)') + '; font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center; font-weight:700;">' + (isAdm ? '👤 تنزل به کاربر عادی' : '🛡️ ارتقا به مدیر سامانه') + '</button>')
+        : '';
+
       var secCard = 
         '<div class="telemetry-card">' +
           '<div class="telemetry-card-title">' +
-            '<span>🔐 امنیت و تایید دو مرحله‌ای (2FA)</span>' +
+            '<span>🔐 امنیت، سطح دسترسی و ۲FA</span>' +
             (u.has2FA ? '<span style="font-size:0.7rem; color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); padding:2px 6px; border-radius:4px;">امن</span>' : '') +
           '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">سطح دسترسی و نقش:</span><span class="telemetry-item-value">' + roleDetailHtml + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت ورود دو مرحله‌ای:</span><span class="telemetry-item-value">' + totpStatusHtml + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">کدهای پشتیبان باقی‌مانده:</span><span class="telemetry-item-value mono">' + (u.has2FA ? (u.backupCodesCount + ' کد آماده مصرف') : 'ندارد') + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">رمزنگاری نشست‌ها:</span><span class="telemetry-item-value" style="color:var(--accent-purple);">AES-256-GCM 🛡️</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت حساب کاربری:</span><span class="telemetry-item-value">' + (u.isSuspended ? '<span style="color:var(--accent-rose);">حساب معلق است</span>' : '<span style="color:var(--accent-green);">حساب مجاز و فعال</span>') + '</span></div>' +
-          '<div class="telemetry-actions">' + totpActionBtn + passActionBtn + '</div>' +
+          '<div class="telemetry-actions">' + roleActionBtn + passActionBtn + totpActionBtn + '</div>' +
         '</div>';
 
       // کارت ۳: مانیتورینگ سلف‌بات تلگرام
@@ -5336,10 +5359,33 @@ export function panelHTML(env) {
       } catch (e) {}
     };
 
+    window.doQuickPromoteAdmin = async function() {
+      var uname = prompt('نام کاربری که می‌خواهید به سطح «مدیر سامانه» (Admin) ارتقا یابد را وارد کنید:');
+      if (!uname) return;
+      uname = uname.trim();
+      if (!uname) return;
+      var targetUser = (window.cachedAdminUsers || []).find(function(x) { return x.username.toLowerCase() === uname.toLowerCase(); });
+      if (targetUser && (targetUser.isAdmin || targetUser.isOwner || targetUser.role === 'admin')) {
+        showToast('این کاربر در حال حاضر مدیر یا مالک سامانه است.', 'info');
+        return;
+      }
+      doUserAdminAction(uname, 'toggle_role');
+    };
+
     window.doUserAdminAction = async function(uname, act) {
-      var actName = act === 'delete' ? 'حذف کامل کاربر' : (act === 'disconnect' ? 'قطع تلگرام' : (act === 'toggle_suspend' ? 'تغییر وضعیت تعلیق' : (act === 'toggle_role' ? 'تغییر سطح دسترسی کاربر' : 'تغییر وضعیت ربات')));
-      if (act === 'delete' && !confirm('آیا از حذف کاربر ' + uname + ' اطمینان دارید؟')) return;
-      if (act === 'toggle_role' && !confirm('آیا از تغییر سطح دسترسی این کاربر (' + uname + ') اطمینان دارید؟')) return;
+      var targetUser = (window.cachedAdminUsers || []).find(function(x) { return x.username.toLowerCase() === String(uname).toLowerCase(); });
+      var isCurrentlyAdmin = targetUser ? (!!targetUser.isAdmin || !!targetUser.isOwner || targetUser.role === 'admin') : false;
+
+      var actName = act === 'delete' ? 'حذف کامل کاربر' : (act === 'disconnect' ? 'قطع تلگرام' : (act === 'toggle_suspend' ? 'تغییر وضعیت تعلیق' : (act === 'toggle_role' ? (isCurrentlyAdmin ? 'تنزل به کاربر عادی' : 'ارتقا به مدیر سامانه') : 'تغییر وضعیت ربات')));
+
+      if (act === 'delete' && !confirm('آیا از حذف کامل کاربر «' + uname + '» اطمینان دارید؟ تمامی داده‌های این کاربر پاک خواهد شد.')) return;
+      if (act === 'toggle_role') {
+        var roleConfirmMsg = isCurrentlyAdmin
+          ? 'آیا از لغو دسترسی مدیریت و تنزل کاربر «' + uname + '» به کاربر عادی اطمینان دارید؟'
+          : 'آیا از ارتقای کاربر «' + uname + '» به سطح «مدیر سامانه» (Admin) اطمینان دارید؟\nاین کاربر پس از ارتقا به تمام بخش‌های پنل مدیریت دسترسی خواهد داشت.';
+        if (!confirm(roleConfirmMsg)) return;
+      }
+      if (act === 'toggle_suspend' && !confirm('آیا از ' + (targetUser && targetUser.isSuspended ? 'خروج از تعلیق' : 'تعلیق') + ' کاربر «' + uname + '» اطمینان دارید؟')) return;
 
       try {
         var res = await fetch('/api/admin/users/action', {
@@ -5349,15 +5395,23 @@ export function panelHTML(env) {
         });
         var data = await res.json();
         if (data.ok) {
-          showToast('عملیات ' + actName + ' انجام شد', 'success');
+          var successMsg = act === 'toggle_role'
+            ? (data.isAdmin ? ('کاربر «' + uname + '» با موفقیت به مدیر سامانه ارتقا یافت 🛡️') : ('دسترسی مدیریت لغو و کاربر «' + uname + '» به کاربر عادی تبدیل شد 👤'))
+            : ('عملیات ' + actName + ' با موفقیت انجام شد');
+          showToast(successMsg, 'success');
           if (act === 'delete' && window.activeInspectedUser === uname) {
             closeUserInspector();
           }
-          loadAdminData();
+          await loadAdminData();
+          if (window.activeInspectedUser === uname) {
+            openUserInspector(uname);
+          }
         } else {
           showToast(data.error || 'خطا در اجرای عملیات', 'error');
         }
-      } catch (e) {}
+      } catch (e) {
+        showToast('خطای شبکه در برقراری ارتباط با سرور', 'error');
+      }
     };
 
     window.doQuickRenew = async function() {
