@@ -52,19 +52,32 @@ function getClientIP(request) {
     '127.0.0.1';
 }
 
+const storageMemCache = new Map(); // key -> { valStr, expiresAt }
+const authTokensCache = new Map(); // token -> { auth, expiresAt }
+const verifiedWebhooks = new Map(); // botTok -> timestamp
+const STORAGE_MEM_TTL = 30000; // 30 seconds RAM TTL
+
 function getUnifiedStorage(env) {
   if (env._unifiedStorage) return env._unifiedStorage;
 
   const storage = {
     async get(key, type) {
+      const now = Date.now();
+      const cached = storageMemCache.get(key);
+      if (cached && now < cached.expiresAt) {
+        return type === 'json' ? JSON.parse(cached.valStr) : cached.valStr;
+      }
+
       // 1. اولویت خواندن از دیتابیس D1 (سقف ۵ میلیون درخواست در روز)
       if (env.DB) {
         try {
           const row = await env.DB.prepare('SELECT value, expires_at FROM kv_store WHERE key = ?').bind(key).first();
           if (row) {
-            if (row.expires_at && Math.floor(Date.now() / 1000) > row.expires_at) {
+            if (row.expires_at && Math.floor(now / 1000) > row.expires_at) {
               env.DB.prepare('DELETE FROM kv_store WHERE key = ?').bind(key).run().catch(() => {});
+              storageMemCache.delete(key);
             } else {
+              storageMemCache.set(key, { valStr: row.value, expiresAt: now + STORAGE_MEM_TTL });
               return type === 'json' ? JSON.parse(row.value) : row.value;
             }
           }
@@ -79,10 +92,11 @@ function getUnifiedStorage(env) {
         try {
           const val = await rawKv.get(key, type);
           if (val !== null && val !== undefined) {
+            const valStr = typeof val === 'string' ? val : JSON.stringify(val);
+            storageMemCache.set(key, { valStr, expiresAt: now + STORAGE_MEM_TTL });
             if (env.DB) {
-              const valStr = typeof val === 'string' ? val : JSON.stringify(val);
               env.DB.prepare('INSERT OR REPLACE INTO kv_store (key, value, updated_at) VALUES (?, ?, ?)')
-                .bind(key, valStr, Date.now()).run().catch(() => {});
+                .bind(key, valStr, now).run().catch(() => {});
             }
             return val;
           }
@@ -93,9 +107,27 @@ function getUnifiedStorage(env) {
 
     async put(key, value, options = {}) {
       const valStr = typeof value === 'string' ? value : JSON.stringify(value);
+      const now = Date.now();
+
+      // حذف رایت تکراری در صورت یکسان بودن داده (Zero-Duplicate-Write)
+      const existing = storageMemCache.get(key);
+      if (existing && existing.valStr === valStr && !options.expirationTtl && !options.expiration) {
+        existing.expiresAt = now + STORAGE_MEM_TTL;
+        return; // داده تغییر نکرده است؛ بدون نیاز به مصرف سهمیه رایت دیتابیس
+      }
+
+      storageMemCache.set(key, { valStr, expiresAt: now + STORAGE_MEM_TTL });
+
+      // اگر تنظیمات کاربری تغییر کرد، کش‌ها را باطل کن
+      if (key.startsWith('user:')) {
+        activeUsersCache = null;
+        activeUsersCacheTime = 0;
+        authTokensCache.clear();
+      }
+
       let exp = null;
       if (options && options.expirationTtl) {
-        exp = Math.floor(Date.now() / 1000) + options.expirationTtl;
+        exp = Math.floor(now / 1000) + options.expirationTtl;
       } else if (options && options.expiration) {
         exp = Math.floor(options.expiration);
       }
@@ -106,16 +138,18 @@ function getUnifiedStorage(env) {
         try {
           await env.DB.prepare(
             'INSERT OR REPLACE INTO kv_store (key, value, expires_at, updated_at) VALUES (?, ?, ?, ?)'
-          ).bind(key, valStr, exp, Date.now()).run();
+          ).bind(key, valStr, exp, now).run();
           d1Success = true;
         } catch (dbErr) {
           console.error(`[Storage] D1 put error for ${key}:`, dbErr);
         }
       }
 
-      // 2. آینه‌سازی در حافظه KV (در صورت پر شدن سهمیه KV، خطا سرکوب می‌شود)
+      // 2. آینه‌سازی هوشمند در KV (حفاظت سخت‌گیرانه از سهمیه ۱۰۰۰ رایت روزانه KV)
+      // داده‌های موقت/پراستفاده (مانند هانی‌پات، استیت بات، کش دیالوگ‌ها، سشن‌های موقت و پینگ رانر) فقط در D1 و RAM نگهداری می‌شوند
+      const isTransientKey = key.startsWith('bot_') || key.startsWith('temp_') || key.startsWith('audit_') || key.startsWith('user_dialogs:') || key.startsWith('runner:');
       const rawKv = env.KV_RAW || env.KV;
-      if (rawKv && typeof rawKv.put === 'function') {
+      if (!isTransientKey && rawKv && typeof rawKv.put === 'function') {
         try {
           await rawKv.put(key, valStr, options);
         } catch (kvErr) {
@@ -129,6 +163,15 @@ function getUnifiedStorage(env) {
     },
 
     async delete(key) {
+      storageMemCache.delete(key);
+      if (key.startsWith('token:')) {
+        authTokensCache.delete(key.replace('token:', ''));
+      }
+      if (key.startsWith('user:')) {
+        activeUsersCache = null;
+        activeUsersCacheTime = 0;
+        authTokensCache.clear();
+      }
       if (env.DB) {
         try {
           await env.DB.prepare('DELETE FROM kv_store WHERE key = ?').bind(key).run();
@@ -174,12 +217,14 @@ function initEnvStorage(env) {
 
 const memoryRateLimits = new Map();
 globalThis.pendingBotActions = globalThis.pendingBotActions || [];
+globalThis.hasPendingBotActions = false;
 globalThis.cachedUserDialogs = globalThis.cachedUserDialogs || {};
 globalThis.botUserReplyStates = globalThis.botUserReplyStates || new Map();
 
 async function enqueueBotAction(env, action) {
   initEnvStorage(env);
   globalThis.pendingBotActions = globalThis.pendingBotActions || [];
+  globalThis.hasPendingBotActions = true;
   if (!action.id) {
     action.id = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
   }
@@ -225,6 +270,12 @@ async function getAuthUser(request, env) {
   }
   if (!token) return null;
 
+  const now = Date.now();
+  const cached = authTokensCache.get(token);
+  if (cached && now < cached.expiresAt) {
+    return cached.auth;
+  }
+
   const sessionData = await env.KV.get('token:' + token, 'json');
   if (!sessionData || !sessionData.username) return null;
 
@@ -235,7 +286,9 @@ async function getAuthUser(request, env) {
     return null;
   }
 
-  return { username: sessionData.username, user: userData, token };
+  const auth = { username: sessionData.username, user: userData, token };
+  authTokensCache.set(token, { auth, expiresAt: now + 30000 });
+  return auth;
 }
 
 /**
@@ -341,14 +394,24 @@ export default {
       });
     }
 
-    // ۱. سرو رابط کاربری پنل با تزریق هدرهای امنیتی و ضد کش (Anti-Cache)
+    // ۱. سرو رابط کاربری پنل با اعتبارسنجی ETag و پاسخ فوق‌سریع ۳۰۴ (کاهش بار CPU و پهنای باند)
     if (url.pathname === '/') {
+      const panelEtag = 'W/"arizo-v3.5-pro"';
+      if (request.headers.get('If-None-Match') === panelEtag) {
+        return new Response(null, {
+          status: 304,
+          headers: {
+            'ETag': panelEtag,
+            'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+            ...SECURITY_HEADERS
+          }
+        });
+      }
       return new Response(panelHTML(env), {
         headers: {
           'Content-Type': 'text/html;charset=utf-8',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'ETag': panelEtag,
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
           ...SECURITY_HEADERS
         },
       });
@@ -1070,26 +1133,30 @@ export default {
         await env.KV.put('user:' + auth.username, JSON.stringify(auth.user));
       }
 
-      // خوددرمانگری هوشمند: اطمینان دائمی از تنظیم بودن وب‌هوک ربات تلگرام روی سرور
+      // خوددرمانگری هوشمند وب‌هوک با کش ۶ ساعته (جلوگیری از ارسال ریکوئست به تلگرام در هر رفرش داشبورد)
       if (auth.user.telegram?.bot?.token) {
         const botTok = auth.user.telegram.bot.token;
-        const hostUrl = new URL(request.url).origin;
-        const expectedWebhook = `${hostUrl}/api/bot-webhook/${encodeURIComponent(auth.username)}`;
-        fetch(`https://api.telegram.org/bot${botTok}/getWebhookInfo`)
-          .then(r => r.json())
-          .then(info => {
-            if (info?.ok && info.result?.url !== expectedWebhook) {
-              fetch(`https://api.telegram.org/bot${botTok}/setWebhook`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  url: expectedWebhook,
-                  allowed_updates: ['message', 'edited_message', 'callback_query']
-                })
-              }).catch(() => {});
-            }
-          })
-          .catch(() => {});
+        const lastChecked = verifiedWebhooks.get(botTok) || 0;
+        if (Date.now() - lastChecked > 6 * 3600 * 1000) {
+          verifiedWebhooks.set(botTok, Date.now());
+          const hostUrl = new URL(request.url).origin;
+          const expectedWebhook = `${hostUrl}/api/bot-webhook/${encodeURIComponent(auth.username)}`;
+          fetch(`https://api.telegram.org/bot${botTok}/getWebhookInfo`)
+            .then(r => r.json())
+            .then(info => {
+              if (info?.ok && info.result?.url !== expectedWebhook) {
+                fetch(`https://api.telegram.org/bot${botTok}/setWebhook`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    url: expectedWebhook,
+                    allowed_updates: ['message', 'edited_message', 'callback_query']
+                  })
+                }).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
       }
 
       const isUserAdmin = auth.user.role === 'admin' || auth.username === 'amirmaster' || auth.username === 'admin';
@@ -1772,9 +1839,12 @@ export default {
       }
 
       globalThis.lastRunnerSyncTime = Date.now();
+      if (env.DB) {
+        env.DB.prepare("INSERT OR REPLACE INTO kv_store (key, value, updated_at) VALUES ('runner:last_ping', ?, ?)").bind(String(Date.now()), Date.now()).run().catch(() => {});
+      }
 
-      // بهینه‌سازی مصرف سهمیه کلادفلر: کش ۱۵ ثانیه‌ای درون حافظه ایزولیت (کاهش بیش از ۹۰٪ سهمیه KV Read)
-      if (activeUsersCache && (Date.now() - activeUsersCacheTime < 15000)) {
+      // بهینه‌سازی مصرف سهمیه کلادفلر: کش ۳۰ ثانیه‌ای درون حافظه ایزولیت (کاهش بیش از ۹۵٪ سهمیه KV Read)
+      if (activeUsersCache && (Date.now() - activeUsersCacheTime < 30000)) {
         return json({ ok: true, users: activeUsersCache, serverTime: Date.now(), cached: true });
       }
 
@@ -1970,12 +2040,18 @@ export default {
       globalThis.pendingBotActions = [];
 
       let kvActions = [];
-      try {
-        kvActions = await env.KV.get('bot_pending_actions', 'json') || [];
-        if (Array.isArray(kvActions) && kvActions.length > 0) {
-          await env.KV.delete('bot_pending_actions');
-        }
-      } catch (_) {}
+      const hasRecentAction = globalThis.hasPendingBotActions || false;
+      const timeSinceLastKvCheck = Date.now() - (globalThis.lastBotActionKvCheck || 0);
+      if (hasRecentAction || timeSinceLastKvCheck > 25000) {
+        globalThis.lastBotActionKvCheck = Date.now();
+        globalThis.hasPendingBotActions = false;
+        try {
+          kvActions = await env.KV.get('bot_pending_actions', 'json') || [];
+          if (Array.isArray(kvActions) && kvActions.length > 0) {
+            await env.KV.delete('bot_pending_actions');
+          }
+        } catch (_) {}
+      }
 
       // ادغام بدون تکرار بر اساس id یا ترکیب action+peerId
       const actionMap = new Map();
@@ -4036,14 +4112,26 @@ async function callAIApiWorker(provider, apiKey, systemPrompt, context, userMess
     initEnvStorage(env);
     ctx.waitUntil((async () => {
       try {
-        // ۱. بررسی زنده بودن رانر گیت‌هاب: اگر رانر در ۳ دقیقه اخیر فعال بوده یا کش فعال است، پردازش کلادفلر متوقف می‌شود
+        // ۱. بررسی زنده بودن رانر در حافظه ایزولیت (اگر در ۵ دقیقه اخیر فعال بوده، پردازش کرون فوراً متوقف می‌شود)
         const lastSync = globalThis.lastRunnerSyncTime || 0;
-        if (Date.now() - lastSync < 180000 || activeUsersCache) {
-          return; // رانر اختصاصی گیت‌هاب فعال و برخط است
+        if (Date.now() - lastSync < 300000) {
+          return;
         }
+
+        // ۲. بررسی پینگ رانر از دیتابیس در صورت آغاز ایزولیت جدید (Zero Redundant Cron Runs)
+        if (env.DB) {
+          try {
+            const row = await env.DB.prepare("SELECT value FROM kv_store WHERE key = 'runner:last_ping'").first();
+            if (row && (Date.now() - Number(row.value) < 300000)) {
+              globalThis.lastRunnerSyncTime = Number(row.value);
+              return; // رانر زنده و فعال است
+            }
+          } catch (_) {}
+        }
+
         await updateAllUsersOptimized(env);
       } catch (_) {
-        // سکوت امن در ورکر جهت جلوگیری از ثبت خطای اسکریپت در کلادفلر
+        // سکوت امن در ورکر
       }
     })().catch(() => {}));
   },
