@@ -2761,6 +2761,12 @@ export function panelHTML(env) {
           <span class="theme-text" id="themeText">حالت روز</span>
         </button>
 
+        <!-- 🚀 دکمه ویزارد راه‌اندازی گام‌به‌گام -->
+        <a href="/setup" class="btn-theme-toggle" id="setupWizardNavBtn" title="ویزارد گرافیکی راه‌اندازی و ستاپ اختصاصی پروژه" style="border-color: rgba(56, 189, 248, 0.35); color: var(--accent-blue); background: var(--accent-blue-bg); text-decoration:none;">
+          <span style="font-size:0.95rem;">🚀</span>
+          <span class="theme-text" style="font-weight:700;">ویزارد راه‌اندازی</span>
+        </a>
+
         <!-- 💡 دکمه رسمی راهنمای امکانات سامانه -->
         <button class="btn-theme-toggle" id="featureTourNavBtn" onclick="openFeaturesModal()" title="راهنمای جامع امکانات و سرویس‌های سامانه Arizo Self" style="border-color: rgba(168, 85, 247, 0.3); color: #c4b5fd; background: rgba(168, 85, 247, 0.1);">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -3020,10 +3026,14 @@ export function panelHTML(env) {
           <span>ورود به داشبورد Arizo Self</span>
         </button>
 
-        <div style="margin-top: 14px; text-align: center;">
+        <div style="margin-top: 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
           <button type="button" class="btn-nav-action" onclick="openAdminPortal()" style="color: var(--accent-amber); font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border: 1px dashed var(--accent-amber-border); border-radius: 999px; background: var(--accent-amber-bg); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
             <span>👑</span> <span>ورود مستقیم به پنل مدیریت ارشد و مانیتورینگ</span>
           </button>
+
+          <a href="/setup" style="color: var(--accent-blue); font-weight: 700; font-size: 0.78rem; padding: 6px 16px; border: 1px solid var(--accent-blue-border); border-radius: 999px; background: var(--accent-blue-bg); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+            <span>🚀</span> <span>پروژه را از گیت‌هاب کلون کردی؟ ویزارد گام‌به‌گام راه‌اندازی</span>
+          </a>
         </div>
       </div>
 
