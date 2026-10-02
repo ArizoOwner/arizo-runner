@@ -3,6 +3,7 @@ import { StringSession } from 'telegram/sessions/index.js';
 import { computeCheck } from 'telegram/Password.js';
 import { FONT_PRESETS, getStylizedTime, renderDynamicBio, isSleepTime } from './clock.js';
 import { panelHTML } from './panel.js';
+import { setupWizardHTML } from './setupWizard.js';
 import {
   hashPassword,
   verifyPassword,
@@ -405,6 +406,80 @@ export default {
           ...SECURITY_HEADERS
         },
       });
+    }
+
+    // 🚀 ویزارد تعاملی و گرافیکی ستاپ و راه‌اندازی شخصی (Self-Hosting Setup Wizard)
+    if (url.pathname === '/setup' || url.pathname === '/wizard') {
+      return new Response(setupWizardHTML(env, url), {
+        headers: {
+          'Content-Type': 'text/html;charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          ...SECURITY_HEADERS
+        },
+      });
+    }
+
+    // بررسی زنده وضعیت و سلامت پیکربندی سیستم (System Health & Configuration Status)
+    if (url.pathname === '/api/setup/status' && request.method === 'GET') {
+      const isKvReady = !!(env.KV_RAW || env.KV);
+      const isD1Ready = !!env.DB;
+      let d1TableExists = false;
+      if (env.DB) {
+        try {
+          const check = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='kv_store'").first();
+          d1TableExists = !!check;
+        } catch (_) {}
+      }
+
+      return json({
+        success: true,
+        workerUrl: url.origin,
+        status: {
+          kvBound: isKvReady,
+          d1Bound: isD1Ready,
+          d1TableExists: d1TableExists,
+          apiIdSet: !!env.API_ID,
+          apiHashSet: !!env.API_HASH,
+          adminPasswordSet: !!env.ADMIN_PASSWORD,
+          runnerSecretSet: !!env.RUNNER_SECRET,
+          cronsConfigured: true,
+          nodeCompat: true
+        }
+      });
+    }
+
+    // تست و اعتبارسنجی آنلاین توکن ربات تلگرام (Telegram Bot Token Live Validator)
+    if (url.pathname === '/api/setup/test-bot' && request.method === 'POST') {
+      try {
+        const { token } = await request.json();
+        if (!token || typeof token !== 'string') {
+          return json({ success: false, error: 'توکن ربات ارسال نشده است.' }, 400);
+        }
+        const cleanToken = token.trim();
+        const tgRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(cleanToken)}/getMe`);
+        const tgData = await tgRes.json();
+        if (tgData && tgData.ok && tgData.result) {
+          return json({
+            success: true,
+            bot: {
+              id: tgData.result.id,
+              firstName: tgData.result.first_name,
+              username: tgData.result.username,
+              canJoinGroups: tgData.result.can_join_groups,
+              supportsInlineQueries: tgData.result.supports_inline_queries
+            }
+          });
+        } else {
+          return json({
+            success: false,
+            error: tgData.description || 'توکن وارد شده توسط سرورهای تلگرام تایید نشد.'
+          }, 400);
+        }
+      } catch (err) {
+        return json({ success: false, error: 'خطا در ارتباط با سرور تلگرام: ' + err.message }, 500);
+      }
     }
 
     // ==========================================
