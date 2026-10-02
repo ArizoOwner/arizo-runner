@@ -3,9 +3,9 @@ import worker from '../src/index.js';
 import { generateTotpCode } from '../src/security/totp.js';
 import { hashPassword, generateRandomHex } from '../src/crypto.js';
 
-function createMockEnv() {
+function createMockEnv(opts = {}) {
   const store = new Map();
-  return {
+  const env = {
     KV: {
       async get(key, type) {
         if (!store.has(key)) return null;
@@ -31,10 +31,41 @@ function createMockEnv() {
       }
     },
     ADMIN_PASSWORD: 'SuperAdminPassword@2026',
+    RUNNER_SECRET: 'SuperAdminPassword@2026',
+    API_ID: '2040',
+    API_HASH: 'b18441a1ff607e10a989891a5462e627',
     ENVIRONMENT: 'test',
     APP_NAME: 'Arizo Test Studio',
     APP_VERSION: '3.6.0-TEST'
   };
+
+  if (opts.withDB) {
+    let tablesCreated = opts.tablesCreated !== false;
+    env.DB = {
+      async exec(sql) {
+        tablesCreated = true;
+        return { success: true };
+      },
+      prepare(query) {
+        return {
+          bind(...params) { return this; },
+          async first() {
+            if (query.includes('sqlite_master')) {
+              return tablesCreated ? { name: 'kv_store' } : null;
+            }
+            if (query.includes('count(*)')) {
+              return { cnt: 12 };
+            }
+            return null;
+          },
+          async run() { return { success: true }; },
+          async all() { return []; }
+        };
+      }
+    };
+  }
+
+  return env;
 }
 
 describe('Worker Suite — Edge Security & API Lifecycle', () => {
@@ -353,6 +384,113 @@ describe('Worker Suite — Edge Security & API Lifecycle', () => {
       assertEqual(disconnectBotRes.status, 200);
       const updatedUserNoBot = await env.KV.get('user:' + username, 'json');
       assertEqual(updatedUserNoBot.telegram.bot, undefined);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('should serve interactive dynamic setup wizard at /setup and /wizard', async () => {
+    const env = createMockEnv();
+
+    // 1. GET /setup
+    const req1 = new Request('https://arizo.test/setup');
+    const res1 = await worker.fetch(req1, env);
+    assertEqual(res1.status, 200);
+    assert(res1.headers.get('Content-Type').includes('text/html'));
+    const html1 = await res1.text();
+    assert(html1.includes('Arizo Self') && html1.includes('WIZARD v3.6.0 PRO'));
+    assert(html1.includes('wrangler.toml'));
+    assert(html1.includes('cfgGhUser'));
+
+    // 2. GET /wizard alias
+    const req2 = new Request('https://arizo.test/wizard');
+    const res2 = await worker.fetch(req2, env);
+    assertEqual(res2.status, 200);
+    const html2 = await res2.text();
+    assert(html2.includes('WIZARD v3.6.0 PRO'));
+  });
+
+  it('should report live setup status and handle D1 database initialization', async () => {
+    // 1. Without DB
+    const envNoDb = createMockEnv();
+    const reqStatus1 = new Request('https://arizo.test/api/setup/status');
+    const resStatus1 = await worker.fetch(reqStatus1, envNoDb);
+    assertEqual(resStatus1.status, 200);
+    const dataStatus1 = await resStatus1.json();
+    assertEqual(dataStatus1.success, true);
+    assertEqual(dataStatus1.status.kvBound, true);
+    assertEqual(dataStatus1.status.d1Bound, false);
+
+    // 2. With DB
+    const envWithDb = createMockEnv({ withDB: true, tablesCreated: false });
+    const reqInit = new Request('https://arizo.test/api/setup/init-db', { method: 'POST' });
+    const resInit = await worker.fetch(reqInit, envWithDb);
+    assertEqual(resInit.status, 200);
+    const dataInit = await resInit.json();
+    assertEqual(dataInit.success, true);
+    assert(dataInit.message.includes('با موفقیت ساخته'));
+
+    // 3. Status after DB init
+    const reqStatus2 = new Request('https://arizo.test/api/setup/status');
+    const resStatus2 = await worker.fetch(reqStatus2, envWithDb);
+    const dataStatus2 = await resStatus2.json();
+    assertEqual(dataStatus2.status.d1Bound, true);
+    assertEqual(dataStatus2.status.d1TableExists, true);
+    assertEqual(dataStatus2.status.d1RowCount, 12);
+  });
+
+  it('should validate bot token and ping test messages in setup wizard', async () => {
+    const env = createMockEnv();
+    const originalFetch = globalThis.fetch;
+
+    globalThis.fetch = async (input, init) => {
+      const urlStr = typeof input === 'string' ? input : input.url;
+      if (urlStr.includes('api.telegram.org') && urlStr.includes('/getMe')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          result: {
+            id: 987654321,
+            first_name: 'Arizo Helper Bot',
+            username: 'arizo_test_bot',
+            can_join_groups: true,
+            supports_inline_queries: false
+          }
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (urlStr.includes('api.telegram.org') && urlStr.includes('/sendMessage')) {
+        return new Response(JSON.stringify({
+          ok: true,
+          result: { message_id: 42 }
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return originalFetch(input, init);
+    };
+
+    try {
+      // 1. Test /api/setup/test-bot
+      const reqBot = new Request('https://arizo.test/api/setup/test-bot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: '123456:FAKE_VALID_TOKEN' })
+      });
+      const resBot = await worker.fetch(reqBot, env);
+      assertEqual(resBot.status, 200);
+      const dataBot = await resBot.json();
+      assertEqual(dataBot.success, true);
+      assertEqual(dataBot.bot.username, 'arizo_test_bot');
+      assertEqual(dataBot.bot.id, 987654321);
+
+      // 2. Test /api/setup/test-bot-message
+      const reqMsg = new Request('https://arizo.test/api/setup/test-bot-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: '123456:FAKE_VALID_TOKEN', chatId: '123456789' })
+      });
+      const resMsg = await worker.fetch(reqMsg, env);
+      assertEqual(resMsg.status, 200);
+      const dataMsg = await resMsg.json();
+      assertEqual(dataMsg.success, true);
+      assert(dataMsg.message.includes('با موفقیت'));
     } finally {
       globalThis.fetch = originalFetch;
     }
