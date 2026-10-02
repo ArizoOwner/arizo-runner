@@ -2,17 +2,18 @@
 
 <br>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:6366f1,100:0ea5e9&height=220&section=header&text=⚡%20Arizo%20Telegram%20Self%20Manager&fontSize=52&fontColor=ffffff&animation=fadeIn&fontAlignY=32&desc=Next-Gen%20Edge%20Telegram%20Selfbot%2C%20AI%20Assistant%20%26%20Logger%20Studio&descSize=18&descAlignY=52&descAlign=50" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:6366f1,100:0ea5e9&height=220&section=header&text=⚡%20Arizo%20Telegram%20Self%20Manager&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=32&desc=Next-Gen%20Edge%20Selfbot%2C%202FA%20Security%2C%20Ghost%20Mode%2C%20AI%20Assistant%20%26%20Logger%20Studio&descSize=16&descAlignY=52&descAlign=50" width="100%"/>
 
 <br>
 
-<h3>🔮 پلتفرم نسل جدید سلف‌بات، لاگر هوشمند و استودیوی تلگرام (Arizo Telegram Self Manager)</h3>
-<h4><i>Next-Gen Telegram Profile Engine, Edge Helper Bot & Logger Studio with Sub-40ms MTProto Precision</i></h4>
+<h3>🔮 پلتفرم نسل جدید سلف‌بات هوشمند، حالت روح، امنیت ۲FA و استودیوی تلگرام</h3>
+<h4><i>Next-Gen Telegram Profile Engine, 2FA Security, Ghost Mode, AI Smart Reply & Edge Logger Studio with Sub-40ms MTProto Precision</i></h4>
 
 <br>
 
 <a href="https://github.com/ArizoOwner/arizo-telegram-self-manager/actions"><img src="https://img.shields.io/badge/⚡_Engine_Status-24%2F7_Active-22c55e?style=for-the-badge&labelColor=0d1117" alt="Engine Status"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Response_Time-<%2040ms-a855f7?style=for-the-badge&labelColor=0d1117" alt="Response Time"/></a>
+<a href="#"><img src="https://img.shields.io/badge/Security-2FA_TOTP_+_Honeypot-ec4899?style=for-the-badge&labelColor=0d1117" alt="Security"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Uptime-99.9%25-0ea5e9?style=for-the-badge&labelColor=0d1117" alt="Uptime"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Version-3.5_PRO-f59e0b?style=for-the-badge&labelColor=0d1117" alt="Version"/></a>
 
@@ -20,12 +21,14 @@
 
 <a href="https://workers.cloudflare.com/"><img src="https://img.shields.io/badge/Cloudflare_Workers-Edge_Serverless-f38020?style=flat-square&logo=cloudflare&logoColor=white" alt="Cloudflare"/></a>
 <img src="https://img.shields.io/badge/Telegram-MTProto_2.0-26A5E4?style=flat-square&logo=telegram&logoColor=white" alt="Telegram"/>
+<img src="https://img.shields.io/badge/2FA_Standard-RFC_6238_TOTP-10b981?style=flat-square&logo=googleauthenticator&logoColor=white" alt="2FA"/>
+<img src="https://img.shields.io/badge/Ghost_Mode-Silent_Read_Receipts-8b5cf6?style=flat-square" alt="Ghost Mode"/>
+<img src="https://img.shields.io/badge/AI_Assistant-LLM_Integrated-06b6d4?style=flat-square&logo=openai&logoColor=white" alt="AI Assistant"/>
 <img src="https://img.shields.io/badge/Telegram_Bot-Helper_%26_Logger-0088cc?style=flat-square&logo=telegram&logoColor=white" alt="Bot"/>
 <img src="https://img.shields.io/badge/Mini_App-Telegram_WebApp-2AABEE?style=flat-square&logo=telegram&logoColor=white" alt="MiniApp"/>
 <img src="https://img.shields.io/badge/Encryption-AES--256--GCM-7c3aed?style=flat-square&logo=letsencrypt&logoColor=white" alt="Encryption"/>
 <img src="https://img.shields.io/badge/Node.js-v22_LTS-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js"/>
 <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=flat-square" alt="License"/>
-<img src="https://img.shields.io/badge/GramJS-Official_MTProto-06b6d4?style=flat-square&logo=telegram&logoColor=white" alt="GramJS"/>
 
 <br><br>
 
@@ -35,7 +38,7 @@
 
 <div align="center">
 
-### 「 ✦ ویژگی‌های برجسته نسخه ۳.۵ پرو ✦ 」
+### 「 ✦ ۱۶ قابلیت برتر سامانه (Core Capabilities) ✦ 」
 
 </div>
 
@@ -43,124 +46,219 @@
 <tr>
 <td width="50%">
 
-### ⏱️ &nbsp; موتور ساعت اتمی سلف
-**Sub-100ms Atomic Clock Engine**
+### ⏱️ &nbsp; ۱. ساعت زنده و اتمی (Atomic Clock)
+> آپدیت خودکار دقیقه به دقیقه زمان تهران در نام حساب با دقت زیر ۱۰۰ms و سوکت‌های گرم در حافظه
 
-> الگوریتم هوشمند **Drift-Free** با سوکت‌های زنده و گرم در حافظه  
-> پینگ و سرعت ثبت واقعی: **۲۰ الی ۴۰ میلی‌ثانیه**
-
-- 🎯 تنظیم فوق‌دقیق رأس دقیقه `00.000` بدون عقب‌افتادگی
-- 🔥 Pre-fetch و آماده‌سازی سوکت ۲ ثانیه قبل از رأس دقیقه
-- 🎨 بیش از ۱۰ استایل فونت فانتزی ارقام (`𝟎𝟏۲` · `𝟬𝟭𝟮` · `۰۱۲`)
-- 🕐 پشتیبانی کامل از فرمت‌های ۱۲ و ۲۴ ساعته + پیشوند و پسوند
+- 🎯 زمان‌بندی دقیق رأس دقیقه `00.000` بدون عقب‌افتادگی
+- 🎨 بیش از **۳۲ فونت فانتزی** (نئون، دایره‌ای، رومی، قلمی و ریاضی)
+- 🕐 پشتیبانی کامل از فرمت‌های ۱۲ و ۲۴ ساعته با پیشوند/پسوند دلخواه
+- ⚡ هماهنگ‌سازی بلادرنگ بدون قطعی یا لیمیت اکانت
 
 </td>
 <td width="50%">
 
-### 🤖 &nbsp; ربات اختصاصی و لاگر هوشمند
-**Telegram Helper Bot & Real-Time Logger**
+### 📝 &nbsp; ۲. بیوگرافی پویا و تقویم (Dynamic Bio)
+> نمایش زنده تقویم هجری شمسی، روز هفته و ساعت در بخش Bio تلگرام
 
-> دستیار تلگرامی شخصی با وب‌هوک پرسرعت کلادفلر  
-> گزارش‌گیری و فرماندهی کامل بدون نیاز به باز کردن سایت
-
-- ⚡ ورود مستقیم یک‌کلیکه به استودیو از داخل تلگرام (**Mini App**)
-- 📊 استعلام زنده وضعیت و روشن/خاموش سلف با دکمه‌های شیشه‌ای
-- 🧪 دستور آزمایشی `/test` جهت بررسی آنی دریافت گزارش‌ها و رسانه
-- 🔌 امکان قطع اتصال امن و آزادسازی فوری حافظه Cloudflare KV
+- 📅 متغیرهای هوشمند `{time}`، `{date}` و `{day}` با تقویم جلالی
+- 📐 متناسب‌سازی خودکار با محدودیت ۷۰ کاراکتر بیو تلگرام
+- 🔄 به‌روزرسانی ابری خودکار همگام با ساعت
+- 🎭 قالب‌های از پیش‌آماده و امکان تعریف متن دلخواه
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-### 📸 &nbsp; نجات‌دهنده رسانه‌های زمان‌دار
-**4-Tier Bulletproof Anti-TTL Saver**
+### 💬 &nbsp; ۳. منشی و پاسخگوی AFK (Auto-Secretary)
+> پاسخگویی هوشمند ۲۴ ساعته در زمان عدم حضور شما در پیوی
 
-> شکار، دانلود ایمن و فوروارد رسانه‌های خودتخریبی  
-> قبل از نابودی تایمر، مستقیماً به پیوی ربات اختصاصی
-
-- 🛡️ تشخیص انواع تایمرهای ثانیه‌ای، روزانه و یک‌بار مصرف (**View-Once**)
-- 🖼️ استخراج بی‌نقص عکس، فیلم، ویس و ویدیو مسیج دایره‌ای
-- 🚀 تحویل تضمینی ۴ لایه به ربات تلگرام با تطبیق دقیق MIME
-- 💾 فال‌بک پشتیبان به Saved Messages در صورت مسدود بودن ربات
+- 💬 امکان شخصی‌سازی کامل متن پاسخ منشی
+- ⏰ زمان‌بندی وقفه ضد اسپم (Cooldown) از ۱ دقیقه تا ۲۴ ساعت
+- 🚫 فیلتر هوشمند اکانت‌های رسمی تلگرام و ربات‌ها
+- 📋 امکان تعیین لیست استثنا و نادیده گرفتن چت‌های خاص
 
 </td>
 <td width="50%">
 
-### 🗑️ &nbsp; سطل زباله و ضد حذف پیام
-**Private Anti-Delete Monitor**
+### 🤖 &nbsp; ۴. دستیار هوش مصنوعی (AI Smart Reply)
+> تعامل زبانی و پاسخ‌دهی خودکار به چت‌ها با هوش مصنوعی یکپارچه
 
-> مانیتورینگ بلادرنگ پیام‌های پاک شده در گفتگوهای خصوصی  
-> همراه با مشخصات کامل فرستنده و محتوا
+- 🧠 تحلیل محتوای پیام‌های ورودی و تولید پاسخ متناسب
+- 🎯 قابلیت فعال/غیرفعال‌سازی سریع برای چت‌های خاص
+- 🛡️ اعمال محدودیت هوشمند برای پیشگیری از حلقه‌های گفتگوی رباتی
+- ⚡ واکنش بلادرنگ و بدون نیاز به نگهداری سرور مجزا
 
-- 🔍 کش فوق‌سبک در حافظه رانر بدون اشغال دیتابیس
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🗑️ &nbsp; ۵. پایشگر ضد حذف (Anti-Delete Monitor)
+> شکار، ذخیره و ارسال آنی پیام‌های پاک‌شده توسط مخاطبان در پیوی به ربات دستیار
+
+- 🔍 کش فوق‌سبک در حافظه رانر بدون افت سرعت
 - 👤 استخراج نام، یوزرنیم، آیدی عددی و زمان دقیق ارسال پیام
-- 📝 بازیابی کامل متن پیام و رسانه‌های پیوست‌شده زیر ۴ مگابایت
+- 📝 بازیابی کامل متن، استیکر، ویس، عکس و فایل
 - 🛡️ نادیده گرفتن خودکار پیام‌های حذف‌شده ناشی از فیلتر سکوت
 
 </td>
+<td width="50%">
+
+### ✏️ &nbsp; ۶. پایشگر ضد ویرایش (Anti-Edit Monitor)
+> رهگیری آنی پیام‌های تغییریافته در پیوی و ثبت متن قبل و بعد ادیت
+
+- ⚡ استخراج مستقیم تغییرات از آپدیت‌های خام MTProto تلگرام
+- 🕒 ثبت دقیق لحظه و تاریخ ویرایش متن فرستنده
+- ⏮️ تفکیک بصری متن اولیه و متن جدید همراه با نقل‌قول شکیل
+- 🔔 ارسال آنی گزارش به ربات اختصاصی شما در تلگرام
+
+</td>
 </tr>
 <tr>
 <td width="50%">
 
-### ✏️ &nbsp; ضد ویرایش و مانیتورینگ تغییرات
-**Live Anti-Edit Monitor**
+### 🔥 &nbsp; ۷. آرشیو رسانه‌های محوشونده (Anti-TTL Saver)
+> دانلود و ذخیره عکس‌ها و ویدیوهای یک‌بار مصرف (View-Once) قبل از سوختن
 
-> رهگیری آنی متن‌های ویرایش‌شده در چت‌های خصوصی  
-> نمایش شفاف تغییرات متن قبل و بعد از ویرایش
-
-- ⚡ رهگیری مستقیم از آپدیت‌های خام MTProto تلگرام
-- 🕒 ثبت دقیق لحظه و تاریخ ویرایش متن فرستنده
-- ⏮️ تفکیک بصری متن اولیه و متن جدید با نقل‌قول‌های شیک
-- 🔔 ارسال آنی هشدار ویرایش به چت اختصاصی شما در ربات
+- 🛡️ تشخیص انواع تایمرهای ثانیه‌ای و محوشونده
+- 🖼️ استخراج بی‌نقص عکس، فیلم، ویس و ویدیو مسیج دایره‌ای
+- 🚀 تحویل تضمینی به ربات شخصی تلگرام با کیفیت اورجینال
+- 💾 سیستم پشتیبان ذخیره در Saved Messages در صورت مسدود بودن ربات
 
 </td>
 <td width="50%">
 
-### 🔇 &nbsp; فیلتر سکوت و حذف دوطرفه
-**Instant Two-Way Mute Filter**
+### 👻 &nbsp; ۸. حالت روح و نامرئی (Ghost Mode)
+> باز کردن و خواندن پیام‌های چت بدون ارسال تیک خوانده‌شدن (سین)
 
-> سایلنت کردن و حذف قطعی پیام‌های افراد مزاحم  
-> در کسری از ثانیه بر اساس آیدی یا یوزرنیم
+- 👁️ غیرفعال‌سازی ارسال Read Receipts در پیام‌های دریافتی
+- ⌨️ دستورات سریع تلگرامی `.ghost on` و `.ghost off`
+- 📖 دستور تلگرامی `.read` برای خواندن بدون تیک چت جاری
+- 📚 دستور `.read all` برای خواندن بی سر و صدای تمام چت‌ها
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🔇 &nbsp; ۹. فیلتر سکوت و حذف دوطرفه (Mute Filter)
+> سایلنت کردن و حذف قطعی و دوطرفه پیام‌های کاربران مزاحم
 
 - 🗑️ حذف دوطرفه بلادرنگ با پرچم `revoke: true`
 - 🔢 پشتیبانی از ارقام فارسی و انگلیسی به صورت خودکار
 - ⌨️ دستورات سریع تلگرامی `.mute` و `.unmute` در متن پیام
-- 👻 بازیابی خودکار AccessHash برای اشخاص ناشناس خارج از مخاطبین
+- 👻 بازیابی خودکار AccessHash برای اشخاص خارج از مخاطبین
+
+</td>
+<td width="50%">
+
+### 🌙 &nbsp; ۱۰. حالت خواب و استراحت (Sleep Mode)
+> تنظیم خودکار وضعیت به استراحت و خواب در ساعات شبانه
+
+- 😴 تغییر خودکار نام خانوادگی به متن استراحت (مانند 😴 Sleep)
+- ⏰ تعیین بازه زمانی دقیق خواب شبانه و بازگشت خودکار در صبح
+- ⚡ توقف هوشمند منشی و وظایف سنگین در ساعات استراحت
+- 🔋 بهینه‌سازی حداکثری مصرف منابع و سهمیه‌های شبکه
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-### 🤖 &nbsp; منشی خودکار پیوی
-**AFK Auto-Secretary**
+### 🔐 &nbsp; ۱۱. تایید دومرحله‌ای گوگل (Google 2FA TOTP)
+> بالاترین استاندارد امنیتی برای ورود به پنل با Google Authenticator
 
-> پاسخگویی هوشمند ۲۴ ساعته در زمان عدم حضور شما  
-> مجهز به سیستم کول‌داون ضد اسپم و ضد لیمیت
-
-- 💬 امکان شخصی‌سازی کامل متن پاسخ منشی
-- ⏰ زمان‌بندی وقفه (Cooldown) از ۱ دقیقه تا ۲۴ ساعت
-- 🚫 فیلتر هوشمند اکانت‌های رسمی تلگرام و ربات‌ها
-- 🔄 ارسال امن چندمرحله‌ای برای جلوگیری از خطاهای شبکه
+- 🔑 سازگار با استاندارد RFC 6238 با کدهای ۶ رقمی ۳۰ ثانیه‌ای
+- 📱 ایجاد آنی بارکد QR و کلید دستی ۳۲ کاراکتری
+- 🆘 تولید ۸ کد بازیابی اضطراری (Emergency Backup Codes) یک‌بار مصرف
+- 🛡️ ماندگاری و انقضای هوشمند سشن در سراسر داشبورد
 
 </td>
 <td width="50%">
 
-### 📝 &nbsp; بیوگرافی زنده و حالت خواب
-**Dynamic Bio Engine & Smart Sleep**
+### 🍯 &nbsp; ۱۲. دفاع فعال هانی‌پات (Zero-Trust Honeypot)
+> تله امنیتی و مهار خودکار اسکنرهای مخرب در لبه شبکه Cloudflare
 
-> ساعت و تاریخ هجری خورشیدی در بیوگرافی  
-> همراه با اتوماسیون شبانه صرفه‌جویی منابع
+- 🚨 مسیرهای تله برای ردیابی پویشگران آسیب‌پذیری وب و دات‌ان‌وی
+- 🚫 بلاک دائم و آنی IPهای متخاصم
+- 📲 ارسال فوری هشدار امنیتی به ربات تلگرام مالک
+- 🛡️ معماری Zero-Trust بدون سربار روی درخواست‌های مجاز
 
-- 📅 متغیرهای `{time}`، `{date}` و `{day}` با تقویم شمسی
-- 📐 بهینه‌سازی خودکار برای سقف ۷۰ کاراکتر بیو تلگرام
-- 🌙 تعیین ساعات خواب شبانه جهت درج استاتوس دلخواه
-- ⚡ توقف هوشمند ارسال ریکوئست در زمان خواب اکانت
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 💾 &nbsp; ۱۳. پشتیبان‌گیری رمزنگاری‌شده (Encrypted Backup)
+> خروجی کامل و بازیابی تمام داده‌ها با رمزنگاری نظامی AES-GCM
+
+- 📦 ذخیره کلیه تنظیمات، سشن تلگرام، لیست‌ها و الگوها در یک فایل
+- 🔒 قفل محتوا با الگوریتم AES-256-GCM و پسورد دلخواه کاربر
+- 🔄 بازیابی آنی و بی‌نقص بدون نیاز به پیکربندی مجدد
+- 🌐 ایمن در برابر نشت اطلاعات حتی در صورت دسترسی غیرمجاز
+
+</td>
+<td width="50%">
+
+### 🎨 &nbsp; ۱۴. کتابخانه ۳۲ قلم نوشتاری ساعت (32 Clock Fonts)
+> مجموعه کامل قلم‌های ساعت دیجیتال با پیش‌نمایش گرافیکی زنده
+
+- 💎 انواع فونت‌های نئون، دایره‌ای، رومی، قلمی و ریاضی
+- 🔢 پشتیبانی از ارقام اصیل فارسی (`۱۲:۳۴`) و لاتین (`12:34`)
+- 👁️ پیش‌نمایش گرافیکی بلادرنگ روی ماک‌آپ واقعی تلگرام در پنل
+- ⚙️ تغییر آنی قلم بدون نیاز به ریستارت یا لاگین مجدد
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📱 &nbsp; ۱۵. مینی‌اپلیکیشن تلگرام (Telegram Mini App)
+> کنترل کامل سلف‌بات مستقیماً از داخل تلگرام بدون نیاز به مرورگر
+
+- ⚡ اتصال بومی به ربات شخصی تلگرام با دکمه شیشه‌ای Web App
+- 🌓 هماهنگی خودکار با تم لایت/دارک تلگرام شما
+- 📊 گزارش زنده عملکرد، سوکت‌ها و لاگ‌های اخیر
+- 🛠️ تغییر آنی پیکربندی‌ها با رابط لمسی مدرن
+
+</td>
+<td width="50%">
+
+### ⚡ &nbsp; ۱۶. زیرساخت ابری سرورلس (Serverless Edge 24/7)
+> پایداری دائمی روی شبکه جهانی Cloudflare Workers بدون نیاز به سرور
+
+- 🌍 میزبانی در صدها دیتاسنتر لبه کلودفلر با تاخیر زیر ۱۰۰ms
+- 📴 کارکرد ۲۴ ساعته مستقل از روشن بودن گوشی یا مصرف اینترنت
+- 🗄️ تفکیک کامل داده‌های هر کاربر با پارتیشن‌های ایزوله KV
+- 💰 کاملاً رایگان و بهینه بدون نیاز به پرداخت هزینه سرور ماهانه
 
 </td>
 </tr>
 </table>
+
+---
+
+<div align="center">
+
+### 「 ✦ جدول دستورات درون‌برنامه‌ای تلگرام (Telegram Commands Cheatsheet) ✦ 」
+
+</div>
+
+> این دستورات مستقیماً در گفتگوهای تلگرام و بدون نیاز به ورود به پنل وب قابل استفاده هستند:
+
+| دستور | نوع کاربرد | توضیحات عملکرد |
+|:---|:---|:---|
+| `.ghost on` | در هر گفتگوی شخصی | فعال‌سازی حالت روح (عدم ارسال تیک دوم و سین خوانده‌شدن) |
+| `.ghost off` | در هر گفتگوی شخصی | غیرفعال‌سازی حالت روح و بازگشت به حالت عادی |
+| `.read` | در هر چت یا گروه | خواندن آرام چت جاری بدون ثبت اعلان مزاحم |
+| `.read all` | در هر گفتگوی شخصی | سین زدن خاموش و بی‌صدا برای تمامی پیام‌های خوانده‌نشده حساب |
+| `.mute` | ریپلای روی پیام شخص | ساکت‌سازی کاربر و حذف دوطرفه تمام پیام‌های آتی او |
+| `.mute @username` | ارسال در چت | افزودن مستقیم یوزرنیم به لیست سکوت و پاکسازی دوطرفه |
+| `.unmute` | ریپلای یا با یوزرنیم | لغو وضعیت سکوت و بازگرداندن کاربر به حالت عادی |
+| `/start` | در ربات دستیار شخصی | باز کردن منوی شیشه‌ای و دسترسی به مینی‌اپلیکیشن پنل |
+| `/test` | در ربات دستیار شخصی | ارسال پیام آزمایشی جهت اعتبارسنجی ارسال گزارش و رسانه |
+| `/status` | در ربات دستیار شخصی | استعلام زنده وضعیت اتصال سلف‌بات، حافظه و سلامت سیستم |
 
 ---
 
@@ -171,39 +269,42 @@
 </div>
 
 ```mermaid
-graph LR
-    subgraph "🌐 Edge Layer (Cloudflare)"
-        CF["☁️ Cloudflare Workers<br/><small>REST API + Web Studio + Webhook</small>"]
-        KV[("🗄️ KV Storage<br/><small>AES-256-GCM Session Vault</small>")]
+graph TD
+    subgraph "🌐 لایه پردازش ابری (Cloudflare Edge)"
+        CF["☁️ Cloudflare Workers<br/><small>REST API · Web Studio · Mini App · Webhook</small>"]
+        KV[("🗄️ Cloudflare KV<br/><small>AES-256-GCM Isolated User Vault</small>")]
+        HONEY["🍯 Zero-Trust Honeypot<br/><small>Threat Detection & Auto-Ban</small>"]
     end
 
-    subgraph "⚡ Engine Layer (GitHub / VPS)"
-        GH["🔄 GitHub Actions / VPS<br/><small>24/7 Zero-Downtime Runner</small>"]
-        POOL["🔌 Connection Pool<br/><small>Persistent MTProto Warm Sockets</small>"]
-        CACHE["🧠 Smart Memory Cache<br/><small>Anti-Delete & Anti-Edit Buffer</small>"]
+    subgraph "⚡ لایه موتور و سوکت‌ها (Zero-Downtime Engine)"
+        RUNNER["🔄 Persistent Runner (GitHub Actions / VPS)<br/><small>Zero-Downtime 24/7 Engine</small>"]
+        SOCKET["🔌 Warm Socket Pool<br/><small>Sub-40ms MTProto Gateway</small>"]
+        CACHE["🧠 Smart Memory Cache<br/><small>Anti-Delete · Anti-Edit Buffer</small>"]
     end
 
-    subgraph "📱 Telegram Ecosystem"
-        TG["☁️ Telegram DC<br/><small>MTProto 2.0 Gateway</small>"]
-        BOT["🤖 Helper Bot (@ArizoSelfbot)<br/><small>Anti-Delete · Anti-Edit · Anti-TTL</small>"]
-        USER["👤 User Account<br/><small>Last Name Clock · Dynamic Bio</small>"]
+    subgraph "📱 اکوسیستم تلگرام (Telegram Ecosystem)"
+        DC["☁️ Telegram Datacenter<br/><small>Official MTProto 2.0</small>"]
+        BOT["🤖 دستیار شخصی تلگرام<br/><small>Helper Bot · Logger · Mini App</small>"]
+        USER["👤 حساب کاربری تلگرام<br/><small>Atomic Clock · Bio · Ghost Mode · AFK</small>"]
     end
 
-    CF <-->|"HTTPS + Token Auth"| KV
-    CF <-->|"Telegram Webhook"| BOT
-    GH -->|"10s Sync Config"| CF
-    GH --> POOL
-    POOL --> CACHE
-    POOL <-->|"Sub-40ms TCP Socket"| TG
-    TG --> USER
-    POOL -->|"Direct Delivery (Native + Doc)"| BOT
+    CF <-->|"HTTPS + 2FA Auth"| KV
+    HONEY -->|"Auto-Block IP"| CF
+    HONEY -->|"Instant Alert"| BOT
+    RUNNER -->|"10s Sync Config"| CF
+    RUNNER --> SOCKET
+    SOCKET --> CACHE
+    SOCKET <-->|"Sub-40ms TCP Stream"| DC
+    DC --> USER
+    SOCKET -->|"Direct Delivery (Anti-Delete/TTL)"| BOT
 
     style CF fill:#f38020,stroke:#f38020,color:#fff
     style KV fill:#6366f1,stroke:#6366f1,color:#fff
-    style GH fill:#22c55e,stroke:#22c55e,color:#fff
-    style POOL fill:#a855f7,stroke:#a855f7,color:#fff
+    style HONEY fill:#ef4444,stroke:#ef4444,color:#fff
+    style RUNNER fill:#22c55e,stroke:#22c55e,color:#fff
+    style SOCKET fill:#a855f7,stroke:#a855f7,color:#fff
     style CACHE fill:#ec4899,stroke:#ec4899,color:#fff
-    style TG fill:#26A5E4,stroke:#26A5E4,color:#fff
+    style DC fill:#26A5E4,stroke:#26A5E4,color:#fff
     style BOT fill:#0088cc,stroke:#0088cc,color:#fff
     style USER fill:#0ea5e9,stroke:#0ea5e9,color:#fff
 ```
@@ -212,17 +313,17 @@ graph LR
 
 <div align="center">
 
-### 「 ✦ استودیوی وب نئو-گلاسمورفیسم (Web Studio) ✦ 」
+### 「 ✦ استودیوی وب و طراحی لوکس شیشه‌ای (Web Studio) ✦ 」
 
 </div>
 
 <table>
 <tr>
 <td align="center">💎<br><b>طراحی شیشه‌ای نئو</b><br><sub>Glassmorphism & Depth</sub></td>
-<td align="center">📱<br><b>ریسپانسیو ۱۰۰٪</b><br><sub>Mobile & Desktop Ready</sub></td>
-<td align="center">🌓<br><b>تم‌های نوری دوگانه</b><br><sub>Dark / Light Aurora Modes</sub></td>
-<td align="center">⚡<br><b>فیزیک فنری کنترل‌ها</b><br><sub>Spring Physics & Haptics</sub></td>
-<td align="center">🚀<br><b>ذخیره و اعمال آنی</b><br><sub>Instant Profile Sync</sub></td>
+<td align="center">📱<br><b>ریسپانسیو ۱۰۰٪</b><br><sub>موبایل، تبلت و دسکتاپ</sub></td>
+<td align="center">🌓<br><b>تم دوگانه روز و شب</b><br><sub>Dark / Light Aurora Modes</sub></td>
+<td align="center">⚡<br><b>فیزیک فنری و انیمیشن</b><br><sub>Spring Physics & Haptics</sub></td>
+<td align="center">🚀<br><b>ذخیره و هماهنگ‌سازی آنی</b><br><sub>Instant Profile Sync</sub></td>
 </tr>
 </table>
 
@@ -230,7 +331,7 @@ graph LR
 
 <div align="center">
 
-### 「 ✦ امنیت، حریم خصوصی و تفکیک دسترسی ✦ 」
+### 「 ✦ امنیت، حریم خصوصی و استانداردهای نظامی ✦ 」
 
 </div>
 
@@ -238,23 +339,23 @@ graph LR
 <tr>
 <td width="25%" align="center">
 <h3>🔐</h3>
+<b>Google 2FA (RFC 6238)</b><br>
+<sub>کد یکبارمصرف ۳۰ ثانیه‌ای، بارکد QR و کدهای اضطراری</sub>
+</td>
+<td width="25%" align="center">
+<h3>🍯</h3>
+<b>Zero-Trust Honeypot</b><br>
+<sub>مهار اسکنرها، بلاک دائمی IP و ارسال هشدار امنیتی به ربات</sub>
+</td>
+<td width="25%" align="center">
+<h3>🛡️</h3>
 <b>AES-256-GCM</b><br>
-<sub>رمزنگاری سطح نظامی سشن‌های تلگرام و کلیدهای ورود</sub>
+<sub>رمزنگاری سطح نظامی داده‌ها و سشن‌های کاربری در KV</sub>
 </td>
 <td width="25%" align="center">
 <h3>🔒</h3>
 <b>Exclusive Owner Lock</b><br>
-<sub>قفل انحصاری ربات به مالک؛ مسدودسازی دسترسی افراد ناشناس</sub>
-</td>
-<td width="25%" align="center">
-<h3>⚡</h3>
-<b>Zero-KV-Write</b><br>
-<sub>بهینه‌سازی حداکثری کوئری‌ها بدون مصرف سهمیه دیتابیس در کارکرد عادی</sub>
-</td>
-<td width="25%" align="center">
-<h3>🛡️</h3>
-<b>Multi-Tier Fallback</b><br>
-<sub>ذخیره تضمینی رسانه‌ها در پیام‌های ذخیره‌شده حتی در صورت مسدودی ربات</sub>
+<sub>قفل انحصاری ربات به مالک و ایزولاسیون کامل چندکاربره</sub>
 </td>
 </tr>
 </table>
@@ -263,58 +364,49 @@ graph LR
 
 <div align="center">
 
-### 「 ✦ متغیرهای محیطی و پیکربندی ✦ 」
+### 「 ✦ راهنمای راه‌اندازی سریع (Quick Start) ✦ 」
 
 </div>
 
-> **مسیر تنظیم:** &nbsp; Repository → Settings → Secrets and variables → Actions
+#### ☁️ &nbsp; روش ۱: استقرار رایگان روی Cloudflare Workers + GitHub Actions (توصیه‌شده)
 
-| نشانگر | متغیر (Variable / Secret) | توضیحات | الزامی |
-|:---:|:---|:---|:---:|
-| 🌐 | `CLOUDFLARE_URL` | آدرس دامنه ورکر کلادفلر شما — `https://example.workers.dev` | ✅ |
-| 🔑 | `RUNNER_SECRET` | کلید احراز هویت امنیتی میان رانر و ورکر | ✅ |
-| 📱 | `API_ID` | شناسه رسمی اپلیکیشن تلگرام — پیش‌فرض: `2040` (دسکتاپ) | ⚪ |
-| 🔒 | `API_HASH` | هش کلاینت رسمی تلگرام دسکتاپ | ⚪ |
-| 🔄 | `GITHUB_TOKEN` | توکن دسترسی گیت‌هاب با مجوز `workflow` جهت تداوم ۲۴ ساعته چرخه | ✅ |
+1. مخزن را فورک یا کلون نمایید:
+   ```bash
+   git clone https://github.com/ArizoOwner/arizo-telegram-self-manager.git
+   cd arizo-telegram-self-manager
+   ```
 
----
+2. ورکر را در کلودفلر مستقر کنید:
+   ```bash
+   npx wrangler deploy
+   ```
 
-<div align="center">
+3. متغیرهای زیر را در بخش **Settings → Secrets and variables → Actions** در ریپازیتوری گیت‌هاب تعریف کنید:
+   - `CLOUDFLARE_URL`: آدرس ورکر استقرار یافته (مانند `https://your-worker.workers.dev`)
+   - `RUNNER_SECRET`: کلید احراز هویت مشترک میان رانر و پنل
+   - `GITHUB_TOKEN`: توکن با مجوز `workflow` جهت تداوم ۲۴ ساعته رانر
 
-### 「 ✦ راه‌اندازی سریع و آسان (Quick Start) ✦ 」
+4. از تب **Actions** گیت‌هاب، چرخه `⚡ Telegram Clock Engine` را فعال و اجرا کنید.
 
-</div>
+#### 🤖 &nbsp; فعال‌سازی ربات و لاگر اختصاصی تلگرام
 
-#### ☁️ &nbsp; روش ۱: استقرار رایگان و مداوم روی GitHub Actions (توصیه‌شده)
+1. به ربات رسمی **[@BotFather](https://t.me/BotFather)** در تلگرام رفته و با دستور `/newbot` یک ربات جدید ایجاد کنید.
+2. توکن ربات دریافتی را کپی کنید.
+3. در استودیوی Arizo وارد بخش **«⚡ ربات و لاگر»** شوید، توکن را ثبت و وب‌هوک را فعال کنید.
+4. وارد ربات خود شده و دستور `/start` را ارسال فرمایید تا پیوند مینی‌اپ و گزارش‌گیری فعال شود.
 
-1. مخزن را فورک یا کلون کنید.
-2. ورکر کلادفلر را با دستور `npx wrangler deploy` مستقر کنید.
-3. متغیرهای جدول بالا را در بخش Secrets گیت‌هاب وارد نمایید.
-4. وارد تب **Actions** شوید و چرخه `⚡ Telegram Clock Engine` را استارت کنید:
-```text
-Repository → Actions → ⚡ Telegram Clock Engine → Run workflow
-```
-> 🔄 موتور سلف‌بات با اتمام هر اجرا، جاب بعدی را به صورت خودکار احضار می‌کند و چرخه‌ای کاملاً بی‌پایان، رایگان و بدون خاموشی می‌سازد.
-
-#### 🤖 &nbsp; فعال‌سازی ربات و لاگر هوشمند تلگرام
-
-1. از طریق ربات **[@BotFather](https://t.me/BotFather)** تلگرام با دستور `/newbot` یک ربات جدید بسازید.
-2. توکن ارائه‌شده (شبیه `123456789:ABC...`) را کپی کنید.
-3. در داشبورد Arizo وارد بخش **«⚡ ربات و لاگر»** شوید، توکن را درج کرده و روی **«اتصال و فعال‌سازی وب‌هوک»** بزنید.
-4. وارد ربات خود شوید و دکمه **Start** را بزنید تا دستیار اختصاصی شما آماده به کار شود!
-
-#### 💻 &nbsp; روش ۲: اجرای محلی یا روی سرور اختصاصی (VPS) با PM2
+#### 💻 &nbsp; روش ۲: اجرای مداوم روی سرور اختصاصی (VPS) با PM2
 
 ```bash
-# ۱. نصب پکیج‌ها
+# ۱. نصب پیش‌نیازها
 npm install --production
 
-# ۲. تعریف متغیرهای محیطی
+# ۲. تنظیم متغیرها
 export CLOUDFLARE_URL="https://your-worker.workers.dev"
-export RUNNER_SECRET="your_secret_password"
+export RUNNER_SECRET="your_secure_password"
 
-# ۳. اجرای دائمی پردازش با PM2
-pm2 start scripts/github-runner.js --name arizo-runner
+# ۳. اجرای دائمی با پروسس منیجر PM2
+pm2 start scripts/github-runner.js --name arizo-self-engine
 pm2 save && pm2 startup
 ```
 
@@ -330,14 +422,15 @@ pm2 save && pm2 startup
 
 <br><br>
 
-| لایه | تکنولوژی | نقش و کاربرد |
+| لایه | تکنولوژی | نقش و کاربرد در سامانه |
 |:---:|:---|:---|
-| 🌐 | **Cloudflare Workers** | پردازش لبه (Edge Computing)، وب‌هوک تلگرام، Web Studio |
-| 🗄️ | **Workers KV** | ذخیره‌سازی ابری سشن‌ها با رمزنگاری پیشرفته AES-256-GCM |
-| ⚡ | **GitHub Actions** | موتور رانر ۲۴ ساعته سوکت‌های گرم با پینگ زیر ۴۰ میلی‌ثانیه |
-| 📡 | **GramJS (MTProto 2.0)** | کلاینت رسمی پروتکل تلگرام جهت دریافت بلادرنگ آپدیت‌ها |
-| 🤖 | **Telegram Bot API** | مینی‌اپ وب (Telegram Mini App) و ارسال اعلان‌های لاگر |
-| 🎨 | **Vanilla CSS + Glassmorphism** | رابط کاربری لوکس شیشه‌ای با واکنش‌گرایی کامل موبایل و کامپیوتر |
+| 🌐 | **Cloudflare Workers** | پردازش لبه، مینی‌اپلیکیشن تلگرام، وب‌هوک و امنیت هانی‌پات |
+| 🗄️ | **Workers KV Storage** | پایگاه داده ابری رمزنگاری‌شده با تفکیک ایزوله برای هر کاربر |
+| ⚡ | **GitHub Actions / VPS** | موتور رانر ۲۴ ساعته سوکت‌های گرم با تاخیر زیر ۴۰ میلی‌ثانیه |
+| 📡 | **GramJS (MTProto 2.0)** | کلاینت رسمی پروتکل تلگرام برای تبادل داده و آپدیت‌های زنده |
+| 🔐 | **Google Authenticator (TOTP)** | تایید هویت دومرحله‌ای سازگار با استاندارد جهانی RFC 6238 |
+| 🤖 | **Telegram Bot API** | دریافت گزارش‌های ضد حذف، ضد ویرایش و مدیریت تلگرامی |
+| 🎨 | **Vanilla CSS + Glassmorphism** | رابط کاربری لوکس شیشه‌ای با واکنش‌گرایی کامل موبایل و وب |
 
 <br>
 
@@ -351,9 +444,9 @@ pm2 save && pm2 startup
 
 <samp>
 
-**Arizo Self Engine v3.5 PRO** — مهندسی شده برای بیشترین سرعت، پایداری و زیبایی 💎
+**Arizo Self Engine v3.5 PRO** — مهندسی شده برای بالاترین سرعت، امنیت نفوذناپذیر و تجربه کاربری بی‌همتا 💎
 
-*Engineered with precision for maximum speed, bulletproof stability & pure aesthetics*
+*Engineered with precision for maximum speed, bulletproof 2FA security & pure aesthetics*
 
 Made with ❤️ by **Arizo Team**
 
