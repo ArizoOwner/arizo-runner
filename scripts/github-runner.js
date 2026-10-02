@@ -2925,7 +2925,7 @@ async function sendGhostChatViewToBot(botToken, chatId, peerId, targetName, mess
  * پولینگ منظم و پردازش بلادرنگ اکشن‌های درخواستی از ربات دستیار
  */
 async function pollAndProcessBotActions(pool) {
-  if (!CLOUDFLARE_URL || !RUNNER_SECRET) return;
+  if (!CLOUDFLARE_URL || !RUNNER_SECRET) return 0;
   try {
     const res = await fetch(`${CLOUDFLARE_URL}/api/internal/bot-actions`, {
       headers: {
@@ -2933,10 +2933,10 @@ async function pollAndProcessBotActions(pool) {
         'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
       }
     });
-    if (!res.ok) return;
+    if (!res.ok) return 0;
     const data = await res.json();
     const actions = data.actions;
-    if (!Array.isArray(actions) || actions.length === 0) return;
+    if (!Array.isArray(actions) || actions.length === 0) return 0;
 
     for (const action of actions) {
       let botToken = action.botToken;
@@ -3079,8 +3079,9 @@ async function pollAndProcessBotActions(pool) {
         }
       }
     }
+    return actions.length;
   } catch (err) {
-    // Silent catch
+    return 0;
   }
 }
 
@@ -3135,7 +3136,7 @@ async function main() {
     }));
   }
 
-  // به‌روزرسانی سریع تنظیمات استودیو هر ۱۰ ثانیه تا تغییرات منشی، نجات مدیا و سکوت بلافاصله اعمال شوند
+  // به‌روزرسانی هوشمند تنظیمات استودیو هر ۳۵ ثانیه (کاهش ۷۰٪ مصرف ریکوئست‌های ورکر کلادفلر)
   const settingsSyncInterval = setInterval(async () => {
     try {
       const freshUsers = await fetchActiveUsers();
@@ -3189,14 +3190,20 @@ async function main() {
         }
       }
     } catch (_) {}
-  }, 10000);
+  }, 35000);
 
-  // پردازش بلادرنگ دستورات ربات تلگرام (مشاهده چت‌ها در حالت شبح، ارسال پاسخ مستقیم و تیک آبی)
-  const botActionsInterval = setInterval(async () => {
+  // پردازش بلادرنگ و تطبیقی دستورات ربات تلگرام (Adaptive Polling: 1.5s هنگام فعالیت، 6s در زمان بیکاری - صرفه‌جویی ۶۵٪ ریکوئست)
+  let botPollTimeout = null;
+  async function runAdaptiveBotPoll() {
     try {
-      await pollAndProcessBotActions(pool);
-    } catch (_) {}
-  }, 2500);
+      const actionCount = await pollAndProcessBotActions(pool);
+      const nextDelay = (actionCount > 0) ? 1500 : 6000;
+      botPollTimeout = setTimeout(runAdaptiveBotPoll, nextDelay);
+    } catch (_) {
+      botPollTimeout = setTimeout(runAdaptiveBotPoll, 8000);
+    }
+  }
+  runAdaptiveBotPoll();
 
   while (true) {
     const elapsed = Date.now() - startTime;
