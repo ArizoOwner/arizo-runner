@@ -475,13 +475,29 @@ export default {
         const usersList = await env.KV.get('users_list', 'json') || [];
         const codesList = await env.KV.get('codes_list', 'json') || [];
 
-        // خواندن وضعیت کاربران
+        // خواندن وضعیت تفصیلی کاربران
         let activeBotsCount = 0;
+        let activeHelperBotsCount = 0;
+        let active2FACount = 0;
+        let suspendedUsersCount = 0;
+
         await Promise.all(
           usersList.map(async (uname) => {
-            const u = await env.KV.get('user:' + uname, 'json');
-            if (u && u.telegram?.enabled && u.telegram?.sessionEncrypted) {
+            const cleanUname = String(uname || '').trim().toLowerCase();
+            const u = await env.KV.get('user:' + cleanUname, 'json') || await env.KV.get('user:' + uname, 'json');
+            if (!u) return;
+            if (u.telegram?.enabled && u.telegram?.sessionEncrypted) {
               activeBotsCount++;
+            }
+            if (u.telegram?.bot?.token) {
+              activeHelperBotsCount++;
+            }
+            if (u.totp?.enabled) {
+              active2FACount++;
+            }
+            const sub = checkUserSubscription(u);
+            if (!sub.active || u.isSuspended) {
+              suspendedUsersCount++;
             }
           })
         );
@@ -499,6 +515,9 @@ export default {
           ok: true,
           totalUsers: usersList.length,
           activeBots: activeBotsCount,
+          activeHelperBots: activeHelperBotsCount,
+          active2FA: active2FACount,
+          suspendedUsers: suspendedUsersCount,
           totalCodes: codesList.length,
           usedCodes: usedCodesCount,
           availableCodes: codesList.length - usedCodesCount
@@ -659,7 +678,27 @@ export default {
               licenseCode: u.licenseCode || 'بدون کد',
               lastUpdate: u.status?.lastUpdate,
               lastTime: u.status?.lastTime,
-              error: u.status?.error
+              error: u.status?.error,
+              // 🔐 وضعیت امنیت و ۲FA
+              has2FA: Boolean(u.totp?.enabled),
+              backupCodesCount: (u.totp?.enabled && Array.isArray(u.totp?.backupCodes)) ? u.totp.backupCodes.length : 0,
+              // 🤖 وضعیت ربات کمکی و ماژول‌ها
+              hasBot: Boolean(u.telegram?.bot?.token),
+              botUsername: u.telegram?.bot?.username || null,
+              botName: u.telegram?.bot?.name || null,
+              botId: u.telegram?.bot?.id || null,
+              botOwnerId: u.telegram?.bot?.ownerId || null,
+              botAntiDelete: u.telegram?.bot?.antiDeleteEnabled !== false,
+              botAntiEdit: u.telegram?.bot?.antiEditEnabled !== false,
+              botForwardTtl: u.telegram?.bot?.forwardTtlToBot !== false,
+              // 📱 تله‌متری سلف‌بات تلگرام
+              telegramUserId: u.telegram?.userId || null,
+              ghostMode: Boolean(u.telegram?.ghostMode),
+              aiReplyEnabled: Boolean(u.telegram?.aiReplyEnabled),
+              bioEnabled: Boolean(u.telegram?.bioEnabled),
+              afkEnabled: Boolean(u.telegram?.afkEnabled),
+              afkReason: u.telegram?.afkReason || null,
+              mutedCount: Array.isArray(u.telegram?.mutedUsers) ? u.telegram.mutedUsers.length : 0
             };
           })
         )).filter(Boolean);
@@ -740,6 +779,96 @@ export default {
           userData.status = null;
           await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
           return json({ ok: true });
+        }
+
+        if (action === 'disable_2fa') {
+          if (userData.totp) {
+            userData.totp = { enabled: false };
+          }
+          await env.KV.delete('temp_totp_setup:' + cleanUser);
+          await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          await logSecurityEvent(env, AUDIT_EVENT_TYPES.TOTP_DISABLED, {
+            ip: clientIP,
+            user: cleanUser,
+            details: { disabledByAdmin: true }
+          }, AUDIT_SEVERITY.WARNING);
+          return json({ ok: true, message: `تایید دو مرحله‌ای کاربر ${cleanUser} با موفقیت غیرفعال و ریست گردید.` });
+        }
+
+        if (action === 'disconnect_bot') {
+          const botToken = userData.telegram?.bot?.token;
+          if (botToken) {
+            await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook?drop_pending_updates=true`).catch(() => {});
+            await fetch(`https://api.telegram.org/bot${botToken}/setChatMenuButton`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ menu_button: { type: 'default' } })
+            }).catch(() => {});
+          }
+          const existingAppToken = await env.KV.get('miniapp_token:' + cleanUser);
+          if (existingAppToken) {
+            await env.KV.delete('token:' + existingAppToken);
+            await env.KV.delete('miniapp_token:' + cleanUser);
+          }
+          if (userData.telegram) {
+            delete userData.telegram.bot;
+          }
+          await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          return json({ ok: true, message: `اتصال ربات کمکی کاربر ${cleanUser} با موفقیت قطع گردید و وب‌هوک تلگرام حذف شد.` });
+        }
+
+        if (action === 'toggle_bot_feature') {
+          const { feature } = body;
+          if (!userData.telegram?.bot) {
+            return json({ error: 'کاربر ربات کمکی متصل ندارد' }, 400);
+          }
+          if (feature === 'antiDelete') {
+            userData.telegram.bot.antiDeleteEnabled = userData.telegram.bot.antiDeleteEnabled === false;
+          } else if (feature === 'antiEdit') {
+            userData.telegram.bot.antiEditEnabled = userData.telegram.bot.antiEditEnabled === false;
+          } else if (feature === 'forwardTtl') {
+            userData.telegram.bot.forwardTtlToBot = userData.telegram.bot.forwardTtlToBot === false;
+          }
+          await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          return json({ ok: true, bot: userData.telegram.bot });
+        }
+
+        if (action === 'clear_error') {
+          if (userData.status) {
+            userData.status.error = null;
+          }
+          await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          return json({ ok: true, message: `خطاهای وضعیت کاربر ${cleanUser} پاکسازی شد.` });
+        }
+
+        if (action === 'toggle_feature') {
+          const { feature } = body;
+          if (!userData.telegram) {
+            return json({ error: 'حساب تلگرام کاربر متصل نیست' }, 400);
+          }
+          if (feature === 'ghostMode') userData.telegram.ghostMode = !userData.telegram.ghostMode;
+          else if (feature === 'aiReplyEnabled') userData.telegram.aiReplyEnabled = !userData.telegram.aiReplyEnabled;
+          else if (feature === 'bioEnabled') userData.telegram.bioEnabled = !userData.telegram.bioEnabled;
+          await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          return json({ ok: true, telegram: userData.telegram });
+        }
+
+        if (action === 'reset_password') {
+          const { newPassword } = body;
+          if (!newPassword || newPassword.length < 6) {
+            return json({ error: 'کلمه عبور جدید باید حداقل ۶ کاراکتر باشد' }, 400);
+          }
+          const salt = generateRandomHex(16);
+          const passwordHash = await hashPassword(newPassword, salt);
+          userData.salt = salt;
+          userData.passwordHash = passwordHash;
+          await env.KV.put('user:' + cleanUser, JSON.stringify(userData));
+          await logSecurityEvent(env, AUDIT_EVENT_TYPES.AUTH_SUCCESS, {
+            ip: clientIP,
+            user: cleanUser,
+            details: { passwordResetByAdmin: true }
+          }, AUDIT_SEVERITY.INFO);
+          return json({ ok: true, message: `کلمه عبور کاربر ${cleanUser} با موفقیت به‌روزرسانی شد.` });
         }
 
         if (action === 'set_plan') {
