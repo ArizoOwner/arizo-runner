@@ -1109,7 +1109,17 @@ class TelegramConnectionPool {
 
     const myId = entry.myId;
     const isOut = Boolean(message.out || (myId && message.senderId && message.senderId.toString() === myId));
-    const isPrivateChat = Boolean(message.isPrivate || (message.peerId instanceof Api.PeerUser) || (!message.isGroup && !message.isChannel));
+    const isStrictGroupOrChannel = Boolean(
+      message.isGroup || 
+      message.isChannel || 
+      (message.peerId instanceof Api.PeerChannel) || 
+      (message.peerId instanceof Api.PeerChat) ||
+      (message.chatId && !message.isPrivate && !(message.peerId instanceof Api.PeerUser))
+    );
+    const isPrivateChat = Boolean(
+      (message.isPrivate || (message.peerId instanceof Api.PeerUser)) && 
+      !isStrictGroupOrChannel
+    );
 
     // ۲. شناسایی دقیق مخاطب چت و ثبت زنده فعالیت کاربر در صورت ارسال پیام دستی
     const partnerIdStr = getChatPartnerId(message, myId);
@@ -1431,12 +1441,12 @@ class TelegramConnectionPool {
       }
     }
 
-    // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL Saver)
-    if (entry.settings.antiTtlEnabled && !isOut && message.media) {
+    // ۲. 📸 ضد خودتخریبی مدیا (Anti-TTL Saver) — اکیداً فقط در گفتگوی خصوصی (پیوی)
+    if (entry.settings.antiTtlEnabled && !isOut && isPrivateChat && !isStrictGroupOrChannel && message.media) {
       entry.processedTtlIds = entry.processedTtlIds || new Set();
       const msgIdNum = Number(message.id);
 
-      // تشخیص دقیق و هوشمند رسانه‌های یک‌بار مصرف View-Once و تایمردار
+      // تشخیص دقیق و هوشمند رسانه‌های یک‌بار مصرف View-Once و تایمردار در گفتگوی خصوصی
       const directTtl = message.media?.ttlSeconds ?? 
                         message.media?.ttl_seconds ?? 
                         message.media?.photo?.ttlSeconds ?? 
@@ -1457,7 +1467,8 @@ class TelegramConnectionPool {
         ttl = 2147483647;
       } else if (directTtl && Number(directTtl) > 0) {
         ttl = Number(directTtl);
-      } else if ((message.ttlPeriod || message.ttl_period) && Number(message.ttlPeriod || message.ttl_period) <= 86400) {
+      } else if ((message.ttlPeriod || message.ttl_period) && Number(message.ttlPeriod || message.ttl_period) <= 300) {
+        // تایمرهای کوتاه خودتخریبی پیوی (حداکثر تا ۵ دقیقه، به غیر از حذف خودکار ۲۴ ساعته یا چند روزه چت)
         ttl = Number(message.ttlPeriod || message.ttl_period);
       }
 
