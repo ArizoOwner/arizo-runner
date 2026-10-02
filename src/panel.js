@@ -213,18 +213,22 @@ export function panelHTML(env) {
       box-sizing: border-box;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
 
     html {
       scroll-behavior: smooth;
       color-scheme: dark light;
+      overflow-x: hidden;
+      max-width: 100vw;
     }
 
     html, body {
       width: 100%;
       min-height: 100vh;
       overflow-x: hidden;
-      box-sizing: border-box;
+      max-width: 100vw;
     }
 
     body {
@@ -235,10 +239,22 @@ export function panelHTML(env) {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 20px 14px 65px 14px;
+      padding: clamp(14px, 2.5vw, 24px) clamp(10px, 2vw, 16px) 65px clamp(10px, 2vw, 16px);
       position: relative;
-      line-height: 1.55;
+      line-height: 1.6;
       transition: background-color 0.4s var(--smooth-physics), color 0.4s var(--smooth-physics);
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    p, span, label, div, h1, h2, h3, h4, h5, h6 {
+      overflow-wrap: break-word;
+      word-break: normal;
+    }
+
+    code, pre {
+      overflow-wrap: anywhere;
+      word-break: break-all;
     }
 
     /* 🌌 بوم الگوریتمی ذرات کوانتومی */
@@ -1179,13 +1195,18 @@ export function panelHTML(env) {
       border: 1px solid var(--border-subtle);
       border-top: 1px solid var(--border-specular);
       border-radius: var(--radius-md);
-      padding: 16px 20px;
+      padding: clamp(14px, 2.5vw, 18px);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
       transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.25s var(--smooth-physics);
+      min-width: 0;
     }
     .toggle-row:hover {
       border-color: rgba(168, 85, 247, 0.3);
       transform: translateY(-1px);
+    }
+    .toggle-row > div:first-child {
+      flex: 1;
+      min-width: 0;
     }
     .toggle-label {
       font-size: 0.92rem;
@@ -1193,11 +1214,15 @@ export function panelHTML(env) {
       color: var(--text-main);
       margin-bottom: 4px;
       letter-spacing: -0.2px;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .toggle-desc {
       font-size: 0.78rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.6;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .switch {
       position: relative;
@@ -1243,7 +1268,7 @@ export function panelHTML(env) {
       background: var(--accent-purple-bg);
       border: 1px solid var(--accent-purple-border);
       border-radius: 10px;
-      padding: 5px 12px;
+      padding: 6px 13px;
       font-size: 0.76rem;
       font-weight: 800;
       color: var(--accent-purple);
@@ -1251,6 +1276,8 @@ export function panelHTML(env) {
       font-family: inherit;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
       transition: transform 0.2s var(--spring-physics), background-color 0.2s ease, color 0.2s ease;
+      white-space: nowrap;
+      user-select: none;
     }
     .var-chip:hover {
       background: var(--primary);
@@ -1278,7 +1305,9 @@ export function panelHTML(env) {
       color: var(--text-muted);
       cursor: pointer;
       direction: ltr;
-      text-align: right;
+      text-align: left;
+      overflow-wrap: break-word;
+      word-break: break-all;
       transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
     }
     .bio-preset-pill:hover {
@@ -1415,9 +1444,10 @@ export function panelHTML(env) {
       gap: 12px;
       align-items: stretch;
       width: 100%;
+      flex-wrap: wrap;
     }
     .input-action-row .input-field {
-      flex: 1 1 auto;
+      flex: 1 1 200px;
       min-width: 0;
     }
     .input-action-row .btn {
@@ -1426,7 +1456,7 @@ export function panelHTML(env) {
       white-space: nowrap;
       padding: 12px 22px;
     }
-    @media (max-width: 600px) {
+    @media (max-width: 680px) {
       .input-action-row {
         flex-direction: column;
         gap: 10px;
@@ -1860,8 +1890,11 @@ export function panelHTML(env) {
       pointer-events: none;
       transition: transform 0.4s var(--spring-physics), opacity 0.3s ease;
       letter-spacing: -0.2px;
-      white-space: nowrap;
-      max-width: 90vw;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      max-width: min(92vw, 440px);
+      line-height: 1.5;
       text-align: center;
     }
     #toast.show {
@@ -2198,20 +2231,21 @@ export function panelHTML(env) {
        ========================================================================== */
     .features-modal-container {
       width: 95%;
-      max-width: 780px;
-      padding: 24px 26px;
+      max-width: 860px;
+      padding: clamp(16px, 2.5vw, 26px);
       background: #090d1a;
-      background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.16) 0%, rgba(9, 13, 26, 0.98) 75%);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-top: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 22px;
-      box-shadow: 0 30px 100px -10px rgba(0, 0, 0, 0.9), 0 0 50px -10px rgba(139, 92, 246, 0.25);
+      background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.2) 0%, rgba(9, 13, 26, 0.98) 75%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 24px;
+      box-shadow: 0 32px 100px -10px rgba(0, 0, 0, 0.95), 0 0 50px -10px rgba(139, 92, 246, 0.32);
       position: relative;
-      max-height: 88vh;
+      max-height: 90vh;
       display: flex;
       flex-direction: column;
       color: #e2e8f0;
       box-sizing: border-box;
+      overflow: hidden;
     }
     .features-modal-header {
       flex-shrink: 0;
@@ -2248,7 +2282,7 @@ export function panelHTML(env) {
       border-radius: 20px;
     }
     .features-header-title {
-      font-size: 1.25rem;
+      font-size: clamp(1.1rem, 3vw, 1.35rem);
       font-weight: 900;
       letter-spacing: -0.4px;
       color: #ffffff;
@@ -2289,50 +2323,53 @@ export function panelHTML(env) {
     .features-modal-body {
       flex: 1;
       overflow-y: auto;
-      padding-right: 2px;
+      overscroll-behavior: contain;
+      padding: 4px 4px 12px 2px;
       scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
     }
     .features-modal-body::-webkit-scrollbar {
       width: 5px;
     }
     .features-modal-body::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 4px;
     }
     .features-cards-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 12px;
     }
     .feature-card-item {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 14px;
-      padding: 13px 14px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px 15px;
       display: flex;
       gap: 12px;
       align-items: flex-start;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      min-width: 0;
     }
     .feature-card-item:hover {
-      background: rgba(255, 255, 255, 0.045);
-      border-color: rgba(168, 85, 247, 0.35);
+      background: rgba(255, 255, 255, 0.055);
+      border-color: rgba(168, 85, 247, 0.4);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.55);
     }
     .feature-item-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: rgba(139, 92, 246, 0.12);
-      border: 1px solid rgba(139, 92, 246, 0.25);
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: rgba(139, 92, 246, 0.14);
+      border: 1px solid rgba(139, 92, 246, 0.28);
       color: #c4b5fd;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      margin-top: 1px;
+      margin-top: 2px;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
     }
     .feature-item-body {
       flex: 1;
@@ -2343,32 +2380,34 @@ export function panelHTML(env) {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
+      flex-wrap: wrap;
     }
     .feature-item-title {
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       font-weight: 800;
       color: #ffffff;
-      line-height: 1.3;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.35;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .feature-item-badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 2px 7px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 8px;
       border-radius: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       color: #a78bfa;
       white-space: nowrap;
       flex-shrink: 0;
     }
     .feature-item-desc {
-      font-size: 0.77rem;
+      font-size: 0.78rem;
       color: #94a3b8;
-      line-height: 1.55;
+      line-height: 1.6;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .features-modal-action-bar {
       flex-shrink: 0;
@@ -2408,7 +2447,7 @@ export function panelHTML(env) {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #cbd5e1;
-      padding: 9px 16px;
+      padding: 9px 18px;
       border-radius: 12px;
       font-size: 0.82rem;
       font-weight: 700;
@@ -2425,7 +2464,7 @@ export function panelHTML(env) {
       background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #ffffff;
-      padding: 9px 22px;
+      padding: 9px 24px;
       border-radius: 12px;
       font-size: 0.86rem;
       font-weight: 800;
@@ -2443,25 +2482,28 @@ export function panelHTML(env) {
       transform: translateY(-1px);
     }
 
-    @media (max-width: 680px) {
+    @media (max-width: 720px) {
       .features-modal-container {
-        padding: 18px 14px;
-        border-radius: 18px;
+        padding: 16px 14px;
+        border-radius: 20px;
+        max-height: 92vh;
       }
       .features-header-title {
-        font-size: 1.12rem;
+        font-size: 1.14rem;
       }
       .features-cards-grid {
         grid-template-columns: 1fr;
-        gap: 8px;
+        gap: 9px;
       }
       .features-modal-action-bar {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
       }
       .features-action-buttons {
         flex-direction: column;
         width: 100%;
+        gap: 8px;
       }
       .features-action-buttons button {
         width: 100%;
@@ -3469,8 +3511,8 @@ export function panelHTML(env) {
               <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:12px; margin-top:12px;">
                 <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">یا کلید محرمانه ۳۲ کاراکتری را دستی وارد نمایید:</div>
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                  <input type="text" id="totpSecretDisplay" class="input-field mono" readonly style="font-weight:800; letter-spacing:2px; text-align:center; flex:1; min-width:200px; font-size:0.92rem; background:transparent;" title="کلید دستی">
-                  <button type="button" class="btn btn-secondary" onclick="copyTotpSecret()" style="font-size:0.8rem; padding:8px 14px; white-space:nowrap;">
+                  <input type="text" id="totpSecretDisplay" class="input-field mono" readonly style="font-weight:800; letter-spacing:2px; text-align:center; flex:1; min-width:min(100%, 180px); font-size:0.92rem; background:transparent;" title="کلید دستی">
+                  <button type="button" class="btn btn-secondary" onclick="copyTotpSecret()" style="font-size:0.8rem; padding:8px 14px; white-space:nowrap; flex: 1 1 auto;">
                     <span>📋 کپی کلید دستی</span>
                   </button>
                 </div>
@@ -3483,11 +3525,11 @@ export function panelHTML(env) {
                 <span>🔢</span> <span>گام ۲: کد ۶ رقمی تولید شده در اپلیکیشن را وارد کنید</span>
               </label>
               <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <input type="text" id="totpVerifyCodeInput" class="input-field mono" maxlength="6" inputmode="numeric" placeholder="مثال: 123456" style="text-align:center; font-size:1.3rem; letter-spacing:6px; max-width:200px; font-weight:800;" onkeypress="if(event.key==='Enter') confirmEnableTotp();">
-                <button type="button" class="btn btn-primary" id="btnConfirmTotp" onclick="confirmEnableTotp()" style="white-space:nowrap; padding:10px 22px;">
+                <input type="text" id="totpVerifyCodeInput" class="input-field mono" maxlength="6" inputmode="numeric" placeholder="مثال: 123456" style="text-align:center; font-size:1.3rem; letter-spacing:6px; max-width:200px; width:100%; font-weight:800;" onkeypress="if(event.key==='Enter') confirmEnableTotp();">
+                <button type="button" class="btn btn-primary" id="btnConfirmTotp" onclick="confirmEnableTotp()" style="white-space:nowrap; padding:10px 22px; flex: 1 1 auto;">
                   <span>تأیید نهایی و فعال‌سازی ۲FA</span>
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="cancelTotpSetup()" style="font-size:0.82rem; padding:8px 14px;">
+                <button type="button" class="btn btn-secondary" onclick="cancelTotpSetup()" style="font-size:0.82rem; padding:8px 14px; flex: 0 1 auto;">
                   <span>انصراف</span>
                 </button>
               </div>
@@ -3535,7 +3577,7 @@ export function panelHTML(env) {
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap:16px;">
             <!-- دانلود بکاپ -->
             <div style="background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:14px;">
               <div style="font-weight:700; font-size:0.82rem; margin-bottom:8px; color:var(--accent-indigo);">📥 ایجاد و دریافت خروجی امن</div>
@@ -3705,7 +3747,7 @@ export function panelHTML(env) {
       <!-- بدنه کارت‌های امکانات (اسکرول نرم و روان در صورت نیاز) -->
       <div class="features-modal-body">
         <div class="features-cards-grid">
-          <!-- ۱. ساعت زنده -->
+          <!-- ۱. ساعت زنده نام کاربری -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -3713,15 +3755,15 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">ساعت زنده نام کاربری</span>
-                <span class="feature-item-badge">۳۰+ قلم نوشتاری</span>
+                <span class="feature-item-badge">۳۲ قلم نوشتاری</span>
               </div>
               <div class="feature-item-desc">
-                به‌روزرسانی دقیق دقیقه به دقیقه زمان تهران در نام حساب با فونت‌های لوکس فارسی و لاتین، ارقام دستی و حالت ۱۲/۲۴ ساعته بدون افت سرعت.
+                به‌روزرسانی خودکار و بلادرنگ زمان تهران در نام کاربری تلگرام با ۳۲ استایل قلم فارسی و لاتین، ارقام محلی و نمایش ۱۲/۲۴ ساعته.
               </div>
             </div>
           </div>
 
-          <!-- ۲. بیوگرافی پویا -->
+          <!-- ۲. بیوگرافی پویا و تقویم -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -3729,15 +3771,15 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">بیوگرافی زنده و تقویم</span>
-                <span class="feature-item-badge">متغیرهای پویا</span>
+                <span class="feature-item-badge">متغیرهای هوشمند</span>
               </div>
               <div class="feature-item-desc">
-                درج خودکار تقویم هجری شمسی، روز هفته و زمان در بخش Bio تلگرام با استفاده از قالب‌های مدرن و متغیرهای پویا.
+                نمایش تقویم زنده هجری شمسی، روز هفته و ساعت در بخش Bio تلگرام با الگوهای مدرن و متغیرهای داینامیک.
               </div>
             </div>
           </div>
 
-          <!-- ۳. منشی و پاسخگوی AFK -->
+          <!-- ۳. منشی و پاسخگوی هوشمند پیوی -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
@@ -3748,12 +3790,28 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">سیستم ضد اسپم</span>
               </div>
               <div class="feature-item-desc">
-                پاسخگویی هوشمند به پیام‌های شخصی در هنگام آفلاین بودن شما با زمان‌بندی کول‌داون ضد اسپم و متن کاملاً سفارشی.
+                پاسخگویی هوشمند به پیام‌های شخصی در هنگام آفلاین بودن، با قابلیت تعریف متن سفارشی، فاصله زمانی و لیست استثنا.
               </div>
             </div>
           </div>
 
-          <!-- ۴. ربات دستیار و لاگر ضد حذف تلگرام -->
+          <!-- ۴. دستیار و پاسخگوی هوش مصنوعی -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">دستیار هوش مصنوعی (AI)</span>
+                <span class="feature-item-badge">هوش مصنوعی ادغام‌شده</span>
+              </div>
+              <div class="feature-item-desc">
+                تعامل زبانی و پاسخ‌دهی خودکار به چت‌ها با استفاده از مدل‌های پیشرفته هوش مصنوعی متصل به سامانه ابری.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۵. پایشگر ضد حذف تلگرام -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
@@ -3761,15 +3819,15 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">پایشگر ضد حذف (Anti-Delete)</span>
-                <span class="feature-item-badge">متن، عکس و ویس</span>
+                <span class="feature-item-badge">متن، عکس، ویس و فایل</span>
               </div>
               <div class="feature-item-desc">
-                ذخیره و ارسال آنی پیام‌ها، فایل‌ها، تصاویر و وویس‌های پاک‌شده توسط مخاطبان در پیوی به ربات دستیار تلگرام شما.
+                ضبط و ارسال بلادرنگ پیام‌ها، فایل‌ها، تصاویر، ویس‌ها و استیکرهای پاک‌شده توسط مخاطبان در پیوی به ربات دستیار شخصی.
               </div>
             </div>
           </div>
 
-          <!-- ۵. مانیتور و ضد ویرایش پیام -->
+          <!-- ۶. مانیتور و ضد ویرایش پیام -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -3780,12 +3838,12 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">متن قبل و بعد ادیت</span>
               </div>
               <div class="feature-item-desc">
-                آشکارسازی و ارسال متن اولیه پیام‌ها قبل از تغییر همراه با نسخه ویرایش‌شده در چت ربات برای آگاهی از ویرایش‌های مخفیانه.
+                آشکارسازی و ارسال متن اولیه پیام‌ها قبل از تغییر همراه با نسخه ویرایش‌شده و زمان دقیق به پیوی ربات برای ردیابی تغییرات.
               </div>
             </div>
           </div>
 
-          <!-- ۶. نجات رسانه‌های خودتخریبی Anti-TTL -->
+          <!-- ۷. نجات رسانه‌های خودتخریبی Anti-TTL -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -3793,15 +3851,31 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">آرشیو رسانه‌ها (Anti-TTL)</span>
-                <span class="feature-item-badge">View-Once یک‌بار مصرف</span>
+                <span class="feature-item-badge">رسانه‌های View-Once</span>
               </div>
               <div class="feature-item-desc">
-                دانلود و فوروارد فوری عکس‌ها، ویدیوها و ویس‌های تایمردار و محوشونده به پیوی ربات شما با کیفیت اورجینال قبل از سوختن.
+                ذخیره و فوروارد فوری عکس‌ها و ویدیوهای محوشونده و تایمردار پیش از سوختن یا ناپدید شدن با کیفیت اورجینال.
               </div>
             </div>
           </div>
 
-          <!-- ۷. مدیریت سکوت و فیلتر پیام‌ها -->
+          <!-- ۸. حالت نامرئی و روح -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">حالت روح و نامرئی (Ghost Mode)</span>
+                <span class="feature-item-badge">مشاهده بدون تیک دوم</span>
+              </div>
+              <div class="feature-item-desc">
+                مشاهده و مرور پیام‌های دریافتی بدون سین خوردن (تیک دوم) با قابلیت کنترل مستقیم از طریق دستورات <code>.ghost on</code> و <code>.read</code>.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۹. مدیریت سکوت و فیلتر پیام‌ها -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
@@ -3809,15 +3883,15 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">مدیریت سکوت و فیلتر (Mute)</span>
-                <span class="feature-item-badge">پاکسازی دوطرفه</span>
+                <span class="feature-item-badge">پاکسازی دوطرفه چت</span>
               </div>
               <div class="feature-item-desc">
-                پالایش و حذف خودکار و آنی پیام‌های کاربران مزاحم با دستورات تلگرامی <code>.mute</code> یا از طریق تنظیمات پنل.
+                مسدودسازی و حذف خودکار و آنی پیام‌های کاربران مزاحم با دستور تلگرامی <code>.mute</code> و مدیریت از طریق پنل.
               </div>
             </div>
           </div>
 
-          <!-- ۸. حالت خواب و استراحت شبانه -->
+          <!-- ۱۰. حالت خواب و استراحت شبانه -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -3828,12 +3902,76 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">اتوماسیون استراحت</span>
               </div>
               <div class="feature-item-desc">
-                تغییر خودکار نام خانوادگی به متن استراحت (مانند 😴 Sleep) و توقف هوشمند وظایف در ساعات مشخص‌شده شبانه.
+                تغییر خودکار نام خانوادگی به حالت استراحت و غیرفعال‌سازی موقت ارسال پیام در بازه زمانی تعیین‌شده شبانه.
               </div>
             </div>
           </div>
 
-          <!-- ۹. کنترل پنل درون تلگرام (Telegram Mini App) -->
+          <!-- ۱۱. تایید دو مرحله‌ای سخت‌گیرانه -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">تایید دومرحله‌ای (Google 2FA)</span>
+                <span class="feature-item-badge">استاندارد TOTP RFC 6238</span>
+              </div>
+              <div class="feature-item-desc">
+                محافظت نفوذناپذیر از پنل کاربری با Google Authenticator، رمز موقت ۶ رقمی TOTP و QR Code اختصاصی.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۲. سیستم دفاع فعال هانی‌پات -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">دفاع فعال هانی‌پات (Honeypot)</span>
+                <span class="feature-item-badge">تله امنیتی و بلاک IP</span>
+              </div>
+              <div class="feature-item-desc">
+                کشف و مهار اسکنرهای مخرب در روت‌های حساس، بلاک خودکار IP نفوذگر و ارسال فوری گزارش امنیتی به تلگرام.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۳. پشتیبان‌گیری رمزنگاری‌شده -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">پشتیبان‌گیری رمزنگاری‌شده</span>
+                <span class="feature-item-badge">دانلود و بازیابی امن</span>
+              </div>
+              <div class="feature-item-desc">
+                پشتیبان‌گیری کامل از کلیه پیکربندی‌ها، الگوها و کلیدها با رمزنگاری مستقل و امکان بازیابی آنی در هر زمان.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۴. تنوع ۳۲ قلم نوشتاری ساعت -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">کتابخانه ۳۲ فونت ساعت</span>
+                <span class="feature-item-badge">پیش‌نمایش زنده در پنل</span>
+              </div>
+              <div class="feature-item-desc">
+                تنوع کامل قلم‌های ساعت از جمله نئون، دایره‌ای، رومی، قلمی و مینیمال با پیش‌نمایش بلادرنگ در داشبورد قبل از فعال‌سازی.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۵. مینی اپلیکیشن تلگرام -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
@@ -3841,15 +3979,15 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">مینی اپلیکیشن تلگرام</span>
-                <span class="feature-item-badge">دسترسی مستقیم درون‌برنامه‌ای</span>
+                <span class="feature-item-badge">رابط درون‌برنامه‌ای</span>
               </div>
               <div class="feature-item-desc">
-                اتصال وب‌اپلیکیشن به ربات تلگرام اختصاصی شما جهت مدیریت آسان و تغییر آنی تنظیمات بدون نیاز به خروج از تلگرام.
+                مدیریت کامل تنظیمات و وضعیت حساب کاربری مستقیماً از داخل تلگرام با طراحی هماهنگ با دارک/لایت مود تلگرام.
               </div>
             </div>
           </div>
 
-          <!-- ۱۰. زیرساخت ابری سرورلس ۲۴/۷ -->
+          <!-- ۱۶. زیرساخت ابری سرورلس ۲۴/۷ -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
@@ -3860,7 +3998,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">پایداری دائمی ۲۴/۷</span>
               </div>
               <div class="feature-item-desc">
-                میزبانی در شبکه جهانی Cloudflare با رمزنگاری ایزوله سشن‌ها؛ کاملاً مستقل از اینترنت یا آنلاین بودن گوشی همراه شما.
+                استقرار دائمی روی شبکه جهانی Cloudflare Edge با واکنش زیر ۱۰۰ms، بدون نیاز به سرور، روشن بودن گوشی یا مصرف باتری.
               </div>
             </div>
           </div>
