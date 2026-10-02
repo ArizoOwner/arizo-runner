@@ -58,6 +58,22 @@ const authTokensCache = new Map(); // token -> { auth, expiresAt }
 const verifiedWebhooks = new Map(); // botTok -> timestamp
 const STORAGE_MEM_TTL = 30000; // 30 seconds RAM TTL
 
+function setStorageMemCache(key, valStr, expiresAt) {
+  if (storageMemCache.size > 1000) {
+    const oldestKey = storageMemCache.keys().next().value;
+    storageMemCache.delete(oldestKey);
+  }
+  storageMemCache.set(key, { valStr, expiresAt });
+}
+
+function setAuthTokensCache(token, auth, expiresAt) {
+  if (authTokensCache.size > 500) {
+    const oldestKey = authTokensCache.keys().next().value;
+    authTokensCache.delete(oldestKey);
+  }
+  authTokensCache.set(token, { auth, expiresAt });
+}
+
 function getUnifiedStorage(env) {
   if (env._unifiedStorage) return env._unifiedStorage;
 
@@ -78,7 +94,7 @@ function getUnifiedStorage(env) {
               env.DB.prepare('DELETE FROM kv_store WHERE key = ?').bind(key).run().catch(() => {});
               storageMemCache.delete(key);
             } else {
-              storageMemCache.set(key, { valStr: row.value, expiresAt: now + STORAGE_MEM_TTL });
+              setStorageMemCache(key, row.value, now + STORAGE_MEM_TTL);
               return type === 'json' ? JSON.parse(row.value) : row.value;
             }
           }
@@ -94,7 +110,7 @@ function getUnifiedStorage(env) {
           const val = await rawKv.get(key, type);
           if (val !== null && val !== undefined) {
             const valStr = typeof val === 'string' ? val : JSON.stringify(val);
-            storageMemCache.set(key, { valStr, expiresAt: now + STORAGE_MEM_TTL });
+            setStorageMemCache(key, valStr, now + STORAGE_MEM_TTL);
             if (env.DB) {
               env.DB.prepare('INSERT OR REPLACE INTO kv_store (key, value, updated_at) VALUES (?, ?, ?)')
                 .bind(key, valStr, now).run().catch(() => {});
@@ -117,7 +133,7 @@ function getUnifiedStorage(env) {
         return; // داده تغییر نکرده است؛ بدون نیاز به مصرف سهمیه رایت دیتابیس
       }
 
-      storageMemCache.set(key, { valStr, expiresAt: now + STORAGE_MEM_TTL });
+      setStorageMemCache(key, valStr, now + STORAGE_MEM_TTL);
 
       // اگر تنظیمات کاربری تغییر کرد، کش‌ها را باطل کن
       if (key.startsWith('user:')) {
@@ -166,7 +182,7 @@ function getUnifiedStorage(env) {
 
       // 2. آینه‌سازی هوشمند در KV (حفاظت سخت‌گیرانه از سهمیه ۱۰۰۰ رایت روزانه KV)
       // داده‌های موقت/پراستفاده (مانند هانی‌پات، استیت بات، کش دیالوگ‌ها، سشن‌های موقت و پینگ رانر) فقط در D1 و RAM نگهداری می‌شوند
-      const isTransientKey = key.startsWith('bot_') || key.startsWith('temp_') || key.startsWith('audit_') || key.startsWith('user_dialogs:') || key.startsWith('runner:');
+      const isTransientKey = key.startsWith('bot_') || key.startsWith('temp_') || key.startsWith('audit_') || key.startsWith('security_') || key.startsWith('rate_') || key === 'security_audit_log' || key.startsWith('user_dialogs:') || key.startsWith('runner:');
       const rawKv = env.KV_RAW || env.KV;
       if (!isTransientKey && rawKv && typeof rawKv.put === 'function') {
         try {
@@ -306,7 +322,7 @@ async function getAuthUser(request, env) {
   }
 
   const auth = { username: sessionData.username, user: userData, token };
-  authTokensCache.set(token, { auth, expiresAt: now + 30000 });
+  setAuthTokensCache(token, auth, now + 30000);
   return auth;
 }
 
