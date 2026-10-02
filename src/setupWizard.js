@@ -1,6 +1,7 @@
 /**
  * Arizo Self - Interactive Web Setup Wizard
- * راهنمای گرافیکی، گام‌به‌گام و تعاملی راه‌اندازی پروژه برای استفاده شخصی
+ * راهنمای گرافیکی، فوق‌پویا، گام‌به‌گام و تعاملی راه‌اندازی سلف‌بات برای استفاده شخصی
+ * نسخه v3.6.0 PRO
  */
 
 export function setupWizardHTML(env = {}, url = {}) {
@@ -12,25 +13,27 @@ export function setupWizardHTML(env = {}, url = {}) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>🚀 ویزارد راه‌اندازی گام‌به‌گام | Arizo Self Setup Wizard</title>
-  <meta name="description" content="راهنمای تعاملی و گرافیکی راه‌اندازی اختصاصی و رایگان سلف‌بات تلگرام Arizo Self روی کلادفلر و گیت‌هاب اکشنز">
+  <title>🚀 ویزارد راه‌اندازی هوشمند و گام‌به‌گام | Arizo Self v3.6.0 PRO</title>
+  <meta name="description" content="راهنمای تعاملی و خودکار راه‌اندازی اختصاصی و رایگان سلف‌بات تلگرام Arizo Self روی کلادفلر و گیت‌هاب اکشنز">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='bg'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3E%3Cstop%20offset='0%25'%20stop-color='%230f172a'/%3E%3Cstop%20offset='50%25'%20stop-color='%231e1b4b'/%3E%3Cstop%20offset='100%25'%20stop-color='%23090d16'/%3E%3C/linearGradient%3E%3ClinearGradient%20id='neon'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3E%3Cstop%20offset='0%25'%20stop-color='%2338bdf8'/%3E%3Cstop%20offset='50%25'%20stop-color='%23818cf8'/%3E%3Cstop%20offset='100%25'%20stop-color='%23c084fc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='16'%20fill='url(%23bg)'/%3E%3Crect%20x='2'%20y='2'%20width='60'%20height='60'%20rx='14'%20fill='none'%20stroke='url(%23neon)'%20stroke-width='2'%20opacity='0.6'/%3E%3Cpath%20d='M35%208%20L18%2034%20L31%2034%20L27%2056%20L46%2028%20L33%2028%20Z'%20fill='url(%23neon)'/%3E%3C/svg%3E">
+  <link rel="alternate icon" href="/favicon.ico">
 
   <style>
     :root {
       --font-main: 'Vazirmatn', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', Consolas, monospace;
       
-      --bg-gradient: radial-gradient(circle at 15% 20%, rgba(30, 27, 75, 0.4) 0%, transparent 40%),
-                     radial-gradient(circle at 85% 75%, rgba(67, 56, 202, 0.3) 0%, transparent 45%),
+      --bg-gradient: radial-gradient(circle at 15% 20%, rgba(30, 27, 75, 0.45) 0%, transparent 40%),
+                     radial-gradient(circle at 85% 75%, rgba(67, 56, 202, 0.35) 0%, transparent 45%),
                      #09090b;
-      --surface-card: rgba(18, 18, 26, 0.75);
-      --surface-card-subtle: rgba(25, 25, 36, 0.6);
+      --surface-card: rgba(18, 18, 26, 0.78);
+      --surface-card-subtle: rgba(25, 25, 36, 0.65);
       --surface-border: rgba(255, 255, 255, 0.08);
-      --surface-border-hover: rgba(129, 140, 248, 0.4);
+      --surface-border-hover: rgba(129, 140, 248, 0.45);
 
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
@@ -61,7 +64,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       --accent-rose-border: rgba(248, 113, 113, 0.3);
 
       --code-bg: #0f172a;
-      --input-bg: rgba(0, 0, 0, 0.35);
+      --input-bg: rgba(0, 0, 0, 0.4);
       --radius-sm: 8px;
       --radius-md: 14px;
       --radius-lg: 20px;
@@ -69,11 +72,11 @@ export function setupWizardHTML(env = {}, url = {}) {
     }
 
     [data-theme="light"] {
-      --bg-gradient: radial-gradient(circle at 15% 20%, rgba(224, 231, 255, 0.5) 0%, transparent 40%),
-                     radial-gradient(circle at 85% 75%, rgba(219, 234, 254, 0.5) 0%, transparent 45%),
+      --bg-gradient: radial-gradient(circle at 15% 20%, rgba(224, 231, 255, 0.55) 0%, transparent 40%),
+                     radial-gradient(circle at 85% 75%, rgba(219, 234, 254, 0.55) 0%, transparent 45%),
                      #f8fafc;
-      --surface-card: rgba(255, 255, 255, 0.92);
-      --surface-card-subtle: rgba(241, 245, 249, 0.85);
+      --surface-card: rgba(255, 255, 255, 0.94);
+      --surface-card-subtle: rgba(241, 245, 249, 0.88);
       --surface-border: rgba(0, 0, 0, 0.12);
       --surface-border-hover: rgba(99, 102, 241, 0.5);
 
@@ -106,7 +109,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       --accent-rose-border: rgba(220, 38, 38, 0.25);
 
       --code-bg: #1e293b;
-      --input-bg: rgba(255, 255, 255, 0.95);
+      --input-bg: rgba(255, 255, 255, 0.98);
       --shadow-glow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
     }
 
@@ -131,7 +134,7 @@ export function setupWizardHTML(env = {}, url = {}) {
     .container {
       max-width: 1080px;
       margin: 0 auto;
-      padding: 20px 16px 60px;
+      padding: 18px 16px 60px;
       width: 100%;
       flex: 1;
     }
@@ -143,11 +146,11 @@ export function setupWizardHTML(env = {}, url = {}) {
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-lg);
-      padding: 14px 22px;
+      padding: 12px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       box-shadow: var(--shadow-glow);
       flex-wrap: wrap;
       gap: 12px;
@@ -162,14 +165,14 @@ export function setupWizardHTML(env = {}, url = {}) {
     }
 
     .brand-icon {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.3rem;
+      font-size: 1.35rem;
       color: #fff;
       box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
     }
@@ -200,7 +203,8 @@ export function setupWizardHTML(env = {}, url = {}) {
     .nav-tools {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .btn-tool {
@@ -238,17 +242,27 @@ export function setupWizardHTML(env = {}, url = {}) {
       backdrop-filter: blur(14px);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-lg);
-      padding: 20px 24px;
-      margin-bottom: 24px;
+      padding: 18px 22px;
+      margin-bottom: 22px;
       box-shadow: var(--shadow-glow);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
     }
 
     .progress-bar-wrap {
       width: 100%;
-      height: 6px;
+      height: 7px;
       background: rgba(255, 255, 255, 0.08);
       border-radius: 999px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       overflow: hidden;
       position: relative;
     }
@@ -273,7 +287,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       align-items: center;
       text-align: center;
       cursor: pointer;
-      padding: 10px 6px;
+      padding: 8px 6px;
       border-radius: var(--radius-md);
       transition: all 0.2s ease;
       position: relative;
@@ -292,7 +306,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 700;
       color: var(--text-dim);
       margin-bottom: 6px;
@@ -336,7 +350,7 @@ export function setupWizardHTML(env = {}, url = {}) {
         font-size: 0.8rem;
       }
       .step-label {
-        font-size: 0.68rem;
+        font-size: 0.65rem;
       }
     }
 
@@ -360,7 +374,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       backdrop-filter: blur(14px);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-lg);
-      padding: 30px;
+      padding: 28px 24px;
       margin-bottom: 24px;
       box-shadow: var(--shadow-glow);
     }
@@ -377,23 +391,23 @@ export function setupWizardHTML(env = {}, url = {}) {
     .card-subtitle {
       font-size: 0.88rem;
       color: var(--text-muted);
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       line-height: 1.6;
     }
 
     /* Sub-cards & Grids */
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
 
     .sub-card {
       background: var(--surface-card-subtle);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-md);
-      padding: 18px 20px;
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -425,7 +439,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       background: var(--code-bg);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: var(--radius-md);
-      padding: 14px 16px;
+      padding: 12px 16px;
       direction: ltr;
       text-align: left;
       font-family: var(--font-mono);
@@ -443,12 +457,14 @@ export function setupWizardHTML(env = {}, url = {}) {
       margin-bottom: 8px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       padding-bottom: 6px;
+      direction: rtl;
     }
 
     .code-box-lang {
       font-size: 0.72rem;
       color: var(--accent-indigo);
       font-weight: 700;
+      direction: ltr;
     }
 
     .btn-copy-code {
@@ -476,25 +492,27 @@ export function setupWizardHTML(env = {}, url = {}) {
       background: rgba(99, 102, 241, 0.04);
       border: 1px solid var(--accent-indigo-border);
       border-radius: var(--radius-md);
-      padding: 20px;
-      margin: 20px 0;
+      padding: 18px 20px;
+      margin: 18px 0;
     }
 
     .tool-box-title {
       font-size: 0.95rem;
       font-weight: 800;
       color: var(--accent-indigo);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
       gap: 8px;
     }
 
     .form-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      margin-bottom: 14px;
+      gap: 12px;
+      margin-bottom: 12px;
     }
 
     .form-group {
@@ -522,7 +540,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       font-size: 0.85rem;
       direction: ltr;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .input-text:focus {
@@ -538,13 +556,15 @@ export function setupWizardHTML(env = {}, url = {}) {
       flex-wrap: wrap;
       gap: 12px;
       margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--surface-border);
     }
 
     .btn-step {
-      padding: 12px 24px;
+      padding: 11px 22px;
       border-radius: var(--radius-md);
       font-family: inherit;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -606,8 +626,8 @@ export function setupWizardHTML(env = {}, url = {}) {
     }
 
     .custom-checkbox {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
       border: 2px solid var(--text-dim);
       display: flex;
@@ -616,12 +636,40 @@ export function setupWizardHTML(env = {}, url = {}) {
       margin-top: 2px;
       flex-shrink: 0;
       transition: all 0.2s;
+      font-weight: 800;
+      font-size: 0.85rem;
     }
 
     .checklist-item.checked .custom-checkbox {
       background: var(--accent-green);
       border-color: var(--accent-green);
       color: #fff;
+    }
+
+    /* Tab Switcher for Commands */
+    .cmd-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .cmd-tab-btn {
+      background: var(--surface-card-subtle);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .cmd-tab-btn.active {
+      background: var(--accent-indigo);
+      color: #fff;
+      border-color: var(--accent-indigo);
     }
 
     /* Toast Notification */
@@ -642,6 +690,9 @@ export function setupWizardHTML(env = {}, url = {}) {
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 9999;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     #wizardToast.show {
@@ -672,7 +723,7 @@ export function setupWizardHTML(env = {}, url = {}) {
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-lg);
       width: 100%;
-      max-width: 580px;
+      max-width: 620px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
       overflow: hidden;
       display: flex;
@@ -680,7 +731,7 @@ export function setupWizardHTML(env = {}, url = {}) {
     }
 
     .modal-header {
-      padding: 18px 24px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--surface-border);
       display: flex;
       justify-content: space-between;
@@ -688,9 +739,25 @@ export function setupWizardHTML(env = {}, url = {}) {
     }
 
     .modal-body {
-      padding: 24px;
-      max-height: 70vh;
+      padding: 20px;
+      max-height: 72vh;
       overflow-y: auto;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
     }
   </style>
 </head>
@@ -705,16 +772,21 @@ export function setupWizardHTML(env = {}, url = {}) {
         <div class="brand-info">
           <h1>
             <span>Arizo Self</span>
-            <span class="brand-badge">SETUP WIZARD v1.0</span>
+            <span class="brand-badge">WIZARD v3.6.0 PRO</span>
           </h1>
-          <div class="brand-desc">ویزارد گرافیکی و گام‌به‌گام راه‌اندازی شخصی از گیت‌هاب</div>
+          <div class="brand-desc">ویزارد هوشمند و تعاملی ستاپ شخصی از گیت‌هاب</div>
         </div>
       </a>
 
       <div class="nav-tools">
-        <button class="btn-tool" onclick="checkLiveServerStatus()" title="بررسی اتصال و وضعیت سرور جاری">
-          <span>🩺</span>
+        <button class="btn-tool" onclick="checkLiveServerStatus()" title="بررسی زنده سلامت دیتابیس و سرویس">
+          <span class="pulse-dot"></span>
           <span>بررسی سلامت سرور</span>
+        </button>
+
+        <button class="btn-tool" onclick="openSecretsExporterModal()" title="خروجی یکجای سکرت‌های رانر">
+          <span>📦</span>
+          <span>خروجی سکرت‌ها</span>
         </button>
 
         <button class="btn-tool" onclick="toggleTheme()" title="تغییر تم روز و شب" id="themeBtn">
@@ -722,14 +794,22 @@ export function setupWizardHTML(env = {}, url = {}) {
           <span id="themeText">حالت روز</span>
         </button>
 
-        <a href="/" class="btn-tool primary" title="ورود به پنل اصلی سلف‌بات">
-          <span>🚪 ورود به پنل</span>
+        <a href="/admin" class="btn-tool" style="border-color:var(--accent-amber-border); color:var(--accent-amber); background:var(--accent-amber-bg);" title="ورود مستقیم به پنل مدیریت">
+          <span>👑 پنل مدیریت</span>
+        </a>
+
+        <a href="/" class="btn-tool primary" title="ورود به پنل استودیو سلف‌بات">
+          <span>🚪 استودیو</span>
         </a>
       </div>
     </header>
 
     <!-- کارت استپر و نوار درصد پیشرفت -->
     <div class="stepper-card">
+      <div class="progress-header">
+        <span id="progressStepTitle">مرحله ۱ از ۵: گیت‌هاب و نیازمندی‌ها</span>
+        <span id="progressPctText">۲۰٪ تکمیل شده</span>
+      </div>
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="progressBar"></div>
       </div>
@@ -737,23 +817,23 @@ export function setupWizardHTML(env = {}, url = {}) {
       <div class="steps-nav">
         <div class="step-item active" onclick="goToStep(1)" id="stepTab1">
           <div class="step-circle" id="circle1">۱</div>
-          <div class="step-label">گیت‌هاب و نیازمندی‌ها</div>
+          <div class="step-label">گیت‌هاب و فورک</div>
         </div>
         <div class="step-item" onclick="goToStep(2)" id="stepTab2">
           <div class="step-circle" id="circle2">۲</div>
-          <div class="step-label">کلادفلر و دیتابیس</div>
+          <div class="step-label">کلادفلر و D1</div>
         </div>
         <div class="step-item" onclick="goToStep(3)" id="stepTab3">
           <div class="step-circle" id="circle3">۳</div>
-          <div class="step-label">تلگرام و ربات کمکی</div>
+          <div class="step-label">تلگرام و ربات</div>
         </div>
         <div class="step-item" onclick="goToStep(4)" id="stepTab4">
           <div class="step-circle" id="circle4">۴</div>
-          <div class="step-label">رانر ۲۴ ساعته Actions</div>
+          <div class="step-label">رانر Actions</div>
         </div>
         <div class="step-item" onclick="goToStep(5)" id="stepTab5">
           <div class="step-circle" id="circle5">۵</div>
-          <div class="step-label">ورود و تست نهایی</div>
+          <div class="step-label">ورود و تست</div>
         </div>
       </div>
     </div>
@@ -764,57 +844,87 @@ export function setupWizardHTML(env = {}, url = {}) {
     <div class="step-pane active" id="stepPane1">
       <div class="content-card">
         <div class="card-title">
-          <span>📥 مرحله اول: انشعاب پروژه در گیت‌هاب (Fork) و نصب نیازمندی‌ها</span>
+          <span>📥 مرحله اول: انشعاب پروژه در گیت‌هاب (Fork) و دانلود سورس</span>
         </div>
         <div class="card-subtitle">
-          به سادگی یک نسخه کپی اختصاصی از پروژه را در اکانت گیت‌هاب خود بسازید تا کنترل کامل کدهای سلف‌بات و رانر همیشه در دستان شما باشد.
+          یک نسخه مستقل از پروژه را در اکانت گیت‌هاب خود فورک کنید. با وارد کردن نام کاربری گیت‌هاب در کادر زیر، تمام آدرس‌ها و دستورات به نام شما شخصی‌سازی خواهند شد!
+        </div>
+
+        <!-- ابزار تعاملی: بایندر یوزرنیم گیت‌هاب کاربر -->
+        <div class="tool-box" style="margin-top: 0;">
+          <div class="tool-box-title">
+            <span>👤 نام کاربری شما در GitHub (شخصی‌سازی خودکار همه لینک‌ها و دستورات)</span>
+            <span id="ghUserBadge" style="font-size:0.75rem; color:var(--text-dim);">هنوز وارد نشده</span>
+          </div>
+          <div class="form-row" style="margin-bottom: 6px;">
+            <div class="form-group" style="flex:1;">
+              <input type="text" id="cfgGhUser" class="input-text" placeholder="مثال: AmirHossein یا your-github-username" oninput="handleGhUserChange()">
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+              <a href="https://github.com/ArizoOwner/arizo-telegram-self-manager/fork" target="_blank" class="btn-step next" style="padding:10px 16px; font-size:0.82rem; text-decoration:none;">
+                <span>🍴 فورک مستقیم در گیت‌هاب</span>
+                <span>↗️</span>
+              </a>
+            </div>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">
+            💡 با وارد کردن یوزرنیم، لینک‌های ریپازیتوری، آدرس تنظیم سکرت‌ها و دستورات کلون به طور خودکار بروز می‌شوند.
+          </div>
         </div>
 
         <div class="cards-grid">
           <div class="sub-card">
             <div class="sub-card-title">
-              <span>🍴 فورک کردن پروژه در گیت‌هاب</span>
+              <span>🍴 ریپازیتوری رسمی پروژه</span>
             </div>
             <div class="sub-card-desc">
-              وارد صفحه ریپازیتوری زیر در گیت‌هاب شده و دکمه <strong>Fork</strong> در بالا سمت راست صفحه را بزنید تا کل سورس در حساب شخصی شما کپی شود:
+              سورس اصلی سلف‌بات روی گیت‌هاب قرار دارد. برای شروع روی دکمه زیر بزنید و در صفحه گیت‌هاب، دکمه <strong>Fork</strong> را بفشارید:
             </div>
-            <div style="margin-top: 6px;">
+            <div style="margin-top: 4px;">
               <a href="https://github.com/ArizoOwner/arizo-telegram-self-manager" target="_blank" class="btn-tool primary" style="width:100%; justify-content:center;">
-                <span>🔗 مشاهده ریپازیتوری و زدن دکمه Fork</span>
+                <span>🔗 مشاهده ریپوی مرجع گیت‌هاب</span>
               </a>
             </div>
           </div>
 
           <div class="sub-card">
             <div class="sub-card-title">
-              <span>💻 ابزارهای مورد نیاز سیستم</span>
+              <span>💻 پیش‌نیازهای نرم‌افزاری ساده</span>
             </div>
             <div class="sub-card-desc">
-              برای راه‌اندازی این پروژه فقط به دو ابزار ساده نیاز دارید:
-              <ul style="margin: 8px 18px; font-size: 0.8rem; line-height: 1.8;">
-                <li>نصب بودن <strong>Node.js 18 یا بالاتر</strong> روی کامپیوتر</li>
-                <li>داشتن یک اکانت کاملاً رایگان در <strong>Cloudflare</strong></li>
-                <li>داشتن اکانت در <strong>GitHub</strong> جهت رانر ۲۴ ساعته</li>
+              تنها ابزارهای مورد نیاز برای استفاده:
+              <ul style="margin: 6px 16px; font-size: 0.8rem; line-height: 1.8;">
+                <li>نصب بودن <strong>Node.js 18 یا بالاتر</strong> روی سیستم</li>
+                <li>یک حساب کاربری رایگان در <strong>Cloudflare</strong></li>
+                <li>یک اکانت رایگان در <strong>GitHub</strong> برای رانر دائمی</li>
               </ul>
             </div>
           </div>
         </div>
 
-        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 8px;">
-          ⌨️ کلون کردن ریپوی شخصی و نصب پکیج‌ها در ترمینال:
-        </div>
-        <div class="code-box">
-          <div class="code-box-header">
-            <span class="code-box-lang">BASH / POWERSHELL</span>
-            <button class="btn-copy-code" onclick="copySnippet('git clone https://github.com/YOUR_USERNAME/arizo-telegram-self-manager.git\\ncd arizo-telegram-self-manager\\nnpm install')">📋 کپی دستورات</button>
+        <!-- تب دستورات کلون متناسب با سیستم‌عامل -->
+        <div style="margin-top: 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-weight:700; font-size:0.92rem;">⌨️ دریافت سورس و نصب پکیج‌ها:</div>
+            <div class="cmd-tabs">
+              <button class="cmd-tab-btn active" id="tabPs" onclick="switchCmdTab('ps')">PowerShell (ویندوز)</button>
+              <button class="cmd-tab-btn" id="tabBash" onclick="switchCmdTab('bash')">Bash (مک و لینوکس)</button>
+            </div>
           </div>
-          <code>git clone https://github.com/YOUR_USERNAME/arizo-telegram-self-manager.git<br>cd arizo-telegram-self-manager<br>npm install</code>
+
+          <div class="code-box">
+            <div class="code-box-header">
+              <span class="code-box-lang" id="cmdLangBadge">POWERSHELL</span>
+              <button class="btn-copy-code" onclick="copyCurrentCloneCmd()">📋 کپی کامل دستور</button>
+            </div>
+            <code id="cloneCmdDisplay">git clone https://github.com/YOUR_USERNAME/arizo-telegram-self-manager.git; cd arizo-telegram-self-manager; npm install</code>
+          </div>
         </div>
 
         <div class="wizard-actions">
           <div></div>
           <button class="btn-step next" onclick="goToStep(2)">
-            <span>مرحله بعد: کلادفلر و دیتابیس</span>
+            <span>مرحله بعد: کلادفلر و پایگاه داده D1</span>
             <span>⬅️</span>
           </button>
         </div>
@@ -827,96 +937,126 @@ export function setupWizardHTML(env = {}, url = {}) {
     <div class="step-pane" id="stepPane2">
       <div class="content-card">
         <div class="card-title">
-          <span>⛅ مرحله دوم: آماده‌سازی سرور ابری کلادفلر (Workers, KV & D1)</span>
+          <span>⛅ مرحله دوم: پایگاه داده SQLite ابری (D1) و حافظه کلادفلر (KV)</span>
         </div>
         <div class="card-subtitle">
-          کلادفلر ورکرز بستر اجرایی بدون سرور (Serverless) پروژه است. با دو دستور زیر پایگاه داده SQLite و حافظه پرسرعت KV را بسازید.
+          پروژه Arizo Self از معماری پیشرفته هیبریدی D1 + KV با سقف ۱۰۰,۰۰۰ رایت رایگان در روز استفاده می‌کند.
+        </div>
+
+        <!-- ابزار فوق‌العاده کاربردی: استخراج خودکار شناسه‌ها از خروجی ترمینال -->
+        <div class="tool-box" style="border-color:var(--accent-amber-border); background:var(--accent-amber-bg); margin-top:0;">
+          <div class="tool-box-title" style="color:var(--accent-amber);">
+            <span>🪄 استخراج جادویی شناسه‌ها از لاگ ترمینال (بدون نیاز به پیدا کردن دستی UUID!)</span>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">
+            وقتی دستورات ساخت D1 یا KV را اجرا کردید، کل خروجی چاپ شده در ترمینال را در کادر زیر پیست کنید تا سیستم شناسه‌ها را به صورت خودکار تشخیص داده و فیلدها را پر کند:
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <textarea id="terminalLogPasteBox" rows="2" placeholder="متن خروجی ترمینال را اینجا Paste کنید..." style="width:100%; background:var(--input-bg); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:var(--text-main); font-family:var(--font-mono); font-size:0.8rem; padding:8px 10px; outline:none; resize:vertical;" oninput="handleTerminalLogPaste()"></textarea>
+            <div id="parseResultMsg" style="font-size:0.75rem; color:var(--accent-green); display:none; font-weight:700;"></div>
+          </div>
         </div>
 
         <div class="cards-grid">
           <div class="sub-card">
             <div class="sub-card-title">
-              <span>🗄️ ۱. ساخت پایگاه داده رایگان D1</span>
+              <span>🗄️ ۱. ساخت پایگاه داده D1</span>
             </div>
             <div class="sub-card-desc">
-              دستور زیر را در ترمینال پوشه پروژه اجرا کنید تا دیتابیس اختصاصی <code>arizo_db</code> ساخته شده و <strong>database_id</strong> آن به شما داده شود:
+              این دستور را در ترمینال پوشه پروژه اجرا کنید:
             </div>
             <div class="code-box" style="margin: 6px 0;">
+              <div class="code-box-header">
+                <span class="code-box-lang">D1 CREATE</span>
+                <button class="btn-copy-code" onclick="copySnippet('npx wrangler d1 create arizo_db')">کپی</button>
+              </div>
               <code>npx wrangler d1 create arizo_db</code>
             </div>
-            <div class="sub-card-desc" style="font-size: 0.76rem; color: var(--accent-amber);">
-              💡 شناسه تولیدشده (یک UUID مثل <code>4edef38a-xxxx...</code>) را یادداشت کنید.
+            <div class="sub-card-desc" style="font-size: 0.74rem; color: var(--accent-amber);">
+              💡 شناسه تولیدشده (database_id) را در فیلد زیر وارد یا پیست کنید.
             </div>
           </div>
 
           <div class="sub-card">
             <div class="sub-card-title">
-              <span>⚡ ۲. ساخت فضای ذخیره‌سازی KV</span>
+              <span>⚡ ۲. ساخت حافظه کش KV</span>
             </div>
             <div class="sub-card-desc">
-              دستور زیر را در ترمینال اجرا کنید تا فضای KV ایجاد شده و شناسه <strong>id</strong> آن چاپ شود:
+              این دستور را در ترمینال اجرا کنید:
             </div>
             <div class="code-box" style="margin: 6px 0;">
+              <div class="code-box-header">
+                <span class="code-box-lang">KV CREATE</span>
+                <button class="btn-copy-code" onclick="copySnippet('npx wrangler kv:namespace create KV')">کپی</button>
+              </div>
               <code>npx wrangler kv:namespace create KV</code>
             </div>
-            <div class="sub-card-desc" style="font-size: 0.76rem; color: var(--accent-blue);">
-              💡 شناسه تولیدشده (مثل <code>b56bacf321...</code>) را یادداشت کنید.
+            <div class="sub-card-desc" style="font-size: 0.74rem; color: var(--accent-blue);">
+              💡 شناسه تولیدشده (id) را در فیلد زیر وارد یا پیست کنید.
             </div>
           </div>
         </div>
 
-        <!-- ابزار تعاملی: تولید خودکار فایل wrangler.toml -->
+        <!-- ابزار تعاملی: تولید خودکار و دانلود فایل wrangler.toml -->
         <div class="tool-box">
           <div class="tool-box-title">
-            <span>⚙️ تولیدکننده خودکار و زنده فایل کانفیگ <code>wrangler.toml</code></span>
+            <span>⚙️ تولیدکننده زنده و دانلود مستقیم فایل <code>wrangler.toml</code></span>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-tool" onclick="downloadWranglerFile()" style="font-size:0.75rem; padding:5px 10px; background:var(--accent-blue-bg); border-color:var(--accent-blue-border); color:var(--accent-blue);">
+                <span>📥 دانلود مستقیم فایل wrangler.toml</span>
+              </button>
+              <button type="button" class="btn-tool" onclick="initD1DatabaseOnline()" id="btnInitD1Online" style="font-size:0.75rem; padding:5px 10px; background:var(--accent-green-bg); border-color:var(--accent-green-border); color:var(--accent-green);">
+                <span>⚡ ساخت خودکار جداول D1</span>
+              </button>
+            </div>
           </div>
-          <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
-            اطلاعات خود را در فیلدهای زیر وارد کنید تا فایل کانفیگ اختصاصی شما بلافاصله تولید شود:
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+            اطلاعات را وارد کنید؛ پیش‌نمایش به صورت بلادرنگ بروزرسانی شده و می‌توانید فایل آماده را مستقیماً دانلود کنید:
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">نام ورکر (Worker Name)</label>
-              <input type="text" id="cfgWorkerName" class="input-text" value="my-arizo-self" oninput="generateWranglerToml()">
+              <input type="text" id="cfgWorkerName" class="input-text" value="my-arizo-self" oninput="handleConfigChange()">
             </div>
             <div class="form-group">
               <label class="form-label">شناسه KV Namespace (KV ID)</label>
-              <input type="text" id="cfgKvId" class="input-text" placeholder="b56bacf321a54731ba4a1e69a5619898" oninput="generateWranglerToml()">
+              <input type="text" id="cfgKvId" class="input-text" placeholder="مثال: b56bacf321a54731ba4a1e69a5619898" oninput="handleConfigChange()">
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">شناسه پایگاه داده D1 (Database ID)</label>
-              <input type="text" id="cfgD1Id" class="input-text" placeholder="4edef38a-95d4-4459-a904-5248a8952363" oninput="generateWranglerToml()">
+              <input type="text" id="cfgD1Id" class="input-text" placeholder="مثال: 4edef38a-95d4-4459-a904-5248a8952363" oninput="handleConfigChange()">
             </div>
             <div class="form-group">
               <label class="form-label">
                 <span>رمز عبور مدیریت (Admin Master Password)</span>
                 <button type="button" onclick="generateRandomPass()" style="background:none; border:none; color:var(--accent-indigo); font-size:0.75rem; cursor:pointer; font-weight:700;">🎲 تولید تصادفی</button>
               </label>
-              <input type="text" id="cfgAdminPass" class="input-text" value="secret_master_key_2026" oninput="generateWranglerToml()">
+              <input type="text" id="cfgAdminPass" class="input-text" value="secret_master_key_2026" oninput="handleConfigChange()">
             </div>
           </div>
 
           <div class="code-box" id="wranglerPreviewBox">
             <div class="code-box-header">
-              <span class="code-box-lang">wrangler.toml (خروجی آماده)</span>
-              <button class="btn-copy-code" onclick="copyWranglerToml()">📋 کپی کامل محتوا</button>
+              <span class="code-box-lang">wrangler.toml (خروجی آماده دیپلوی)</span>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-copy-code" onclick="downloadWranglerFile()">📥 دانلود فایل</button>
+                <button class="btn-copy-code" onclick="copyWranglerToml()">📋 کپی کامل</button>
+              </div>
             </div>
             <pre id="wranglerOutputCode" style="margin:0; font-family:var(--font-mono); white-space:pre-wrap;"></pre>
           </div>
-          <div style="font-size: 0.76rem; color: var(--text-dim); margin-top: 6px;">
-            💡 محتوای بالا را کپی کرده و در فایل <code>wrangler.toml</code> در ریشه پروژه خود جایگزین کنید.
-          </div>
         </div>
 
-        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 8px;">
+        <div style="font-weight: 700; font-size: 0.92rem; margin-bottom: 6px;">
           🚀 دستور دیپلوی به کلادفلر:
         </div>
         <div class="code-box">
           <div class="code-box-header">
-            <span class="code-box-lang">TERMINAL</span>
+            <span class="code-box-lang">DEPLOY COMMAND</span>
             <button class="btn-copy-code" onclick="copySnippet('npx wrangler deploy')">📋 کپی دستور</button>
           </div>
           <code>npx wrangler deploy</code>
@@ -927,7 +1067,7 @@ export function setupWizardHTML(env = {}, url = {}) {
             <span>➡️ مرحله قبل</span>
           </button>
           <button class="btn-step next" onclick="goToStep(3)">
-            <span>مرحله بعد: کلیدهای تلگرام و ربات</span>
+            <span>مرحله بعد: کلیدهای تلگرام و ربات کمکی</span>
             <span>⬅️</span>
           </button>
         </div>
@@ -940,62 +1080,81 @@ export function setupWizardHTML(env = {}, url = {}) {
     <div class="step-pane" id="stepPane3">
       <div class="content-card">
         <div class="card-title">
-          <span>📱 مرحله سوم: اتصال به تلگرام و ساخت ربات کمکی اختصاصی</span>
+          <span>📱 مرحله سوم: اتصال کلاینت رسمی تلگرام و ساخت ربات کمکی</span>
         </div>
         <div class="card-subtitle">
-          پروژه برای اتصال سلف‌بات به پروتکل MTProto و کنترل هوشمند نیاز به اطلاعات کلاینت تلگرام و یک ربات بات‌فادر دارد.
+          ربات کمکی اختصاصی برای ارسال پیام‌های پاک‌شده، پیام‌های زمان‌دار قبل از انقضا و کدهای ورود به پیوی شما استفاده می‌شود.
         </div>
 
         <div class="cards-grid">
           <div class="sub-card">
             <div class="sub-card-title">
-              <span>🔑 ۱. شناسه و هش رسمی تلگرام (API_ID / API_HASH)</span>
+              <span>🔑 ۱. شناسه و هش رسمی تلگرام</span>
             </div>
             <div class="sub-card-desc">
-              این مقادیر به‌صورت پیش‌فرض روی شناسه امن کلاینت رسمی تلگرام دسکتاپ ست شده‌اند و نیازی به تغییر اجباری ندارید:
+              این مقادیر شناسه کلاینت رسمی تلگرام دسکتاپ هستند و سیستم به طور پیش‌فرض از آن‌ها استفاده می‌کند (نیازی به تغییر ندارید):
             </div>
-            <div class="code-box" style="margin: 8px 0; font-size: 0.78rem;">
+            <div class="code-box" style="margin: 6px 0; font-size: 0.78rem;">
               API_ID = "2040"<br>
               API_HASH = "b18441a1ff607e10a989891a5462e627"
             </div>
             <div class="sub-card-desc" style="font-size: 0.74rem;">
-              در صورت تمایل به ساخت کلید اختصاصی، به سایت <a href="https://my.telegram.org" target="_blank" style="color:var(--accent-blue);">my.telegram.org</a> رفته و از بخش API development tools اپلیکیشن بسازید.
+              در صورت تمایل به دریافت کلید شخصی می‌توانید به سایت رسمی <a href="https://my.telegram.org" target="_blank" style="color:var(--accent-blue);">my.telegram.org</a> مراجعه کنید.
             </div>
           </div>
 
           <div class="sub-card">
             <div class="sub-card-title">
-              <span>🤖 ۲. ثبت ربات کمکی در BotFather</span>
+              <span>🤖 ۲. ایجاد ربات در BotFather تلگرام</span>
             </div>
             <div class="sub-card-desc">
-              برای مدیریت پیام‌های حذف‌شده، پیام‌های تایمردار، و اعلان‌های سیستم، یک ربات رایگان در تلگرام بسازید:
-              <ol style="margin: 8px 18px; font-size: 0.8rem; line-height: 1.8;">
-                <li>در تلگرام به آیدی <a href="https://t.me/BotFather" target="_blank" style="color:var(--accent-blue);">@BotFather</a> پیام دهید.</li>
+              یک ربات اختصاصی و رایگان برای خود بسازید:
+              <ol style="margin: 6px 16px; font-size: 0.8rem; line-height: 1.8;">
+                <li>در تلگرام وارد آیدی <a href="https://t.me/BotFather" target="_blank" style="color:var(--accent-blue); font-weight:700;">@BotFather</a> شوید.</li>
                 <li>دستور <code>/newbot</code> را بفرستید.</li>
-                <li>یک نام و یک یوزرنیم که به bot ختم شود انتخاب کنید.</li>
-                <li>توکن تلگرام داده‌شده (مثل <code>123456:ABC-DEF...</code>) را کپی کنید.</li>
+                <li>یک نام و یک یوزرنیم دلخواه (که به bot ختم شود) برگزینید.</li>
+                <li>توکن تلگرام داده‌شده را کپی و در کادر زیر وارد کنید.</li>
               </ol>
+            </div>
+            <div style="margin-top: 4px;">
+              <a href="https://t.me/BotFather?start=newbot" target="_blank" class="btn-tool primary" style="width:100%; justify-content:center;">
+                <span>🤖 باز کردن ربات‌فادر در تلگرام</span>
+              </a>
             </div>
           </div>
         </div>
 
-        <!-- ابزار تعاملی: تست زنده توکن ربات -->
+        <!-- ابزار تعاملی: تست آنلاین توکن ربات -->
         <div class="tool-box">
           <div class="tool-box-title">
             <span>🔍 تستر و اعتبارسنجی آنلاین توکن ربات تلگرام</span>
           </div>
           <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
-            توکن ربات خود را اینجا وارد کنید تا ویزارد مستقیماً با سرورهای تلگرام ارتباط گرفته و از صحت آن اطمینان حاصل کند:
+            توکن ربات خود را اینجا وارد کنید تا سیستم از طریق ارتباط مستقیم با API تلگرام صحت آن را تایید کند:
           </div>
 
           <div style="display:flex; flex-wrap:wrap; gap:10px;">
-            <input type="text" id="botTokenInput" class="input-text" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ..." style="flex:1; min-width:240px;">
+            <input type="text" id="botTokenInput" class="input-text" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ..." style="flex:1; min-width:240px;" oninput="handleBotTokenInput()">
             <button class="btn-tool primary" id="testBotBtn" onclick="testBotTokenOnline()">
               <span>🚀 تست آنلاین توکن</span>
             </button>
           </div>
 
           <div id="botTestResult" style="margin-top:14px; display:none;"></div>
+
+          <!-- فیلد تست ارسال پیام تست -->
+          <div id="botMessageTestSection" style="margin-top:14px; padding-top:14px; border-top:1px dashed var(--surface-border); display:none;">
+            <div style="font-size:0.8rem; font-weight:700; margin-bottom:8px; color:var(--text-main);">
+              💬 ارسال پیام تست به پیوی شما از طریق این ربات:
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+              <input type="text" id="testChatIdInput" class="input-text" placeholder="شناسه عددی چت شما (Chat ID عددی)" style="flex:1; min-width:200px;">
+              <button class="btn-tool" onclick="sendTestBotMessage()" id="btnSendTestMsg" style="background:var(--accent-purple-bg); border-color:var(--accent-purple-border); color:var(--accent-purple);">
+                <span>📩 ارسال پیام تست</span>
+              </button>
+            </div>
+            <div id="testMsgResult" style="font-size:0.75rem; margin-top:6px; display:none;"></div>
+          </div>
         </div>
 
         <div class="wizard-actions">
@@ -1003,7 +1162,7 @@ export function setupWizardHTML(env = {}, url = {}) {
             <span>➡️ مرحله قبل</span>
           </button>
           <button class="btn-step next" onclick="goToStep(4)">
-            <span>مرحله بعد: رانر ۲۴ ساعته Actions</span>
+            <span>مرحله بعد: رانر ۲۴ ساعته GitHub Actions</span>
             <span>⬅️</span>
           </button>
         </div>
@@ -1019,64 +1178,75 @@ export function setupWizardHTML(env = {}, url = {}) {
           <span>⚡ مرحله چهارم: فعال‌سازی رانر دائمی و ۲۴ ساعته در GitHub Actions</span>
         </div>
         <div class="card-subtitle">
-          گیت‌هاب اکشنز موتور تپنده‌ای است که تغییرات ساعت فونتی، آپدیت بیو، ماژول‌های پاسخ خودکار و جلوگیری از خاموشی را به‌صورت نامحدود اجرا می‌کند.
+          گیت‌هاب اکشنز ساعت زنده، بیوگرافی هوشمند و پایش ۲۴ ساعته را بدون قطعی و کاملاً رایگان روی سرورهای ابری گیت‌هاب روشن نگه می‌دارد.
         </div>
 
-        <div class="sub-card" style="margin-bottom: 20px;">
+        <div class="sub-card" style="margin-bottom: 18px;">
           <div class="sub-card-title">
-            <span>🛡️ افزودن سکرت‌های امنیتی به گیت‌هاب (Repository Secrets)</span>
+            <span>🛡️ مسیر ثبت سکرت‌ها در گیت‌هاب (Repository Secrets)</span>
+            <a id="btnDirectSecretsLink" href="#" target="_blank" class="btn-tool primary" style="font-size:0.75rem; padding:4px 10px; margin-right:auto;">
+              <span>🔗 رفتن مستقیم به صفحه Secrets ریپازیتوری شما</span>
+              <span>↗️</span>
+            </a>
           </div>
           <div class="sub-card-desc">
-            در صفحه ریپازیتوری شخصی خود در گیت‌هاب، به مسیر زیر بروید:
-            <div style="margin: 6px 0; font-weight:700; color:var(--accent-purple);">
+            در ریپازیتوری خود وارد مسیر زیر شوید و چهار متغیر زیر را ثبت نمایید:
+            <div style="margin: 6px 0; font-weight:700; color:var(--accent-purple); font-size:0.82rem;">
               Settings ➔ Secrets and variables ➔ Actions ➔ New repository secret
             </div>
-            و مقادیر زیر را تک‌به‌تک ثبت کنید:
           </div>
         </div>
 
-        <!-- جدول سکرت‌های مورد نیاز با دکمه کپی اختصاصی -->
+        <!-- جدول سکرت‌های مورد نیاز با دکمه کپی اختصاصی و وضعیت -->
         <div style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.84rem; text-align:right; margin-bottom:20px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.84rem; text-align:right; margin-bottom:18px;">
             <thead>
               <tr style="border-bottom:1px solid var(--surface-border); color:var(--text-dim);">
                 <th style="padding:10px;">نام Secret در گیت‌هاب</th>
-                <th style="padding:10px;">مقدار پیشنهادی</th>
-                <th style="padding:10px;">توضیحات</th>
-                <th style="padding:10px; text-align:center;">عملیات</th>
+                <th style="padding:10px;">مقدار شما</th>
+                <th style="padding:10px; text-align:center;">عملیات کپی نام</th>
+                <th style="padding:10px; text-align:center;">عملیات کپی مقدار</th>
               </tr>
             </thead>
             <tbody>
               <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                 <td style="padding:10px; font-family:var(--font-mono); font-weight:700; color:var(--accent-blue);">CLOUDFLARE_URL</td>
-                <td style="padding:10px; font-family:var(--font-mono); color:var(--text-muted);">${currentWorkerUrl}</td>
-                <td style="padding:10px; color:var(--text-muted);">آدرس دامنه ورکر کلادفلر شما</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--text-muted);" id="valSecCloudflareUrl">${currentWorkerUrl}</td>
                 <td style="padding:10px; text-align:center;">
-                  <button class="btn-copy-code" onclick="copySnippet('${currentWorkerUrl}')">کپی مقدار</button>
+                  <button class="btn-copy-code" onclick="copySnippet('CLOUDFLARE_URL', 'نام سکرت کپی شد')">کپی نام</button>
+                </td>
+                <td style="padding:10px; text-align:center;">
+                  <button class="btn-copy-code" onclick="copySecretVal('cfUrl')">کپی مقدار</button>
                 </td>
               </tr>
               <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                 <td style="padding:10px; font-family:var(--font-mono); font-weight:700; color:var(--accent-purple);">RUNNER_SECRET</td>
-                <td style="padding:10px; font-family:var(--font-mono); color:var(--text-muted);">همان رمزی که در wrangler.toml وارد کردید</td>
-                <td style="padding:10px; color:var(--text-muted);">رمز عبور احراز هویت رانر با ورکر</td>
+                <td style="padding:10px; font-family:var(--font-mono); color:var(--text-muted);" id="valSecRunnerSecret">secret_master_key_2026</td>
                 <td style="padding:10px; text-align:center;">
-                  <button class="btn-copy-code" onclick="copyRunnerSecret()">کپی مقدار</button>
+                  <button class="btn-copy-code" onclick="copySnippet('RUNNER_SECRET', 'نام سکرت کپی شد')">کپی نام</button>
+                </td>
+                <td style="padding:10px; text-align:center;">
+                  <button class="btn-copy-code" onclick="copySecretVal('runnerSec')">کپی مقدار</button>
                 </td>
               </tr>
               <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                 <td style="padding:10px; font-family:var(--font-mono); font-weight:700; color:var(--accent-indigo);">API_ID</td>
                 <td style="padding:10px; font-family:var(--font-mono); color:var(--text-muted);">2040</td>
-                <td style="padding:10px; color:var(--text-muted);">شناسه تلگرام کلاینت رسمی</td>
                 <td style="padding:10px; text-align:center;">
-                  <button class="btn-copy-code" onclick="copySnippet('2040')">کپی</button>
+                  <button class="btn-copy-code" onclick="copySnippet('API_ID', 'نام سکرت کپی شد')">کپی نام</button>
+                </td>
+                <td style="padding:10px; text-align:center;">
+                  <button class="btn-copy-code" onclick="copySnippet('2040', 'مقدار 2040 کپی شد')">کپی مقدار</button>
                 </td>
               </tr>
               <tr>
                 <td style="padding:10px; font-family:var(--font-mono); font-weight:700; color:var(--accent-indigo);">API_HASH</td>
                 <td style="padding:10px; font-family:var(--font-mono); color:var(--text-muted);">b18441a1ff607e10a989891a5462e627</td>
-                <td style="padding:10px; color:var(--text-muted);">هش تلگرام کلاینت رسمی</td>
                 <td style="padding:10px; text-align:center;">
-                  <button class="btn-copy-code" onclick="copySnippet('b18441a1ff607e10a989891a5462e627')">کپی</button>
+                  <button class="btn-copy-code" onclick="copySnippet('API_HASH', 'نام سکرت کپی شد')">کپی نام</button>
+                </td>
+                <td style="padding:10px; text-align:center;">
+                  <button class="btn-copy-code" onclick="copySnippet('b18441a1ff607e10a989891a5462e627', 'مقدار API_HASH کپی شد')">کپی مقدار</button>
                 </td>
               </tr>
             </tbody>
@@ -1085,12 +1255,16 @@ export function setupWizardHTML(env = {}, url = {}) {
 
         <div class="sub-card">
           <div class="sub-card-title">
-            <span>▶️ راه‌اندازی و شروع گردش کار (Start Workflow)</span>
+            <span>▶️ استارت گردش کار رانر (Run Workflow)</span>
+            <a id="btnDirectActionsLink" href="#" target="_blank" class="btn-tool primary" style="font-size:0.75rem; padding:4px 10px; margin-right:auto;">
+              <span>🚀 رفتن به صفحه Actions ریپازیتوری شما</span>
+              <span>↗️</span>
+            </a>
           </div>
           <div class="sub-card-desc">
-            در صفحه گیت‌هاب به تب <strong>Actions</strong> بروید ➔ گردش‌کار <strong>⚡ Telegram Clock Engine</strong> را از سایدبار چپ انتخاب کنید ➔ دکمه <strong>Run workflow</strong> را بزنید!
+            در صفحه گیت‌هاب ریپوی خود، به تب <strong>Actions</strong> بروید ➔ گردش‌کار <strong>⚡ Telegram Clock Engine</strong> را انتخاب کنید ➔ دکمه <strong>Run workflow</strong> را بزنید!
             <div style="font-size:0.78rem; color:var(--accent-green); margin-top:8px; font-weight:700;">
-              🟢 رانر بلافاصله روشن شده و به‌صورت خودکار هر ۴ ساعت خودش را تمدید می‌کند تا بدون ثانیه‌ای قطعی به کارش ادامه دهد.
+              🟢 رانر ابری فعال شده و هر ۴ ساعت به‌صورت خودکار چرخه اجرای خود را تمدید می‌کند.
             </div>
           </div>
         </div>
@@ -1113,69 +1287,89 @@ export function setupWizardHTML(env = {}, url = {}) {
     <div class="step-pane" id="stepPane5">
       <div class="content-card">
         <div class="card-title">
-          <span>🎉 مرحله پنجم: ورود به داشبورد و فعال‌سازی اکانت تلگرام</span>
+          <span>🎉 مرحله پنجم: چک‌لیست نهایی، بررسی سلامت و اتصال تلگرام</span>
         </div>
         <div class="card-subtitle">
-          تبریک! تمامی زیرساخت‌ها با موفقیت مهیا شدند. اکنون می‌توانید وارد پنل کاربری یا پنل مدیریت شده و اکانت تلگرام خود را به سیستم متصل نمایید.
+          تبریک! تمام اجزای سیستم پیکربندی شدند. اکنون می‌توانید سلامت سیستم را چک کرده، نسخه پشتیبان دانلود کنید و وارد پنل شوید.
         </div>
 
-        <!-- چک‌لیست آمادگی نهایی -->
-        <div style="margin-bottom: 24px;">
-          <div style="font-weight:800; font-size:1rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-            <span>📋 چک‌لیست آمادگی نهایی (روی هر کدام کلیک کنید تا تیک بخورد):</span>
+        <!-- چک‌لیست هوشمند آمادگی نهایی -->
+        <div style="margin-bottom: 22px;">
+          <div style="font-weight:800; font-size:1rem; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+            <span>📋 چک‌لیست آمادگی نهایی:</span>
+            <span style="font-size:0.75rem; color:var(--text-dim);">روی هر مورد کلیک کنید تا تیک بخورد</span>
           </div>
 
-          <div class="checklist-item checked" onclick="toggleChecklist(this)">
+          <div class="checklist-item checked" onclick="toggleChecklist(this)" id="chkItem1">
             <div class="custom-checkbox">✓</div>
             <div>
-              <div style="font-weight:700; font-size:0.85rem;">ریپازیتوری فورک و پکیج‌ها نصب شدند</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">پروژه در ریپوی شخصی گیت‌هاب قرار گرفت.</div>
+              <div style="font-weight:700; font-size:0.85rem;">انشعاب پروژه (Fork) در حساب شخصی گیت‌هاب</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);" id="chkDesc1">پروژه در ریپازیتوری شخصی شما کلون و آماده شد.</div>
             </div>
           </div>
 
-          <div class="checklist-item checked" onclick="toggleChecklist(this)">
+          <div class="checklist-item checked" onclick="toggleChecklist(this)" id="chkItem2">
             <div class="custom-checkbox">✓</div>
             <div>
               <div style="font-weight:700; font-size:0.85rem;">کلادفلر ورکر و دیتابیس D1 ساخته و مستقر شد</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">دستور npx wrangler deploy با موفقیت اجرا شد و ورکر آدرس اختصاصی گرفت.</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">پایگاه داده SQLite ابری با سقف ۱۰۰ هزار رایت رایگان در روز راه‌اندازی شد.</div>
             </div>
           </div>
 
-          <div class="checklist-item checked" onclick="toggleChecklist(this)">
+          <div class="checklist-item checked" onclick="toggleChecklist(this)" id="chkItem3">
             <div class="custom-checkbox">✓</div>
             <div>
-              <div style="font-weight:700; font-size:0.85rem;">ربات کمکی در BotFather ایجاد شد</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">توکن تلگرام آماده استفاده در پنل یا تنظیمات است.</div>
+              <div style="font-weight:700; font-size:0.85rem;">ربات کمکی در BotFather ایجاد و اعتبارسنجی شد</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">توکن ربات تایید شده و آماده دریافت پیام‌هاست.</div>
             </div>
           </div>
 
-          <div class="checklist-item checked" onclick="toggleChecklist(this)">
+          <div class="checklist-item checked" onclick="toggleChecklist(this)" id="chkItem4">
             <div class="custom-checkbox">✓</div>
             <div>
-              <div style="font-weight:700; font-size:0.85rem;">سکرت‌های گیت‌هاب اکشنز ست شدند</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">مقادیر CLOUDFLARE_URL و RUNNER_SECRET ذخیره و رانر استارت شد.</div>
+              <div style="font-weight:700; font-size:0.85rem;">سکرت‌های گیت‌هاب اکشنز ست و رانر استارت شد</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">آدرس ورکر و رمز رانر در Secrets ثبت شدند.</div>
             </div>
           </div>
         </div>
 
         <div class="cards-grid">
-          <div class="sub-card" style="border-color:var(--accent-indigo-border); background:var(--accent-indigo-bg);">
-            <div class="sub-card-title" style="color:var(--accent-indigo);">
-              <span>🔑 ورود مدیر کل به پنل</span>
+          <div class="sub-card" style="border-color:var(--accent-amber-border); background:var(--accent-amber-bg);">
+            <div class="sub-card-title" style="color:var(--accent-amber);">
+              <span>👑 ورود مدیر کل به پنل مدیریت</span>
             </div>
             <div class="sub-card-desc">
-              وارد صفحه اصلی شده، دکمه <strong>👑 پنل مدیریت</strong> را بزنید و رمز عبوری که در <code>wrangler.toml</code> گذاشتید را وارد کنید تا به انبار لایسنس‌ها و مانیتورینگ دسترسی پیدا کنید.
+              وارد روت <code>/admin</code> شده و رمز عبوری که در <code>wrangler.toml</code> تنظیم کردید را بزنید تا به انبار لایسنس، تله‌متری و ارتقای کاربران دسترسی یابید.
+            </div>
+            <div style="margin-top:auto;">
+              <a href="/admin" class="btn-tool" style="width:100%; justify-content:center; background:var(--accent-amber); color:#000; font-weight:800; border:none;">
+                <span>ورود به پنل مدیریت (/admin)</span>
+              </a>
             </div>
           </div>
 
           <div class="sub-card" style="border-color:var(--accent-green-border); background:var(--accent-green-bg);">
             <div class="sub-card-title" style="color:var(--accent-green);">
-              <span>📱 اتصال اکانت تلگرام</span>
+              <span>📱 اتصال اکانت تلگرام به سلف‌بات</span>
             </div>
             <div class="sub-card-desc">
-              پس از ورود به حساب کاربری، روی <strong>اسکن QR تلگرام</strong> کلیک کنید و در تلگرام گوشی خود به <code>Settings > Devices > Link Desktop Device</code> بروید تا اتصال برقرار شود.
+              در داشبورد کاربری، روی <strong>اسکن QR تلگرام</strong> بزنید و از تلگرام گوشی در مسیر <code>Settings > Devices > Link Desktop</code> کد را اسکن نمایید.
+            </div>
+            <div style="margin-top:auto;">
+              <a href="/" class="btn-tool" style="width:100%; justify-content:center; background:var(--accent-green); color:#fff; font-weight:800; border:none;">
+                <span>ورود به داشبورد کاربری استودیو</span>
+              </a>
             </div>
           </div>
+        </div>
+
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;">
+          <button type="button" class="btn-tool" onclick="downloadBackupConfig()" style="font-size:0.8rem;">
+            <span>💾 دانلود پکیج پیکربندی (JSON Backup)</span>
+          </button>
+          <button type="button" class="btn-tool" onclick="checkLiveServerStatus()" style="font-size:0.8rem;">
+            <span>🩺 عیب‌یابی و اسکن اتصالات ورکر</span>
+          </button>
         </div>
 
         <div class="wizard-actions">
@@ -1183,7 +1377,7 @@ export function setupWizardHTML(env = {}, url = {}) {
             <span>➡️ مرحله قبل</span>
           </button>
           <a href="/" class="btn-step finish">
-            <span>🚀 ورود به داشبورد و پایان راه‌اندازی</span>
+            <span>🚀 ورود به استودیو و پایان راه‌اندازی</span>
           </a>
         </div>
       </div>
@@ -1191,12 +1385,12 @@ export function setupWizardHTML(env = {}, url = {}) {
 
   </div>
 
-  <!-- مودال بررسی زنده سلامت سرور -->
+  <!-- مودال عیب‌یابی و بررسی زنده سلامت سرور -->
   <div id="statusModal" class="modal-backdrop hidden" onclick="if(event.target===this) closeStatusModal();">
     <div class="modal-card">
       <div class="modal-header">
         <div style="font-weight:800; font-size:1rem; display:flex; align-items:center; gap:8px;">
-          <span>🩺 عیب‌یابی و بررسی زنده پیکربندی ورکر</span>
+          <span>🩺 عیب‌یابی زنده اتصالات و پیکربندی ورکر</span>
         </div>
         <button class="btn-tool" onclick="closeStatusModal()" style="padding:4px 10px;">✕</button>
       </div>
@@ -1208,21 +1402,249 @@ export function setupWizardHTML(env = {}, url = {}) {
     </div>
   </div>
 
+  <!-- مودال خروجی یکجای سکرت‌های رانر -->
+  <div id="secretsModal" class="modal-backdrop hidden" onclick="if(event.target===this) closeSecretsModal();">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div style="font-weight:800; font-size:1rem; display:flex; align-items:center; gap:8px;">
+          <span>📦 خروجی یکجای سکرت‌های GitHub Actions</span>
+        </div>
+        <button class="btn-tool" onclick="closeSecretsModal()" style="padding:4px 10px;">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">
+          تمامی متغیرهای محیطی با فرمت <code>.env</code> آماده برای کپی یا استفاده مستقیم:
+        </div>
+        <div class="code-box">
+          <div class="code-box-header">
+            <span class="code-box-lang">ENV FORMAT</span>
+            <button class="btn-copy-code" onclick="copySecretsBulkText()">📋 کپی کل متن</button>
+          </div>
+          <pre id="secretsBulkDisplay" style="margin:0; font-family:var(--font-mono); white-space:pre-wrap;"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- اعلان Toast -->
   <div id="wizardToast">پیام سیستم</div>
 
   <script>
     var currentStep = 1;
     var totalSteps = 5;
+    var activeCmdTab = 'ps';
+
+    var wizardState = {
+      ghUser: '',
+      workerName: 'my-arizo-self',
+      workerUrl: window.location.origin || '${currentWorkerUrl}',
+      kvId: '',
+      d1Id: '',
+      adminPass: 'secret_master_key_2026',
+      botToken: '',
+      theme: 'dark'
+    };
+
+    function loadState() {
+      try {
+        var raw = localStorage.getItem('arizo_wizard_state_v2');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            wizardState = Object.assign(wizardState, parsed);
+          }
+        }
+      } catch (_) {}
+
+      // مقداردهی اولیه به اینپوت‌ها
+      if (document.getElementById('cfgGhUser')) document.getElementById('cfgGhUser').value = wizardState.ghUser || '';
+      if (document.getElementById('cfgWorkerName')) document.getElementById('cfgWorkerName').value = wizardState.workerName || 'my-arizo-self';
+      if (document.getElementById('cfgKvId')) document.getElementById('cfgKvId').value = wizardState.kvId || '';
+      if (document.getElementById('cfgD1Id')) document.getElementById('cfgD1Id').value = wizardState.d1Id || '';
+      if (document.getElementById('cfgAdminPass')) document.getElementById('cfgAdminPass').value = wizardState.adminPass || 'secret_master_key_2026';
+      if (document.getElementById('botTokenInput')) document.getElementById('botTokenInput').value = wizardState.botToken || '';
+
+      updateAllBindings();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('arizo_wizard_state_v2', JSON.stringify(wizardState));
+      } catch (_) {}
+    }
+
+    function updateAllBindings() {
+      var user = (wizardState.ghUser || '').trim();
+      var safeUser = user || 'YOUR_USERNAME';
+
+      // بروزرسانی بج و متن‌ها در مرحله ۱
+      var badge = document.getElementById('ghUserBadge');
+      if (badge) {
+        if (user) {
+          badge.textContent = '@' + user;
+          badge.style.color = 'var(--accent-green)';
+        } else {
+          badge.textContent = 'هنوز وارد نشده';
+          badge.style.color = 'var(--text-dim)';
+        }
+      }
+
+      // بروزرسانی دستورات کلون
+      updateCloneCmdText();
+
+      // بروزرسانی لینک‌های مستقیم سکرت‌ها و اکشنز
+      var secretsLink = document.getElementById('btnDirectSecretsLink');
+      if (secretsLink) {
+        if (user) {
+          secretsLink.href = 'https://github.com/' + encodeURIComponent(user) + '/arizo-telegram-self-manager/settings/secrets/actions/new';
+          secretsLink.style.display = 'inline-flex';
+        } else {
+          secretsLink.href = 'https://github.com/ArizoOwner/arizo-telegram-self-manager/settings/secrets/actions/new';
+        }
+      }
+
+      var actionsLink = document.getElementById('btnDirectActionsLink');
+      if (actionsLink) {
+        if (user) {
+          actionsLink.href = 'https://github.com/' + encodeURIComponent(user) + '/arizo-telegram-self-manager/actions';
+          actionsLink.style.display = 'inline-flex';
+        } else {
+          actionsLink.href = 'https://github.com/ArizoOwner/arizo-telegram-self-manager/actions';
+        }
+      }
+
+      // بروزرسانی سکرت‌ها در جدول مرحله ۴
+      var secCfUrl = document.getElementById('valSecCloudflareUrl');
+      if (secCfUrl) secCfUrl.textContent = wizardState.workerUrl || window.location.origin;
+
+      var secRunner = document.getElementById('valSecRunnerSecret');
+      if (secRunner) secRunner.textContent = wizardState.adminPass || 'secret_master_key_2026';
+
+      // تولید فایل wrangler.toml
+      generateWranglerToml();
+      saveState();
+    }
+
+    function handleGhUserChange() {
+      var val = (document.getElementById('cfgGhUser').value || '').trim();
+      // حذف @ احتمالی اول یوزرنیم
+      val = val.replace(/^@+/, '');
+      wizardState.ghUser = val;
+      updateAllBindings();
+    }
+
+    function handleConfigChange() {
+      wizardState.workerName = (document.getElementById('cfgWorkerName').value || '').trim() || 'my-arizo-self';
+      wizardState.kvId = (document.getElementById('cfgKvId').value || '').trim();
+      wizardState.d1Id = (document.getElementById('cfgD1Id').value || '').trim();
+      wizardState.adminPass = (document.getElementById('cfgAdminPass').value || '').trim() || 'secret_master_key_2026';
+      updateAllBindings();
+    }
+
+    function handleBotTokenInput() {
+      wizardState.botToken = (document.getElementById('botTokenInput').value || '').trim();
+      saveState();
+    }
+
+    function switchCmdTab(tab) {
+      activeCmdTab = tab;
+      var btnPs = document.getElementById('tabPs');
+      var btnBash = document.getElementById('tabBash');
+      var badge = document.getElementById('cmdLangBadge');
+
+      if (tab === 'ps') {
+        if (btnPs) btnPs.classList.add('active');
+        if (btnBash) btnBash.classList.remove('active');
+        if (badge) badge.textContent = 'POWERSHELL';
+      } else {
+        if (btnBash) btnBash.classList.add('active');
+        if (btnPs) btnPs.classList.remove('active');
+        if (badge) badge.textContent = 'BASH / LINUX';
+      }
+      updateCloneCmdText();
+    }
+
+    function updateCloneCmdText() {
+      var user = (wizardState.ghUser || '').trim() || 'YOUR_USERNAME';
+      var repoUrl = 'https://github.com/' + user + '/arizo-telegram-self-manager.git';
+      var cmdDisplay = document.getElementById('cloneCmdDisplay');
+      if (!cmdDisplay) return;
+
+      if (activeCmdTab === 'ps') {
+        cmdDisplay.textContent = 'git clone ' + repoUrl + '; cd arizo-telegram-self-manager; npm install';
+      } else {
+        cmdDisplay.textContent = 'git clone ' + repoUrl + ' && cd arizo-telegram-self-manager && npm install';
+      }
+    }
+
+    function copyCurrentCloneCmd() {
+      var el = document.getElementById('cloneCmdDisplay');
+      if (el) copySnippet(el.textContent, 'دستور دانلود و نصب در حافظه کپی شد! 📋');
+    }
+
+    // استخراج هوشمند از لاگ ترمینال (Terminal Parser)
+    function handleTerminalLogPaste() {
+      var box = document.getElementById('terminalLogPasteBox');
+      var text = (box.value || '').trim();
+      var msg = document.getElementById('parseResultMsg');
+      if (!text) {
+        if (msg) msg.style.display = 'none';
+        return;
+      }
+
+      var extractedCount = 0;
+      var extractedItems = [];
+
+      // 1. جستجوی UUID دیتابیس D1 (مانند 4edef38a-95d4-4459-a904-5248a8952363)
+      var d1Match = text.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+      if (d1Match && d1Match[1]) {
+        wizardState.d1Id = d1Match[1];
+        document.getElementById('cfgD1Id').value = d1Match[1];
+        extractedCount++;
+        extractedItems.push('شناسه D1');
+      }
+
+      // 2. جستجوی شناسه ۳۲ کاراکتری KV (مانند b56bacf321a54731ba4a1e69a5619898)
+      // پرهیز از تکرار همان UUID بدون دش
+      var kvMatches = text.match(/([0-9a-f]{32})/gi);
+      if (kvMatches && kvMatches.length > 0) {
+        var foundKv = kvMatches[0];
+        // اگر قبلاً به عنوان D1 ثبت نشده
+        if (!wizardState.d1Id || wizardState.d1Id.replace(/-/g, '') !== foundKv) {
+          wizardState.kvId = foundKv;
+          document.getElementById('cfgKvId').value = foundKv;
+          extractedCount++;
+          extractedItems.push('شناسه KV');
+        }
+      }
+
+      if (extractedCount > 0) {
+        updateAllBindings();
+        if (msg) {
+          msg.style.display = 'block';
+          msg.textContent = '🎉 ' + extractedItems.join(' و ') + ' با موفقیت استخراج و در فیلدها جایگذاری شد!';
+        }
+        showToast('اطلاعات با موفقیت از خروجی ترمینال شناسایی شدند! ✨');
+      }
+    }
 
     function goToStep(step) {
       if (step < 1 || step > totalSteps) return;
       currentStep = step;
 
       // آپدیت نوار پیشرفت
-      var pct = ((step - 1) / (totalSteps - 1)) * 100;
-      if (pct === 0) pct = 20;
+      var pct = Math.round(((step) / totalSteps) * 100);
       document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressPctText').textContent = pct + '٪ تکمیل شده';
+
+      var titles = [
+        'مرحله ۱ از ۵: گیت‌هاب و نیازمندی‌ها',
+        'مرحله ۲ از ۵: کلادفلر و پایگاه داده D1',
+        'مرحله ۳ از ۵: تلگرام و ربات کمکی',
+        'مرحله ۴ از ۵: رانر ۲۴ ساعته GitHub Actions',
+        'مرحله ۵ از ۵: چک‌لیست نهایی، سلامت و اتصال'
+      ];
+      document.getElementById('progressStepTitle').textContent = titles[step - 1];
 
       // آپدیت تب‌ها
       for (var i = 1; i <= totalSteps; i++) {
@@ -1257,16 +1679,17 @@ export function setupWizardHTML(env = {}, url = {}) {
       for (var i = 0; i < 16; i++) {
         pass += chars.charAt(Math.floor(Math.random() * chars.length));
       }
+      wizardState.adminPass = pass;
       document.getElementById('cfgAdminPass').value = pass;
-      generateWranglerToml();
+      updateAllBindings();
       showToast('رمز تصادفی ایمن تولید شد 🎲');
     }
 
     function generateWranglerToml() {
-      var name = document.getElementById('cfgWorkerName').value.trim() || 'my-arizo-self';
-      var kvId = document.getElementById('cfgKvId').value.trim() || 'YOUR_KV_NAMESPACE_ID';
-      var d1Id = document.getElementById('cfgD1Id').value.trim() || 'YOUR_D1_DATABASE_ID';
-      var adminPass = document.getElementById('cfgAdminPass').value.trim() || 'secret_admin_key_2026';
+      var name = wizardState.workerName || 'my-arizo-self';
+      var kvId = wizardState.kvId || 'YOUR_KV_NAMESPACE_ID';
+      var d1Id = wizardState.d1Id || 'YOUR_D1_DATABASE_ID';
+      var adminPass = wizardState.adminPass || 'secret_master_key_2026';
 
       var code = 
 'name = "' + name + '"\\n' +
@@ -1289,24 +1712,65 @@ export function setupWizardHTML(env = {}, url = {}) {
 'ADMIN_PASSWORD = "' + adminPass + '"\\n' +
 'RUNNER_SECRET = "' + adminPass + '"\\n';
 
-      document.getElementById('wranglerOutputCode').textContent = code;
+      var codeEl = document.getElementById('wranglerOutputCode');
+      if (codeEl) codeEl.textContent = code;
+      return code;
     }
 
     function copyWranglerToml() {
-      var code = document.getElementById('wranglerOutputCode').textContent;
-      copySnippet(code);
+      var code = generateWranglerToml();
+      copySnippet(code, 'محتوای فایل wrangler.toml کپی شد! 📋');
     }
 
-    function copyRunnerSecret() {
-      var pass = document.getElementById('cfgAdminPass').value || 'secret_master_key_2026';
-      copySnippet(pass);
+    function downloadWranglerFile() {
+      var code = generateWranglerToml();
+      var blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'wrangler.toml';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('فایل wrangler.toml با موفقیت دانلود شد! 📥');
     }
 
-    function copySnippet(text) {
+    function downloadBackupConfig() {
+      var backupData = {
+        app: 'Arizo Self Studio',
+        version: '3.6.0-PRO',
+        exportedAt: new Date().toISOString(),
+        config: wizardState
+      };
+      var jsonStr = JSON.stringify(backupData, null, 2);
+      var blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'arizo_setup_config.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('پکیج پشتیبان کانفیگ ذخیره شد! 💾');
+    }
+
+    function copySecretVal(type) {
+      if (type === 'cfUrl') {
+        var url = wizardState.workerUrl || window.location.origin;
+        copySnippet(url, 'آدرس دامنه ورکر کپی شد 📋');
+      } else if (type === 'runnerSec') {
+        var sec = wizardState.adminPass || 'secret_master_key_2026';
+        copySnippet(sec, 'رمز رانر کپی شد 📋');
+      }
+    }
+
+    function copySnippet(text, customMsg) {
       navigator.clipboard.writeText(text).then(function() {
-        showToast('📋 در حافظه کپی شد!');
+        showToast(customMsg || '📋 در حافظه کپی شد!');
       }).catch(function() {
-        showToast('خطا در کپی، لطفاً دستی کپی کنید', true);
+        showToast('خطا در کپی خودکار؛ لطفاً دستی کپی کنید');
       });
     }
 
@@ -1327,17 +1791,48 @@ export function setupWizardHTML(env = {}, url = {}) {
       }
     }
 
+    // ساخت خودکار جداول پایگاه داده D1 به صورت آنلاین
+    async function initD1DatabaseOnline() {
+      var btn = document.getElementById('btnInitD1Online');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ در حال ساخت جداول...</span>';
+
+      try {
+        var r = await fetch('/api/setup/init-db', { method: 'POST' });
+        var data = await r.json();
+
+        if (data.success) {
+          showToast('✅ جداول پایگاه داده D1 با موفقیت ساخته شدند!');
+          btn.innerHTML = '<span>✅ جداول آماده است</span>';
+          btn.style.background = 'var(--accent-green)';
+          btn.style.color = '#fff';
+        } else {
+          showToast(data.error || 'خطا در ایجاد جداول D1', 'error');
+          btn.innerHTML = '<span>⚡ تلاش مجدد ساخت جداول</span>';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showToast('خطا در ارتباط با سرور: ' + err.message);
+        btn.innerHTML = '<span>⚡ ساخت خودکار جداول D1</span>';
+        btn.disabled = false;
+      }
+    }
+
     // تستر آنلاین توکن ربات تلگرام
     async function testBotTokenOnline() {
       var input = document.getElementById('botTokenInput');
       var token = (input.value || '').trim();
       var resBox = document.getElementById('botTestResult');
       var btn = document.getElementById('testBotBtn');
+      var msgSection = document.getElementById('botMessageTestSection');
 
       if (!token) {
         showToast('لطفاً ابتدا توکن ربات را وارد کنید!');
         return;
       }
+
+      wizardState.botToken = token;
+      saveState();
 
       btn.disabled = true;
       btn.innerHTML = '<span>⏳ در حال بررسی...</span>';
@@ -1354,27 +1849,72 @@ export function setupWizardHTML(env = {}, url = {}) {
 
         if (data.success && data.bot) {
           resBox.innerHTML = 
-            '<div style="background:var(--accent-green-bg); border:1px solid var(--accent-green-border); border-radius:10px; padding:14px; font-size:0.84rem;">' +
-              '<div style="font-weight:800; color:var(--accent-green); margin-bottom:6px;">✅ توکن تلگرام کاملاً معتبر و فعال است!</div>' +
+            '<div style="background:var(--accent-green-bg); border:1px solid var(--accent-green-border); border-radius:10px; padding:12px; font-size:0.84rem;">' +
+              '<div style="font-weight:800; color:var(--accent-green); margin-bottom:4px;">✅ توکن تلگرام کاملاً معتبر و فعال است!</div>' +
               '<div><strong>نام ربات:</strong> ' + data.bot.firstName + '</div>' +
               '<div><strong>یوزرنیم:</strong> @' + data.bot.username + '</div>' +
               '<div><strong>شناسه عددی ربات:</strong> <code>' + data.bot.id + '</code></div>' +
             '</div>';
           showToast('ربات با موفقیت تایید شد 🤖');
+          if (msgSection) msgSection.style.display = 'block';
         } else {
           resBox.innerHTML = 
-            '<div style="background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); border-radius:10px; padding:14px; font-size:0.84rem; color:var(--accent-rose);">' +
+            '<div style="background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); border-radius:10px; padding:12px; font-size:0.84rem; color:var(--accent-rose);">' +
               '<strong>❌ خطای تلگرام:</strong> ' + (data.error || 'توکن نامعتبر است.') +
             '</div>';
+          if (msgSection) msgSection.style.display = 'none';
         }
       } catch (err) {
         resBox.innerHTML = 
-          '<div style="background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); border-radius:10px; padding:14px; font-size:0.84rem; color:var(--accent-rose);">' +
+          '<div style="background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); border-radius:10px; padding:12px; font-size:0.84rem; color:var(--accent-rose);">' +
             'خطا در ارتباط با سرور: ' + err.message +
           '</div>';
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<span>🚀 تست آنلاین توکن</span>';
+      }
+    }
+
+    // ارسال پیام تست توسط ربات
+    async function sendTestBotMessage() {
+      var token = wizardState.botToken || (document.getElementById('botTokenInput').value || '').trim();
+      var chatId = (document.getElementById('testChatIdInput').value || '').trim();
+      var btn = document.getElementById('btnSendTestMsg');
+      var res = document.getElementById('testMsgResult');
+
+      if (!token || !chatId) {
+        showToast('لطفاً توکن ربات و Chat ID عددی خود را وارد کنید!');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ در حال ارسال...</span>';
+      res.style.display = 'block';
+      res.textContent = 'در حال ارسال پیام تست به تلگرام...';
+      res.style.color = 'var(--text-muted)';
+
+      try {
+        var r = await fetch('/api/setup/test-bot-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, chatId: chatId })
+        });
+        var data = await r.json();
+
+        if (data.success) {
+          res.textContent = '🎉 پیام با موفقیت در تلگرام دریافت شد! ربات آماده به کار است.';
+          res.style.color = 'var(--accent-green)';
+          showToast('پیام تلگرام ارسال شد! 📩');
+        } else {
+          res.textContent = '❌ خطا: ' + (data.error || 'ارسال نشد. اطمینان حاصل کنید ربات را در تلگرام استارت کرده‌اید.');
+          res.style.color = 'var(--accent-rose)';
+        }
+      } catch (err) {
+        res.textContent = 'خطا در ارتباط: ' + err.message;
+        res.style.color = 'var(--accent-rose)';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>📩 ارسال پیام تست</span>';
       }
     }
 
@@ -1384,45 +1924,58 @@ export function setupWizardHTML(env = {}, url = {}) {
       var body = document.getElementById('statusModalBody');
       modal.classList.remove('hidden');
 
-      body.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted);">در حال دریافت وضعیت از اندپوینت /api/setup/status...</div>';
+      body.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted);">در حال دریافت وضعیت زنده از سرور...</div>';
+
+      var startTime = performance.now();
 
       try {
         var r = await fetch('/api/setup/status');
         var data = await r.json();
+        var latency = Math.round(performance.now() - startTime);
 
         if (data.success && data.status) {
           var s = data.status;
-          var kvBadge = s.kvBound ? '<span style="color:var(--accent-green);">🟢 متصل و فعال</span>' : '<span style="color:var(--accent-rose);">🔴 متصل نیست</span>';
-          var d1Badge = s.d1Bound ? '<span style="color:var(--accent-green);">🟢 متصل (D1 Binding OK)</span>' : '<span style="color:var(--accent-rose);">🔴 متصل نیست</span>';
-          var passBadge = s.adminPasswordSet ? '<span style="color:var(--accent-green);">🟢 تنظیم‌شده</span>' : '<span style="color:var(--accent-amber);">⚠️ بدون رمز</span>';
+          var kvBadge = s.kvBound ? '<span style="color:var(--accent-green);">🟢 متصل و آماده</span>' : '<span style="color:var(--accent-rose);">🔴 تعریف نشده</span>';
+          var d1Badge = s.d1Bound ? (s.d1TableExists ? '<span style="color:var(--accent-green);">🟢 متصل و جداول آماده (تعداد کلیدها: ' + (s.d1RowCount || 0) + ')</span>' : '<span style="color:var(--accent-amber);">🟡 دیتابیس متصل است اما جداول هنوز ساخته نشده‌اند</span>') : '<span style="color:var(--accent-rose);">🔴 متصل نیست</span>';
+          var passBadge = s.adminPasswordSet ? '<span style="color:var(--accent-green);">🟢 فعال و امن</span>' : '<span style="color:var(--accent-amber);">⚠️ بدون رمز</span>';
+
+          var repairBtn = '';
+          if (s.d1Bound && !s.d1TableExists) {
+            repairBtn = '<button class="btn-tool" onclick="initD1DatabaseOnline()" style="background:var(--accent-green); color:#fff; border:none; width:100%; margin-top:8px; justify-content:center;">⚡ ساخت فوری جداول دیتابیس D1</button>';
+          }
 
           body.innerHTML = 
-            '<div style="display:flex; flex-direction:column; gap:12px; font-size:0.85rem;">' +
+            '<div style="display:flex; flex-direction:column; gap:10px; font-size:0.85rem;">' +
               '<div style="padding:10px; background:var(--surface-card-subtle); border-radius:8px; display:flex; justify-content:space-between;">' +
-                '<span>🌐 آدرس دامنه ورکر جاری:</span>' +
+                '<span>🌐 آدرس دامنه ورکر:</span>' +
                 '<code style="font-size:0.8rem; color:var(--accent-blue);">' + (data.workerUrl || window.location.origin) + '</code>' +
               '</div>' +
               '<div style="padding:10px; background:var(--surface-card-subtle); border-radius:8px; display:flex; justify-content:space-between;">' +
-                '<span>⚡ فضای حافظه Cloudflare KV:</span>' + kvBadge +
+                '<span>⚡ سرعت پاسخ سرور (Latency):</span>' +
+                '<span style="color:var(--accent-green); font-weight:700;">' + latency + ' ms</span>' +
+              '</div>' +
+              '<div style="padding:10px; background:var(--surface-card-subtle); border-radius:8px; display:flex; justify-content:space-between;">' +
+                '<span>⚡ حافظه پرسرعت Cloudflare KV:</span>' + kvBadge +
               '</div>' +
               '<div style="padding:10px; background:var(--surface-card-subtle); border-radius:8px; display:flex; justify-content:space-between;">' +
                 '<span>🗄️ پایگاه داده Cloudflare D1:</span>' + d1Badge +
               '</div>' +
+              repairBtn +
               '<div style="padding:10px; background:var(--surface-card-subtle); border-radius:8px; display:flex; justify-content:space-between;">' +
                 '<span>🔑 کلید مستر ادمین (ADMIN_PASSWORD):</span>' + passBadge +
               '</div>' +
               '<div style="padding:10px; background:var(--surface-card-subtle); border-radius:8px; display:flex; justify-content:space-between;">' +
-                '<span>📱 شناسه کلاینت رسمی تلگرام (API_ID):</span>' + (s.apiIdSet ? '<span style="color:var(--accent-green);">🟢 استاندارد (2040)</span>' : '⚪ پیش‌فرض') +
+                '<span>📱 کلاینت رسمی تلگرام (API_ID):</span>' + (s.apiIdSet ? '<span style="color:var(--accent-green);">🟢 استاندارد (2040)</span>' : '⚪ پیش‌فرض') +
               '</div>' +
               '<div style="margin-top:10px; text-align:center;">' +
-                '<button class="btn-tool primary" onclick="closeStatusModal()" style="width:100%; justify-content:center;">تایید و بازگشت به ویزارد</button>' +
+                '<button class="btn-tool primary" onclick="closeStatusModal()" style="width:100%; justify-content:center;">بستن پنجره عیب‌یابی</button>' +
               '</div>' +
             '</div>';
         } else {
           body.innerHTML = '<div style="color:var(--accent-rose); padding:16px;">خطا در دریافت وضعیت سرور.</div>';
         }
       } catch (err) {
-        body.innerHTML = '<div style="color:var(--accent-rose); padding:16px;">عدم دسترسی به سرور: ' + err.message + '</div>';
+        body.innerHTML = '<div style="color:var(--accent-rose); padding:16px;">عدم امکان دسترسی به سرور: ' + err.message + '</div>';
       }
     }
 
@@ -1430,12 +1983,37 @@ export function setupWizardHTML(env = {}, url = {}) {
       document.getElementById('statusModal').classList.add('hidden');
     }
 
+    function openSecretsExporterModal() {
+      var modal = document.getElementById('secretsModal');
+      var display = document.getElementById('secretsBulkDisplay');
+      modal.classList.remove('hidden');
+
+      var text = 
+'# Arizo Self Studio — GitHub Actions Runner Secrets\\n' +
+'CLOUDFLARE_URL=' + (wizardState.workerUrl || window.location.origin) + '\\n' +
+'RUNNER_SECRET=' + (wizardState.adminPass || 'secret_master_key_2026') + '\\n' +
+'API_ID=2040\\n' +
+'API_HASH=b18441a1ff607e10a989891a5462e627\\n';
+
+      display.textContent = text;
+    }
+
+    function closeSecretsModal() {
+      document.getElementById('secretsModal').classList.add('hidden');
+    }
+
+    function copySecretsBulkText() {
+      var text = document.getElementById('secretsBulkDisplay').textContent;
+      copySnippet(text, 'تمام سکرت‌ها به صورت یکجا کپی شدند! 📦');
+    }
+
     // تم روشن و تاریک
     function toggleTheme() {
       var cur = document.documentElement.getAttribute('data-theme') || 'dark';
       var next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('arizo_theme', next);
+      wizardState.theme = next;
+      saveState();
       updateThemeDisplay(next);
     }
 
@@ -1446,12 +2024,24 @@ export function setupWizardHTML(env = {}, url = {}) {
       if (text) text.textContent = t === 'dark' ? 'حالت روز' : 'حالت شب';
     }
 
-    // اولیه سازی
+    // کلیدهای میانبر کیبورد
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeStatusModal();
+        closeSecretsModal();
+      } else if (e.key === 'ArrowLeft' && !e.target.matches('input, textarea')) {
+        goToStep(currentStep + 1);
+      } else if (e.key === 'ArrowRight' && !e.target.matches('input, textarea')) {
+        goToStep(currentStep - 1);
+      }
+    });
+
+    // راه‌اندازی اولیه
     document.addEventListener('DOMContentLoaded', function() {
-      var savedTheme = localStorage.getItem('arizo_theme') || 'dark';
+      loadState();
+      var savedTheme = wizardState.theme || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       updateThemeDisplay(savedTheme);
-      generateWranglerToml();
     });
   </script>
 </body>
