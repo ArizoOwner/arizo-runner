@@ -1,4 +1,5 @@
-export function panelHTML(env) {
+export function panelHTML(env, options = {}) {
+  const autoOpenAdmin = !!(options && options.autoOpenAdmin);
   return `<!DOCTYPE html>
 <html lang="fa" dir="rtl" data-theme="dark">
 <head>
@@ -9,9 +10,12 @@ export function panelHTML(env) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='bg'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3E%3Cstop%20offset='0%25'%20stop-color='%230f172a'/%3E%3Cstop%20offset='50%25'%20stop-color='%231e1b4b'/%3E%3Cstop%20offset='100%25'%20stop-color='%23090d16'/%3E%3C/linearGradient%3E%3ClinearGradient%20id='neon'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3E%3Cstop%20offset='0%25'%20stop-color='%2338bdf8'/%3E%3Cstop%20offset='50%25'%20stop-color='%23818cf8'/%3E%3Cstop%20offset='100%25'%20stop-color='%23c084fc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='16'%20fill='url(%23bg)'/%3E%3Crect%20x='2'%20y='2'%20width='60'%20height='60'%20rx='14'%20fill='none'%20stroke='url(%23neon)'%20stroke-width='2'%20opacity='0.6'/%3E%3Cpath%20d='M35%208%20L18%2034%20L31%2034%20L27%2056%20L46%2028%20L33%2028%20Z'%20fill='url(%23neon)'/%3E%3C/svg%3E">
+  <link rel="alternate icon" href="/favicon.ico">
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
+    window.START_IN_ADMIN = ${autoOpenAdmin ? 'true' : 'false'};
     // ⚡ Anti-FOUC Theme Initializer & Telegram WebApp SSO
     (function() {
       try {
@@ -2045,7 +2049,6 @@ export function panelHTML(env) {
     #adminTabContentUsers:not(.hidden),
     #loginFormBox:not(.hidden),
     #registerFormBox:not(.hidden),
-    #adminLoginBox:not(.hidden),
     #adminDashboardBox:not(.hidden) {
       animation: tabPaneFade 0.28s var(--smooth-physics) both;
     }
@@ -2085,11 +2088,6 @@ export function panelHTML(env) {
     }
     #telegramConnectSection {
       max-width: 640px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    #adminLoginBox {
-      max-width: 490px;
       margin: 0 auto;
       width: 100%;
     }
@@ -2761,20 +2759,14 @@ export function panelHTML(env) {
           <span class="theme-text" id="themeText">حالت روز</span>
         </button>
 
-        <!-- 🚀 دکمه ویزارد راه‌اندازی گام‌به‌گام -->
-        <a href="/setup" class="btn-theme-toggle" id="setupWizardNavBtn" title="ویزارد گرافیکی راه‌اندازی و ستاپ اختصاصی پروژه" style="border-color: rgba(56, 189, 248, 0.35); color: var(--accent-blue); background: var(--accent-blue-bg); text-decoration:none;">
-          <span style="font-size:0.95rem;">🚀</span>
-          <span class="theme-text" style="font-weight:700;">ویزارد راه‌اندازی</span>
-        </a>
-
         <!-- 💡 دکمه رسمی راهنمای امکانات سامانه -->
         <button class="btn-theme-toggle" id="featureTourNavBtn" onclick="openFeaturesModal()" title="راهنمای جامع امکانات و سرویس‌های سامانه Arizo Self" style="border-color: rgba(168, 85, 247, 0.3); color: #c4b5fd; background: rgba(168, 85, 247, 0.1);">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
           <span class="theme-text" style="font-weight:700;">راهنمای امکانات</span>
         </button>
 
-        <!-- 👑 دکمه طلایی دسترسی به پنل مدیریت -->
-        <button class="btn-admin-highlight" id="adminPortalNavBtn" onclick="openAdminPortal()" title="ورود به پنل مدیریت ارشد و مانیتورینگ">
+        <!-- 👑 دکمه طلایی دسترسی به پنل مدیریت (فقط برای ادمین پس از لاگین نمایان می‌شود) -->
+        <button class="btn-admin-highlight hidden" id="adminPortalNavBtn" onclick="openAdminPortal()" title="ورود به پنل مدیریت ارشد و مانیتورینگ">
           <span>👑</span> <span>پنل مدیریت</span>
         </button>
 
@@ -2798,28 +2790,8 @@ export function panelHTML(env) {
         </button>
       </div>
 
-      <!-- فرم لاگین ادمین (در صورت نداشتن توکن مدیریت) -->
-      <div id="adminLoginBox">
-        <div style="background: var(--accent-amber-bg); border: 1px solid var(--accent-amber-border); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
-          <div style="font-size: 0.95rem; font-weight: 800; color: var(--accent-amber); margin-bottom: 6px;">
-            🔒 احراز هویت سطح مدیر کل (Master Key Authentication)
-          </div>
-          <div style="font-size: 0.78rem; color: var(--text-muted);">
-            جهت دسترسی به انبار کدهای لایسنس، آمار و مدیریت کاربران، کلید امنیتی مدیر ارشد را وارد کنید.
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">کلید مستر ادمین (Admin Master Password)</label>
-          <input type="password" id="adminPassInput" class="input-field" placeholder="کلید عبور مدیر کل (Master Password)...">
-        </div>
-        <button class="btn btn-primary" id="adminLoginBtn" onclick="doAdminLogin()">
-          <span>ورود به پنل مدیریت کل</span>
-        </button>
-      </div>
-
       <!-- داشبورد تفکیک‌شده ادمین با تب‌های مجزا -->
-      <div id="adminDashboardBox" class="hidden">
+      <div id="adminDashboardBox">
         
         <!-- 📑 نوار تب‌های تفکیک‌شده ادمین -->
         <div class="admin-subtab-bar">
@@ -2995,8 +2967,8 @@ export function panelHTML(env) {
           </div>
         </div>
 
-        <button class="btn btn-secondary" onclick="logoutAdmin()" style="margin-top: 24px; color:var(--accent-rose);">
-          <span>🚪 خروج از حساب مدیریت</span>
+        <button class="btn btn-secondary" onclick="closeAdminPortal()" style="margin-top: 24px; color:var(--text-main);">
+          <span>↩️ بازگشت به داشبورد کاربری</span>
         </button>
 
       </div>
@@ -3029,15 +3001,6 @@ export function panelHTML(env) {
           <span>ورود به داشبورد Arizo Self</span>
         </button>
 
-        <div style="margin-top: 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-          <button type="button" class="btn-nav-action" onclick="openAdminPortal()" style="color: var(--accent-amber); font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border: 1px dashed var(--accent-amber-border); border-radius: 999px; background: var(--accent-amber-bg); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <span>👑</span> <span>ورود مستقیم به پنل مدیریت ارشد و مانیتورینگ</span>
-          </button>
-
-          <a href="/setup" style="color: var(--accent-blue); font-weight: 700; font-size: 0.78rem; padding: 6px 16px; border: 1px solid var(--accent-blue-border); border-radius: 999px; background: var(--accent-blue-bg); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
-            <span>🚀</span> <span>پروژه را از گیت‌هاب کلون کردی؟ ویزارد گام‌به‌گام راه‌اندازی</span>
-          </a>
-        </div>
       </div>
 
       <!-- فرم ثبت‌نام کاربران با کد لایسنس -->
@@ -3071,12 +3034,6 @@ export function panelHTML(env) {
         <button class="btn btn-primary" id="regBtn" onclick="doUserRegister()">
           <span>ثبت‌نام و فعال‌سازی اشتراک Arizo Self</span>
         </button>
-
-        <div style="margin-top: 14px; text-align: center;">
-          <button type="button" class="btn-nav-action" onclick="openAdminPortal()" style="color: var(--accent-amber); font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border: 1px dashed var(--accent-amber-border); border-radius: 999px; background: var(--accent-amber-bg); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <span>👑</span> <span>ورود مستقیم به پنل مدیریت ارشد و مانیتورینگ</span>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -4000,26 +3957,30 @@ export function panelHTML(env) {
           <div class="features-header-top-row">
             <span class="features-header-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-              <span>معرفی امکانات و سرویس‌ها | Arizo Self v3.5 PRO</span>
+              <span>معرفی امکانات و سرویس‌های پیشرفته | Arizo Self v3.6.0 PRO</span>
             </span>
           </div>
           <div class="features-header-title">استودیوی ابری سلف‌بات هوشمند تلگرام</div>
           <div class="features-header-desc">
-            پلتفرم متمرکز ابری جهت خودکارسازی و مدیریت نمایه تلگرام بر بستر سرورلس ۲۴ ساعته بدون نیاز به آنلاین بودن دستگاه.
+            پلتفرم متمرکز ابری جهت خودکارسازی و مدیریت نمایه تلگرام بر بستر سرورلس ۲۴ ساعته بدون نیاز به آنلاین بودن دستگاه یا سرور اختصاصی.
           </div>
           <!-- تراشه‌های زیرساخت ابری (مینی‌مال و فوق‌العاده شکیل) -->
           <div class="features-chips-row">
             <span class="features-chip">
               <span class="features-chip-dot"></span>
-              <span>واکنش زیر ۱۰۰ms</span>
+              <span>واکنش زیر ۴۰ms</span>
             </span>
             <span class="features-chip">
               <span class="features-chip-dot" style="background:#38bdf8; box-shadow:0 0 6px #38bdf8;"></span>
               <span>۱۰۰٪ ابری ۲۴/۷</span>
             </span>
             <span class="features-chip">
+              <span class="features-chip-dot" style="background:#10b981; box-shadow:0 0 6px #10b981;"></span>
+              <span>دیتابیس هیبرید D1 + KV</span>
+            </span>
+            <span class="features-chip">
               <span class="features-chip-dot" style="background:#c084fc; box-shadow:0 0 6px #c084fc;"></span>
-              <span>رمزنگاری ایزوله KV</span>
+              <span>امنیت ۲FA و هانی‌پات</span>
             </span>
           </div>
         </div>
@@ -4029,7 +3990,7 @@ export function panelHTML(env) {
       <!-- بدنه کارت‌های امکانات (اسکرول نرم و روان در صورت نیاز) -->
       <div class="features-modal-body">
         <div class="features-cards-grid">
-          <!-- ۱. ساعت زنده نام کاربری -->
+          <!-- ۱. ساعت زنده اتمی نام کاربری -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -4040,7 +4001,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">۳۲ قلم نوشتاری</span>
               </div>
               <div class="feature-item-desc">
-                به‌روزرسانی خودکار و بلادرنگ زمان تهران در نام کاربری تلگرام با ۳۲ استایل قلم فارسی و لاتین، ارقام محلی و نمایش ۱۲/۲۴ ساعته.
+                به‌روزرسانی خودکار و بلادرنگ زمان تهران در نام کاربری تلگرام با ۳۲ استایل قلم فارسی و لاتین، ارقام محلی و نمایش ۱۲/۲۴ ساعته رأس ثانیه ۰۰.
               </div>
             </div>
           </div>
@@ -4072,7 +4033,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">سیستم ضد اسپم</span>
               </div>
               <div class="feature-item-desc">
-                پاسخگویی هوشمند به پیام‌های شخصی در هنگام آفلاین بودن، با قابلیت تعریف متن سفارشی، فاصله زمانی و لیست استثنا.
+                پاسخگویی هوشمند به پیام‌های شخصی هنگام آفلاین بودن، با قابلیت تعریف متن سفارشی، فاصله زمانی و استثناسازی ربات‌ها و کاربران.
               </div>
             </div>
           </div>
@@ -4085,10 +4046,10 @@ export function panelHTML(env) {
             <div class="feature-item-body">
               <div class="feature-item-top">
                 <span class="feature-item-title">دستیار هوش مصنوعی (AI)</span>
-                <span class="feature-item-badge">هوش مصنوعی ادغام‌شده</span>
+                <span class="feature-item-badge">پاسخگوی چت لبه‌ای</span>
               </div>
               <div class="feature-item-desc">
-                تعامل زبانی و پاسخ‌دهی خودکار به چت‌ها با استفاده از مدل‌های پیشرفته هوش مصنوعی متصل به سامانه ابری.
+                تعامل زبانی و پاسخ‌دهی خودکار به چت‌ها با استفاده از مدل‌های پیشرفته هوش مصنوعی متصل به سامانه سرورلس ابری.
               </div>
             </div>
           </div>
@@ -4104,7 +4065,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">متن، عکس، ویس و فایل</span>
               </div>
               <div class="feature-item-desc">
-                ضبط و ارسال بلادرنگ پیام‌ها، فایل‌ها، تصاویر، ویس‌ها و استیکرهای پاک‌شده توسط مخاطبان در پیوی به ربات دستیار شخصی.
+                ضبط و فوروارد بلادرنگ پیام‌ها، فایل‌ها، تصاویر، ویس‌ها و استیکرهای پاک‌شده توسط مخاطبان در پیوی به ربات دستیار شخصی.
               </div>
             </div>
           </div>
@@ -4120,7 +4081,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">متن قبل و بعد ادیت</span>
               </div>
               <div class="feature-item-desc">
-                آشکارسازی و ارسال متن اولیه پیام‌ها قبل از تغییر همراه با نسخه ویرایش‌شده و زمان دقیق به پیوی ربات برای ردیابی تغییرات.
+                آشکارسازی و ارسال متن اولیه پیام‌ها قبل از ویرایش به همراه نسخه اصلاح‌شده و زمان دقیق به ربات دستیار برای ثبت تاریخچه.
               </div>
             </div>
           </div>
@@ -4136,7 +4097,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">رسانه‌های View-Once</span>
               </div>
               <div class="feature-item-desc">
-                ذخیره و فوروارد فوری عکس‌ها و ویدیوهای محوشونده و تایمردار پیش از سوختن یا ناپدید شدن با کیفیت اورجینال.
+                ذخیره و فوروارد فوری عکس‌ها و ویدیوهای محوشونده و تایمردار تلگرام پیش از سوختن یا ناپدید شدن با حداکثر کیفیت اصلی.
               </div>
             </div>
           </div>
@@ -4152,7 +4113,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">مشاهده بدون تیک دوم</span>
               </div>
               <div class="feature-item-desc">
-                مشاهده و مرور پیام‌های دریافتی بدون سین خوردن (تیک دوم) با قابلیت کنترل مستقیم از طریق دستورات <code>.ghost on</code> و <code>.read</code>.
+                مشاهده و مرور پیام‌های دریافتی بدون سین خوردن با امکان فعال‌سازی از پنل یا دستور تلگرامی <code>.ghost on</code> و <code>.read</code>.
               </div>
             </div>
           </div>
@@ -4168,7 +4129,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">پاکسازی دوطرفه چت</span>
               </div>
               <div class="feature-item-desc">
-                مسدودسازی و حذف خودکار و آنی پیام‌های کاربران مزاحم با دستور تلگرامی <code>.mute</code> و مدیریت از طریق پنل.
+                مسدودسازی و حذف خودکار و آنی پیام‌های کاربران مزاحم با دستور تلگرامی <code>.mute</code> و مدیریت یکپارچه از طریق پنل.
               </div>
             </div>
           </div>
@@ -4184,7 +4145,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">اتوماسیون استراحت</span>
               </div>
               <div class="feature-item-desc">
-                تغییر خودکار نام خانوادگی به حالت استراحت و غیرفعال‌سازی موقت ارسال پیام در بازه زمانی تعیین‌شده شبانه.
+                تغییر خودکار نام خانوادگی به حالت استراحت و به تعویق انداختن پیام‌ها در ساعات مشخص شبانه به صورت اتوماتیک.
               </div>
             </div>
           </div>
@@ -4200,7 +4161,7 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">استاندارد TOTP RFC 6238</span>
               </div>
               <div class="feature-item-desc">
-                محافظت نفوذناپذیر از پنل کاربری با Google Authenticator، رمز موقت ۶ رقمی TOTP و QR Code اختصاصی.
+                محافظت نفوذناپذیر از حساب پنل کاربری با Google Authenticator، رمز موقت ۶ رقمی و ۸ کد بازیابی اضطراری.
               </div>
             </div>
           </div>
@@ -4216,71 +4177,103 @@ export function panelHTML(env) {
                 <span class="feature-item-badge">تله امنیتی و بلاک IP</span>
               </div>
               <div class="feature-item-desc">
-                کشف و مهار اسکنرهای مخرب در روت‌های حساس، بلاک خودکار IP نفوذگر و ارسال فوری گزارش امنیتی به تلگرام.
+                کشف و مهار اسکنرهای مخرب روی روت‌های حساس، مسدودسازی آنی IP نفوذگر و ارسال گزارش حمله به ربات تلگرام.
               </div>
             </div>
           </div>
 
-          <!-- ۱۳. پشتیبان‌گیری رمزنگاری‌شده -->
+          <!-- ۱۳. ویزارد گرافیکی راه‌اندازی (/setup) -->
+          <div class="feature-card-item" style="border: 1px solid var(--accent-blue-border); background: var(--accent-blue-bg);">
+            <div class="feature-item-icon" style="color: var(--accent-blue);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title" style="color: var(--accent-blue);">ویزارد راه‌اندازی تحت وب (/setup)</span>
+                <span class="feature-item-badge" style="background:var(--accent-blue); color:#fff;">بدون کدنویسی</span>
+              </div>
+              <div class="feature-item-desc">
+                راهنمای جامع تعاملی ۵ مرحله‌ای برای دریافت API کلیدها، ایجاد سشن تلگرام و راه‌اندازی آسان و بدون ترمینال.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۴. سیستم ارتقا به مدیر و مدیریت سطوح دسترسی -->
+          <div class="feature-card-item" style="border: 1px solid var(--accent-amber-border); background: var(--accent-amber-bg);">
+            <div class="feature-item-icon" style="color: var(--accent-amber);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title" style="color: var(--accent-amber);">سیستم ارتقا به مدیر (Role System)</span>
+                <span class="feature-item-badge" style="background:var(--accent-amber); color:#000;">ارتقا / تنزل آنی</span>
+              </div>
+              <div class="feature-item-desc">
+                امکان ارتقای مستقیم کاربران به مدیر سیستم یا تنزل به کاربر عادی در جدول کاربران و پنل بازرس با تایید امنیتی.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۵. تله‌متری و مانیتورینگ ۳۶۰ درجه (/admin) -->
+          <div class="feature-card-item">
+            <div class="feature-item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            </div>
+            <div class="feature-item-body">
+              <div class="feature-item-top">
+                <span class="feature-item-title">داشبورد مانیتورینگ (/admin)</span>
+                <span class="feature-item-badge">روت مستقل و امن</span>
+              </div>
+              <div class="feature-item-desc">
+                مشاهده آمارهای زنده دیتابیس، نرخ رایت‌ها، سشن‌های فعال، خطاهای ثبت‌شده و وضعیت ربات‌های کمکی در صفحه مجزا.
+              </div>
+            </div>
+          </div>
+
+          <!-- ۱۶. موتور هیبریدی ذخیره‌سازی Zero-Write -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">پشتیبان‌گیری رمزنگاری‌شده</span>
-                <span class="feature-item-badge">دانلود و بازیابی امن</span>
+                <span class="feature-item-title">موتور ذخیره‌سازی هیبرید D1 + KV</span>
+                <span class="feature-item-badge">۱۰۰,۰۰۰ رایت D1 روزانه</span>
               </div>
               <div class="feature-item-desc">
-                پشتیبان‌گیری کامل از کلیه پیکربندی‌ها، الگوها و کلیدها با رمزنگاری مستقل و امکان بازیابی آنی در هر زمان.
+                بهره‌گیری همزمان از Cloudflare D1 و KV همراه با کش رم هوشمند جهت به صفر رساندن استهلاک دیتابیس بدون مصرف اضافه.
               </div>
             </div>
           </div>
 
-          <!-- ۱۴. تنوع ۳۲ قلم نوشتاری ساعت -->
+          <!-- ۱۷. انبار لایسنس و ردیم‌کدها -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">کتابخانه ۳۲ فونت ساعت</span>
-                <span class="feature-item-badge">پیش‌نمایش زنده در پنل</span>
+                <span class="feature-item-title">انبار لایسنس و ردیم‌کد (License Vault)</span>
+                <span class="feature-item-badge">مدیریت اعتبار و تاریخ انقضا</span>
               </div>
               <div class="feature-item-desc">
-                تنوع کامل قلم‌های ساعت از جمله نئون، دایره‌ای، رومی، قلمی و مینیمال با پیش‌نمایش بلادرنگ در داشبورد قبل از فعال‌سازی.
+                تولید، ابطال و رصد کدهای اشتراک مدت‌دار با فرمت استاندارد ARIZO-XXXX، تخصیص مستقیم به کاربران و مدیریت مالی اشتراک‌ها.
               </div>
             </div>
           </div>
 
-          <!-- ۱۵. مینی اپلیکیشن تلگرام -->
+          <!-- ۱۸. مینی اپلیکیشن تلگرام -->
           <div class="feature-card-item">
             <div class="feature-item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
             </div>
             <div class="feature-item-body">
               <div class="feature-item-top">
-                <span class="feature-item-title">مینی اپلیکیشن تلگرام</span>
-                <span class="feature-item-badge">رابط درون‌برنامه‌ای</span>
+                <span class="feature-item-title">مینی اپلیکیشن تلگرام (Telegram WebApp)</span>
+                <span class="feature-item-badge">ورود مستقیم SSO</span>
               </div>
               <div class="feature-item-desc">
-                مدیریت کامل تنظیمات و وضعیت حساب کاربری مستقیماً از داخل تلگرام با طراحی هماهنگ با دارک/لایت مود تلگرام.
-              </div>
-            </div>
-          </div>
-
-          <!-- ۱۶. زیرساخت ابری سرورلس ۲۴/۷ -->
-          <div class="feature-card-item">
-            <div class="feature-item-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-            </div>
-            <div class="feature-item-body">
-              <div class="feature-item-top">
-                <span class="feature-item-title">معماری ابری سرورلس</span>
-                <span class="feature-item-badge">پایداری دائمی ۲۴/۷</span>
-              </div>
-              <div class="feature-item-desc">
-                استقرار دائمی روی شبکه جهانی Cloudflare Edge با واکنش زیر ۱۰۰ms، بدون نیاز به سرور، روشن بودن گوشی یا مصرف باتری.
+                دسترسی تمام‌عیار و مدیریت سلف‌بات مستقیماً از درون محیط تلگرام با ورود خودکار امن و هماهنگی کامل با تم تلگرام.
               </div>
             </div>
           </div>
@@ -4294,12 +4287,15 @@ export function panelHTML(env) {
           <span>عدم نمایش خودکار در دفعات بعدی</span>
         </label>
         <div class="features-action-buttons">
+          <a href="/setup" target="_blank" style="color: var(--accent-blue); font-weight: 700; font-size: 0.8rem; padding: 7px 14px; border: 1px solid var(--accent-blue-border); border-radius: var(--radius-sm); background: var(--accent-blue-bg); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+            <span>🚀</span> <span>ویزارد راه‌اندازی (/setup)</span>
+          </a>
           <button class="btn-feature-dismiss" onclick="closeFeaturesModal()">
             <span>بستن</span>
           </button>
           <button class="btn-feature-start" onclick="closeFeaturesModal()">
             <span>ورود به استودیو</span>
-            <span style="font-size: 1rem; line-height: 1;">🚀</span>
+            <span style="font-size: 1rem; line-height: 1;">✨</span>
           </button>
         </div>
       </div>
@@ -4378,6 +4374,7 @@ export function panelHTML(env) {
       </div>
 
       <div class="inspector-scroll-area">
+        <div id="inspectorQuickActions" style="margin-bottom:14px; padding:12px 14px; background:rgba(255, 255, 255, 0.03); border:1px solid var(--border-subtle); border-radius:14px;"></div>
         <div class="telemetry-grid" id="inspectorTelemetryGrid">
           <!-- کارت‌های ۴ گانه مانیتورینگ به صورت داینامیک اینجا رندر می‌شوند -->
         </div>
@@ -4667,6 +4664,15 @@ export function panelHTML(env) {
     // 👑 پنل مدیریت ادمین Arizo Self و کنترل تب‌ها
     // ==========================================
     window.openAdminPortal = function() {
+      if (!window.currentUserIsAdmin) {
+        showToast('دسترسی به پنل مدیریت فقط مخصوص کاربران دارای نقش مدیریت است', 'error');
+        closeAdminPortal();
+        return;
+      }
+      document.title = '👑 پنل مدیریت ارشد و مانیتورینگ | Arizo Self';
+      if (window.location.pathname !== '/admin' && window.location.pathname !== '/admin/') {
+        try { window.history.pushState({ admin: true }, document.title, '/admin'); } catch (_) {}
+      }
       document.getElementById('adminPanelSection').classList.remove('hidden');
       document.getElementById('userAuthSection').classList.add('hidden');
       document.getElementById('clockHeroCard').classList.add('hidden');
@@ -4674,23 +4680,33 @@ export function panelHTML(env) {
       document.getElementById('telegramConnectSection').classList.add('hidden');
       document.getElementById('dashboardSection').classList.add('hidden');
 
-      // در صورت ورود کاربر با نقش ادمین، داشبورد مستقیم بدون نیاز به رمز مجدد باز می‌شود
-      if (window.currentUserIsAdmin || getAdminToken()) {
-        document.getElementById('adminLoginBox').classList.add('hidden');
-        document.getElementById('adminDashboardBox').classList.remove('hidden');
-        switchAdminSubtab('stats');
-        loadAdminData();
-      } else {
-        document.getElementById('adminLoginBox').classList.remove('hidden');
-        document.getElementById('adminDashboardBox').classList.add('hidden');
-      }
+      document.getElementById('adminDashboardBox')?.classList.remove('hidden');
+      switchAdminSubtab('stats');
+      loadAdminData();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.closeAdminPortal = function() {
+      document.title = '⚡ Arizo Self | پلتفرم استودیوی سلف‌بات هوشمند تلگرام و پنل مدیریت';
+      if (window.location.pathname.startsWith('/admin')) {
+        try { window.history.pushState({}, document.title, '/'); } catch (_) {}
+      }
       document.getElementById('adminPanelSection').classList.add('hidden');
       loadUserDashboard();
     };
+
+    window.addEventListener('popstate', function(e) {
+      if (window.location.pathname.startsWith('/admin')) {
+        if (window.currentUserIsAdmin) {
+          openAdminPortal();
+        } else {
+          closeAdminPortal();
+        }
+      } else {
+        document.getElementById('adminPanelSection').classList.add('hidden');
+        loadUserDashboard();
+      }
+    });
 
     // تفکیک تب‌های داخلی پنل ادمین
     window.switchAdminSubtab = function(tab) {
@@ -4711,45 +4727,7 @@ export function panelHTML(env) {
       boxUsers.classList.toggle('hidden', tab !== 'users');
     };
 
-    window.doAdminLogin = async function() {
-      var pass = document.getElementById('adminPassInput').value;
-      if (!pass) {
-        showToast('رمز عبور مدیریت را وارد کنید', 'error');
-        return;
-      }
-      var btn = document.getElementById('adminLoginBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> اعتبارسنجی...';
-
-      try {
-        var res = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pass })
-        });
-        var data = await res.json();
-        if (data.ok && data.token) {
-          setAdminToken(data.token);
-          showToast('خوش آمدید مدیر ارشد Arizo Self 👑', 'success');
-          document.getElementById('adminPassInput').value = '';
-          document.getElementById('adminLoginBox').classList.add('hidden');
-          document.getElementById('adminDashboardBox').classList.remove('hidden');
-          switchAdminSubtab('stats');
-          loadAdminData();
-        } else {
-          showToast(data.error || 'رمز ورود اشتباه است', 'error');
-        }
-      } catch (e) {
-        showToast('خطای شبکه', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>ورود به پنل مدیریت کل</span>';
-      }
-    };
-
-    window.logoutAdmin = async function() {
-      try { await fetch('/api/admin/logout', { method: 'POST', headers: adminHeaders() }); } catch (_) {}
-      setAdminToken('');
+    window.logoutAdmin = function() {
       closeAdminPortal();
     };
 
@@ -4897,23 +4875,10 @@ export function panelHTML(env) {
           ? '<span class="status-badge used" style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); font-size:0.72rem;">⏸️ معلق</span>'
           : '<span class="status-badge unused" style="color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); font-size:0.72rem;">🟢 فعال</span>';
 
-        // دکمه‌های عملیاتی
-        var inspectBtn = '<button class="btn-nav-action" data-user="' + u.username + '" onclick="openUserInspector(this.dataset.user)" style="color:var(--accent-indigo); background:var(--accent-indigo-bg); border-color:var(--accent-indigo-border); font-weight:700; padding:4px 9px; font-size:0.74rem;" title="مانیتورینگ کامل ۳۶۰ درجه و کنترل کاربر">🔍 مانیتورینگ</button> ';
-        var planBtn = '<button class="btn-nav-action" data-user="' + u.username + '" onclick="doChangeUserPlan(this.dataset.user)" style="color:var(--accent-blue); padding:4px 7px; font-size:0.74rem;" title="تغییر نوع اشتراک">⭐</button> ';
-        var pauseBtn = '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="padding:4px 7px; font-size:0.74rem;" title="سوئیچ فعال/مکث سلف‌بات">⏸️/▶️</button> ';
-
-        var extraBtns = '';
-        if (!isOwner) {
-          var suspendBtnIcon = u.isSuspended ? '🔓' : '🔒';
-          var promoteBtnHtml = isAdm
-            ? '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-amber); background:var(--accent-amber-bg); border-color:var(--accent-amber-border); font-weight:700; padding:4px 8px; font-size:0.72rem; border-radius:6px;" title="تنزل سطح دسترسی مدیر به کاربر عادی">👤 تنزل مدیر</button> '
-            : '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_role" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-purple); background:var(--accent-purple-bg); border-color:var(--accent-purple-border); font-weight:700; padding:4px 8px; font-size:0.72rem; border-radius:6px;" title="ارتقای کاربر به سطح دسترسی مدیر سامانه">🛡️ ارتقا به مدیر</button> ';
-
-          extraBtns = 
-            promoteBtnHtml +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="toggle_suspend" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + '; padding:4px 7px; font-size:0.74rem;" title="' + (u.isSuspended ? 'خروج از تعلیق' : 'تعلیق کاربر') + '">' + suspendBtnIcon + '</button> ' +
-            '<button class="btn-nav-action" data-user="' + u.username + '" data-act="delete" onclick="doUserAdminAction(this.dataset.user, this.dataset.act)" style="color:var(--accent-rose); padding:4px 7px; font-size:0.74rem;" title="حذف کامل کاربر">🗑️</button>';
-        }
+        // دکمه مانیتورینگ جامع در جدول (سایر عملیات و دکمه‌ها درون بخش مانیتورینگ قرار دارند)
+        var actionsCol = '<button class="btn btn-secondary" data-user="' + u.username + '" onclick="openUserInspector(this.dataset.user)" style="color:var(--accent-indigo); background:var(--accent-indigo-bg); border:1px solid var(--accent-indigo-border); font-weight:700; padding:6px 14px; font-size:0.78rem; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; white-space:nowrap; transition:all 0.2s ease;" title="مانیتورینگ کامل ۳۶۰ درجه و مدیریت کاربر">' +
+          '<span>🔍</span> <span>مانیتورینگ</span>' +
+        '</button>';
 
         return '<tr>' +
           '<td style="font-weight:bold; font-size:0.84rem;">' + u.username + '</td>' +
@@ -4923,7 +4888,7 @@ export function panelHTML(env) {
           '<td>' + tgStatus + '</td>' +
           '<td>' + planCol + '</td>' +
           '<td>' + suspendBadge + '</td>' +
-          '<td><div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">' + inspectBtn + planBtn + pauseBtn + extraBtns + '</div></td>' +
+          '<td style="text-align:center;">' + actionsCol + '</td>' +
         '</tr>';
       }).join('');
     };
@@ -4959,15 +4924,80 @@ export function panelHTML(env) {
       }
       document.getElementById('inspectorRoleBadge').innerHTML = roleBadgeContent;
 
+      // نشان و کنترل پلن اشتراک
       document.getElementById('inspectorPlanBadge').innerHTML = 
-        '<span style="color:var(--accent-blue); background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); padding:2px 8px; border-radius:6px; font-weight:700; font-size:0.72rem;">⭐ ' + (u.planName || u.plan || 'استاندارد') + '</span>';
+        '<span style="color:var(--accent-blue); background:var(--accent-blue-bg); border:1px solid var(--accent-blue-border); padding:2px 8px; border-radius:6px; font-weight:700; font-size:0.72rem;">⭐ ' + (u.planName || u.plan || 'استاندارد') + '</span> ' +
+        '<button class="btn-nav-action" onclick="doChangeUserPlan(window.activeInspectedUser)" style="font-size:0.7rem; padding:2px 7px; color:var(--accent-blue); border-radius:6px;" title="تغییر یا تمدید اشتراک">✏️ تغییر</button>';
 
-      document.getElementById('inspectorSuspendBadge').innerHTML = u.isSuspended
-        ? '<span style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); padding:2px 8px; border-radius:6px; font-size:0.72rem;">⏸️ معلق</span>'
-        : '<span style="color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); padding:2px 8px; border-radius:6px; font-size:0.72rem;">🟢 فعال</span>';
+      // نشان و کنترل وضعیت تعلیق
+      var suspendBadgeContent = u.isSuspended
+        ? '<span style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:700;">⏸️ معلق</span>'
+        : '<span style="color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:700;">🟢 فعال</span>';
+      if (!isOwner) {
+        suspendBadgeContent += u.isSuspended
+          ? ' <button class="btn-nav-action" onclick="doUserAdminAction(window.activeInspectedUser, &apos;toggle_suspend&apos;)" style="color:var(--accent-green); background:var(--accent-green-bg); border:1px solid var(--accent-green-border); font-size:0.7rem; padding:2px 7px; font-weight:700; border-radius:6px;" title="خروج کاربر از حالت تعلیق">🔓 خروج از تعلیق</button>'
+          : ' <button class="btn-nav-action" onclick="doUserAdminAction(window.activeInspectedUser, &apos;toggle_suspend&apos;)" style="color:var(--accent-rose); background:var(--accent-rose-bg); border:1px solid var(--accent-rose-border); font-size:0.7rem; padding:2px 7px; font-weight:700; border-radius:6px;" title="تعلیق فوری دسترسی کاربر">🔒 تعلیق حساب</button>';
+      }
+      document.getElementById('inspectorSuspendBadge').innerHTML = suspendBadgeContent;
 
       document.getElementById('inspectorCreatedAt').textContent = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fa-IR') : 'نامشخص';
       document.getElementById('inspectorLicenseCode').textContent = u.licenseCode || 'بدون کد';
+
+      // نوار ابزار اختصاصی دسترسی سریع به کلیه عملیات مدیریتی کاربر
+      var quickActionsEl = document.getElementById('inspectorQuickActions');
+      if (quickActionsEl) {
+        var pauseResumeBtn = '<button class="btn btn-secondary" data-act="toggle" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.76rem; padding:8px 12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:' + (u.enabled ? 'var(--accent-amber)' : 'var(--accent-green)') + '; background:' + (u.enabled ? 'var(--accent-amber-bg)' : 'var(--accent-green-bg)') + '; border-color:' + (u.enabled ? 'var(--accent-amber-border)' : 'var(--accent-green-border)') + ';">' +
+          (u.enabled ? '<span>⏸️</span> <span>مکث سلف‌بات</span>' : '<span>▶️</span> <span>فعال‌سازی سلف‌بات</span>') +
+        '</button>';
+
+        var planQuickBtn = '<button class="btn btn-secondary" onclick="doChangeUserPlan(window.activeInspectedUser)" style="font-size:0.76rem; padding:8px 12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:var(--accent-blue); background:var(--accent-blue-bg); border-color:var(--accent-blue-border);">' +
+          '<span>⭐</span> <span>تغییر پلن اشتراک</span>' +
+        '</button>';
+
+        var passQuickBtn = '<button class="btn btn-secondary" onclick="adminResetUserPassword(window.activeInspectedUser)" style="font-size:0.76rem; padding:8px 12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:var(--accent-indigo); background:var(--accent-indigo-bg); border-color:var(--accent-indigo-border);">' +
+          '<span>🔑</span> <span>تغییر کلمه عبور</span>' +
+        '</button>';
+
+        var suspendQuickBtn = '';
+        var roleQuickBtn = '';
+        var deleteQuickBtn = '';
+        var disconnectTgQuickBtn = '';
+
+        if (!isOwner) {
+          if (u.hasTelegram) {
+            disconnectTgQuickBtn = '<button class="btn btn-secondary" data-act="disconnect" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.76rem; padding:8px 12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:var(--accent-amber); background:var(--accent-amber-bg); border-color:var(--accent-amber-border);" title="قطع نشست تلگرام">' +
+              '<span>🔌</span> <span>قطع سشن تلگرام</span>' +
+            '</button>';
+          }
+
+          suspendQuickBtn = '<button class="btn btn-secondary" data-act="toggle_suspend" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.76rem; padding:8px 12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + '; background:' + (u.isSuspended ? 'var(--accent-green-bg)' : 'var(--accent-rose-bg)') + '; border-color:' + (u.isSuspended ? 'var(--accent-green-border)' : 'var(--accent-rose-border)') + ';">' +
+            (u.isSuspended ? '<span>🔓</span> <span>خروج از تعلیق</span>' : '<span>🔒</span> <span>تعلیق حساب</span>') +
+          '</button>';
+
+          roleQuickBtn = '<button class="btn btn-secondary" data-act="toggle_role" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.76rem; padding:8px 12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:' + (isAdm ? 'var(--accent-amber)' : 'var(--accent-purple)') + '; background:' + (isAdm ? 'var(--accent-amber-bg)' : 'var(--accent-purple-bg)') + '; border-color:' + (isAdm ? 'var(--accent-amber-border)' : 'var(--accent-purple-border)') + ';">' +
+            (isAdm ? '<span>👤</span> <span>تنزل به کاربر عادی</span>' : '<span>🛡️</span> <span>ارتقا به مدیر سامانه</span>') +
+          '</button>';
+
+          deleteQuickBtn = '<button class="btn btn-secondary" data-act="delete" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.76rem; padding:8px 12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:var(--accent-rose); background:var(--accent-rose-bg); border-color:var(--accent-rose-border);" title="حذف کامل کاربر و تمام اطلاعات">' +
+            '<span>🗑️</span> <span>حذف کامل کاربر</span>' +
+          '</button>';
+        }
+
+        quickActionsEl.innerHTML = 
+          '<div style="font-size:0.8rem; font-weight:800; color:var(--text-main); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">' +
+            '<span>⚡ دسترسی سریع به عملیات مدیریتی کاربر:</span>' +
+            '<span style="font-size:0.72rem; color:var(--text-dim); font-weight:400;">مدیریت کامل نقش، لایسنس، تعلیق و اجرای سلف‌بات</span>' +
+          '</div>' +
+          '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">' +
+            pauseResumeBtn +
+            planQuickBtn +
+            suspendQuickBtn +
+            roleQuickBtn +
+            passQuickBtn +
+            disconnectTgQuickBtn +
+            deleteQuickBtn +
+          '</div>';
+      }
 
       var grid = document.getElementById('inspectorTelemetryGrid');
 
@@ -5035,6 +5065,14 @@ export function panelHTML(env) {
         ? ('<button class="btn btn-secondary" onclick="doUserAdminAction(window.activeInspectedUser, &apos;toggle_role&apos;)" style="color:' + (isAdm ? 'var(--accent-amber)' : 'var(--accent-purple)') + '; border-color:' + (isAdm ? 'var(--accent-amber-border)' : 'var(--accent-purple-border)') + '; font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center; font-weight:700;">' + (isAdm ? '👤 تنزل به کاربر عادی' : '🛡️ ارتقا به مدیر سامانه') + '</button>')
         : '';
 
+      var suspendActionBtn = !isOwner
+        ? ('<button class="btn btn-secondary" onclick="doUserAdminAction(window.activeInspectedUser, &apos;toggle_suspend&apos;)" style="color:' + (u.isSuspended ? 'var(--accent-green)' : 'var(--accent-rose)') + '; border-color:' + (u.isSuspended ? 'var(--accent-green-border)' : 'var(--accent-rose-border)') + '; font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center; font-weight:700;">' + (u.isSuspended ? '🔓 خروج از تعلیق' : '🔒 تعلیق حساب کاربر') + '</button>')
+        : '';
+
+      var deleteActionBtn = !isOwner
+        ? ('<button class="btn btn-secondary" onclick="doUserAdminAction(window.activeInspectedUser, &apos;delete&apos;)" style="color:var(--accent-rose); border-color:var(--accent-rose-border); background:var(--accent-rose-bg); font-size:0.75rem; padding:6px 12px; flex:1; min-width:140px; justify-content:center; font-weight:700;">🗑️ حذف کامل کاربر</button>')
+        : '';
+
       var secCard = 
         '<div class="telemetry-card">' +
           '<div class="telemetry-card-title">' +
@@ -5045,8 +5083,8 @@ export function panelHTML(env) {
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت ورود دو مرحله‌ای:</span><span class="telemetry-item-value">' + totpStatusHtml + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">کدهای پشتیبان باقی‌مانده:</span><span class="telemetry-item-value mono">' + (u.has2FA ? (u.backupCodesCount + ' کد آماده مصرف') : 'ندارد') + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">رمزنگاری نشست‌ها:</span><span class="telemetry-item-value" style="color:var(--accent-purple);">AES-256-GCM 🛡️</span></div>' +
-          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت حساب کاربری:</span><span class="telemetry-item-value">' + (u.isSuspended ? '<span style="color:var(--accent-rose);">حساب معلق است</span>' : '<span style="color:var(--accent-green);">حساب مجاز و فعال</span>') + '</span></div>' +
-          '<div class="telemetry-actions">' + roleActionBtn + passActionBtn + totpActionBtn + '</div>' +
+          '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت حساب کاربری:</span><span class="telemetry-item-value">' + (u.isSuspended ? '<span style="color:var(--accent-rose); font-weight:700;">حساب معلق است ⏸️</span>' : '<span style="color:var(--accent-green); font-weight:700;">حساب مجاز و فعال 🟢</span>') + '</span></div>' +
+          '<div class="telemetry-actions">' + roleActionBtn + suspendActionBtn + passActionBtn + totpActionBtn + deleteActionBtn + '</div>' +
         '</div>';
 
       // کارت ۳: مانیتورینگ سلف‌بات تلگرام
@@ -5091,8 +5129,8 @@ export function panelHTML(env) {
           '<div class="telemetry-item"><span class="telemetry-item-label">وضعیت عدم حضور (AFK):</span><span class="telemetry-item-value">' + (u.afkEnabled ? ('🟢 فعال' + (u.afkReason ? ' (' + u.afkReason + ')' : '')) : '<span style="color:var(--text-muted);">⚪ خاموش</span>') + '</span></div>' +
           '<div class="telemetry-item"><span class="telemetry-item-label">کاربران بی‌صدا / مسدود شده:</span><span class="telemetry-item-value mono">' + (u.mutedCount || 0) + ' کاربر</span></div>' +
           '<div class="telemetry-actions">' +
-            '<button class="btn-nav-action" data-act="toggle" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.75rem; padding:6px 10px; flex:1; justify-content:center;">⏸️/▶️ سوئیچ فعال/مکث</button>' +
-            (u.hasTelegram ? '<button class="btn-nav-action" data-act="disconnect" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="color:var(--accent-amber); font-size:0.75rem; padding:6px 10px; flex:1; justify-content:center;">🔌 قطع سشن تلگرام</button>' : '') +
+            '<button class="btn btn-secondary" data-act="toggle" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center; color:' + (u.enabled ? 'var(--accent-amber)' : 'var(--accent-green)') + '; border-color:' + (u.enabled ? 'var(--accent-amber-border)' : 'var(--accent-green-border)') + ';">' + (u.enabled ? '⏸️ متوقف‌سازی سلف‌بات' : '▶️ فعال‌سازی سلف‌بات') + '</button>' +
+            (u.hasTelegram ? '<button class="btn btn-secondary" data-act="disconnect" onclick="doUserAdminAction(window.activeInspectedUser, this.dataset.act)" style="color:var(--accent-amber); border-color:var(--accent-amber-border); font-size:0.75rem; padding:6px 12px; flex:1; justify-content:center;">🔌 قطع سشن تلگرام</button>' : '') +
           '</div>' +
         '</div>';
 
@@ -5382,7 +5420,7 @@ export function panelHTML(env) {
       if (act === 'toggle_role') {
         var roleConfirmMsg = isCurrentlyAdmin
           ? 'آیا از لغو دسترسی مدیریت و تنزل کاربر «' + uname + '» به کاربر عادی اطمینان دارید؟'
-          : 'آیا از ارتقای کاربر «' + uname + '» به سطح «مدیر سامانه» (Admin) اطمینان دارید؟\nاین کاربر پس از ارتقا به تمام بخش‌های پنل مدیریت دسترسی خواهد داشت.';
+          : 'آیا از ارتقای کاربر «' + uname + '» به سطح «مدیر سامانه» (Admin) اطمینان دارید؟\\nاین کاربر پس از ارتقا به تمام بخش‌های پنل مدیریت دسترسی خواهد داشت.';
         if (!confirm(roleConfirmMsg)) return;
       }
       if (act === 'toggle_suspend' && !confirm('آیا از ' + (targetUser && targetUser.isSuspended ? 'خروج از تعلیق' : 'تعلیق') + ' کاربر «' + uname + '» اطمینان دارید؟')) return;
@@ -6474,15 +6512,19 @@ export function panelHTML(env) {
     async function loadUserDashboard() {
       var token = getAuthToken();
       var adminNav = document.getElementById('adminPortalNavBtn');
-      if (adminNav) adminNav.classList.remove('hidden');
       if (!token) {
         window.currentUserIsAdmin = false;
+        if (adminNav) adminNav.classList.add('hidden');
         document.getElementById('userHeaderBadge').classList.add('hidden');
         document.getElementById('userAuthSection').classList.remove('hidden');
         document.getElementById('clockHeroCard').classList.add('hidden');
         document.getElementById('suspensionAlertBox')?.classList.add('hidden');
         document.getElementById('telegramConnectSection').classList.add('hidden');
         document.getElementById('dashboardSection').classList.add('hidden');
+        document.getElementById('adminPanelSection')?.classList.add('hidden');
+        if (window.location.pathname.startsWith('/admin')) {
+          try { window.history.replaceState({}, document.title, '/'); } catch (_) {}
+        }
         return;
       }
 
@@ -6499,9 +6541,19 @@ export function panelHTML(env) {
 
         window.currentUserIsAdmin = !!data.isAdmin;
         if (adminNav) {
-          adminNav.classList.remove('hidden');
           if (data.isAdmin) {
+            adminNav.classList.remove('hidden');
             adminNav.style.boxShadow = '0 0 16px rgba(245, 158, 11, 0.45)';
+          } else {
+            adminNav.classList.add('hidden');
+          }
+        }
+
+        if (window.location.pathname.startsWith('/admin') || window.START_IN_ADMIN) {
+          if (data.isAdmin) {
+            openAdminPortal();
+          } else {
+            closeAdminPortal();
           }
         }
 
@@ -7026,6 +7078,8 @@ export function panelHTML(env) {
 
     initStudioNavDots();
     loadUserDashboard();
+
+    // ورود خودکار به روت /admin در صورت احراز دسترسی ادمین در loadUserDashboard انجام می‌شود
 
     // پاپ‌آپ معرفی امکانات تنها در صورت کلیک کاربر روی دکمه راهنما باز می‌شود
 
