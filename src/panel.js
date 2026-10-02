@@ -5979,12 +5979,23 @@ export function panelHTML(env) {
     // به‌روزرسانی زنده شمارنده ثانیه‌های آخرین استعلام هر ۵ ثانیه
     setInterval(renderLiveLastUpdate, 5000);
 
-    // هماهنگ‌سازی خودکار وضعیت با سرور هر ۳۰ ثانیه تا زمان آپدیت بدون رفرش صفحه به‌روز بماند (بهینه‌سازی سهمیه KV)
+    // هماهنگ‌سازی خودکار وضعیت با سرور هر ۶۰ ثانیه در تب‌های فعال و توقف کامل در پس‌زمینه (صرفه‌جویی هوشمند سهمیه)
+    var lastDashboardPollTime = Date.now();
     setInterval(function() {
       if (getAuthToken() && !document.hidden) {
+        lastDashboardPollTime = Date.now();
         loadUserDashboard();
       }
-    }, 30000);
+    }, 60000);
+
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && getAuthToken()) {
+        if (Date.now() - lastDashboardPollTime > 45000) {
+          lastDashboardPollTime = Date.now();
+          loadUserDashboard();
+        }
+      }
+    });
 
     // اتصال هوشمند فیلد سکوت: فعال‌سازی خودکار سوییچ با ورود آیدی یا یوزرنیم
     var mutedInpEl = document.getElementById('mutedUsersInput');
