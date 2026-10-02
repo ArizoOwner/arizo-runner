@@ -1275,6 +1275,18 @@ class TelegramConnectionPool {
           downloadMediaSafely(entry.client, message, username).then(buf => {
             if (buf && buf.length > 0 && buf.length < 4 * 1024 * 1024) {
               cacheObj.mediaBuffer = buf;
+              cacheObj.mediaBufferTime = Date.now();
+              // بهینه‌سازی حافظه RAM: پاکسازی خودکار بافرهای قدیمی‌تر از ۱۵ دقیقه و سقف ۳۰ بافر همزمان
+              let mediaCount = 0;
+              const now = Date.now();
+              for (const [, c] of entry.recentMessagesCache.entries()) {
+                if (c.mediaBuffer) {
+                  mediaCount++;
+                  if (now - (c.mediaBufferTime || 0) > 900000 || mediaCount > 30) {
+                    delete c.mediaBuffer;
+                  }
+                }
+              }
             }
           }).catch(() => {});
         }
@@ -3203,15 +3215,22 @@ async function main() {
     } catch (_) {}
   }, 35000);
 
-  // پردازش بلادرنگ و تطبیقی دستورات ربات تلگرام (Adaptive Polling: 1.5s هنگام فعالیت، 6s در زمان بیکاری - صرفه‌جویی ۶۵٪ ریکوئست)
+  // پردازش بلادرنگ و تطبیقی دستورات ربات تلگرام (Adaptive Polling: 1.5s هنگام فعالیت، 6s تا 12s در زمان بیکاری - صرفه‌جویی ۷۵٪ ریکوئست ورکر)
   let botPollTimeout = null;
+  let consecutiveIdlePolls = 0;
   async function runAdaptiveBotPoll() {
     try {
       const actionCount = await pollAndProcessBotActions(pool);
-      const nextDelay = (actionCount > 0) ? 1500 : 6000;
+      if (actionCount > 0) {
+        consecutiveIdlePolls = 0;
+      } else {
+        consecutiveIdlePolls++;
+      }
+      // تنظیم هوشمند وقفه: در زمان بیکاری به مرور تا ۱۲ ثانیه افزایش می‌یابد تا سهمیه ریکوئست‌های ورکر مصرف نشود
+      const nextDelay = (actionCount > 0) ? 1500 : (consecutiveIdlePolls < 4 ? 6000 : 12000);
       botPollTimeout = setTimeout(runAdaptiveBotPoll, nextDelay);
     } catch (_) {
-      botPollTimeout = setTimeout(runAdaptiveBotPoll, 8000);
+      botPollTimeout = setTimeout(runAdaptiveBotPoll, 12000);
     }
   }
   runAdaptiveBotPoll();
@@ -3229,7 +3248,7 @@ async function main() {
     if (remainingTime <= 0) {
       console.log('🏁 Duration reached. Cleaning up and exiting...');
       clearInterval(settingsSyncInterval);
-      clearInterval(botActionsInterval);
+      if (botPollTimeout) clearTimeout(botPollTimeout);
       await pool.disconnectAll();
       break;
     }
