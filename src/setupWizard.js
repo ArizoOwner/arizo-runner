@@ -18,9 +18,20 @@ export function setupWizardHTML(env = {}, url = {}) {
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='bg'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3E%3Cstop%20offset='0%25'%20stop-color='%230f172a'/%3E%3Cstop%20offset='50%25'%20stop-color='%231e1b4b'/%3E%3Cstop%20offset='100%25'%20stop-color='%23090d16'/%3E%3C/linearGradient%3E%3ClinearGradient%20id='neon'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3E%3Cstop%20offset='0%25'%20stop-color='%2338bdf8'/%3E%3Cstop%20offset='50%25'%20stop-color='%23818cf8'/%3E%3Cstop%20offset='100%25'%20stop-color='%23c084fc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='16'%20fill='url(%23bg)'/%3E%3Crect%20x='2'%20y='2'%20width='60'%20height='60'%20rx='14'%20fill='none'%20stroke='url(%23neon)'%20stroke-width='2'%20opacity='0.6'/%3E%3Cpath%20d='M35%208%20L18%2034%20L31%2034%20L27%2056%20L46%2028%20L33%2028%20Z'%20fill='url(%23neon)'/%3E%3C/svg%3E">
   <link rel="alternate icon" href="/favicon.ico">
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('arizo_wizard_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        var savedLang = localStorage.getItem('arizo_lang') || 'fa';
+        document.documentElement.setAttribute('lang', savedLang);
+        document.documentElement.setAttribute('dir', savedLang === 'en' ? 'ltr' : 'rtl');
+      } catch(e) {}
+    })();
+  </script>
 
   <style>
     :root {
@@ -434,6 +445,28 @@ export function setupWizardHTML(env = {}, url = {}) {
       line-height: 1.5;
     }
 
+        html[lang="en"] body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    html[dir="ltr"] .code-box-header {
+      direction: ltr;
+    }
+    html[dir="ltr"] .nav-tools {
+      direction: ltr;
+    }
+    html[dir="ltr"] .brand-wrap {
+      direction: ltr;
+    }
+    html[dir="ltr"] .card-title,
+    html[dir="ltr"] .card-subtitle,
+    html[dir="ltr"] .tool-box-title,
+    html[dir="ltr"] .sub-card-title,
+    html[dir="ltr"] .sub-card-desc,
+    html[dir="ltr"] .checklist-item {
+      text-align: left;
+      direction: ltr;
+    }
+
     /* Code block & Terminal */
     .code-box {
       background: var(--code-bg);
@@ -774,19 +807,24 @@ export function setupWizardHTML(env = {}, url = {}) {
             <span>Arizo Self</span>
             <span class="brand-badge">WIZARD v3.6.0 PRO</span>
           </h1>
-          <div class="brand-desc">ویزارد هوشمند و تعاملی ستاپ شخصی از گیت‌هاب</div>
+          <div class="brand-desc" data-i18n="brandDesc">ویزارد هوشمند و تعاملی ستاپ شخصی از گیت‌هاب</div>
         </div>
       </a>
 
       <div class="nav-tools">
         <button class="btn-tool" onclick="checkLiveServerStatus()" title="بررسی زنده سلامت دیتابیس و سرویس">
           <span class="pulse-dot"></span>
-          <span>بررسی سلامت سرور</span>
+          <span data-i18n="checkHealthBtn">بررسی سلامت سرور</span>
         </button>
 
         <button class="btn-tool" onclick="openSecretsExporterModal()" title="خروجی یکجای سکرت‌های رانر">
           <span>📦</span>
-          <span>خروجی سکرت‌ها</span>
+          <span data-i18n="exportSecretsBtn">خروجی سکرت‌ها</span>
+        </button>
+
+        <button class="btn-tool" onclick="toggleLanguage()" title="Switch Language / تغییر زبان" id="langToggleBtn">
+          <span>🌐</span>
+          <span id="langText">English</span>
         </button>
 
         <button class="btn-tool" onclick="toggleTheme()" title="تغییر تم روز و شب" id="themeBtn">
@@ -795,11 +833,11 @@ export function setupWizardHTML(env = {}, url = {}) {
         </button>
 
         <a href="/admin" class="btn-tool" style="border-color:var(--accent-amber-border); color:var(--accent-amber); background:var(--accent-amber-bg);" title="ورود مستقیم به پنل مدیریت">
-          <span>👑 پنل مدیریت</span>
+          <span data-i18n="adminPortalBtn">👑 پنل مدیریت</span>
         </a>
 
         <a href="/" class="btn-tool primary" title="ورود به پنل استودیو سلف‌بات">
-          <span>🚪 استودیو</span>
+          <span data-i18n="studioBtn">🚪 استودیو</span>
         </a>
       </div>
     </header>
@@ -817,23 +855,23 @@ export function setupWizardHTML(env = {}, url = {}) {
       <div class="steps-nav">
         <div class="step-item active" onclick="goToStep(1)" id="stepTab1">
           <div class="step-circle" id="circle1">۱</div>
-          <div class="step-label">گیت‌هاب و فورک</div>
+          <div class="step-label" data-i18n="step1Label">گیت‌هاب و فورک</div>
         </div>
         <div class="step-item" onclick="goToStep(2)" id="stepTab2">
           <div class="step-circle" id="circle2">۲</div>
-          <div class="step-label">کلادفلر و D1</div>
+          <div class="step-label" data-i18n="step2Label">کلادفلر و D1</div>
         </div>
         <div class="step-item" onclick="goToStep(3)" id="stepTab3">
           <div class="step-circle" id="circle3">۳</div>
-          <div class="step-label">تلگرام و ربات</div>
+          <div class="step-label" data-i18n="step3Label">تلگرام و ربات</div>
         </div>
         <div class="step-item" onclick="goToStep(4)" id="stepTab4">
           <div class="step-circle" id="circle4">۴</div>
-          <div class="step-label">رانر Actions</div>
+          <div class="step-label" data-i18n="step4Label">رانر Actions</div>
         </div>
         <div class="step-item" onclick="goToStep(5)" id="stepTab5">
           <div class="step-circle" id="circle5">۵</div>
-          <div class="step-label">ورود و تست</div>
+          <div class="step-label" data-i18n="step5Label">ورود و تست</div>
         </div>
       </div>
     </div>
@@ -1628,6 +1666,90 @@ export function setupWizardHTML(env = {}, url = {}) {
       }
     }
 
+    
+    // ==========================================
+    // 🌐 موتور چندزبانه بومی ویزارد (Wizard Dual-Language Engine)
+    // ==========================================
+    window.currentLang = localStorage.getItem('arizo_lang') || 'fa';
+
+    window.WIZARD_I18N = {
+      fa: {
+        pageTitle: '🚀 ویزارد راه‌اندازی هوشمند و گام‌به‌گام | Arizo Self v3.6.0 PRO',
+        brandDesc: 'ویزارد هوشمند و تعاملی ستاپ شخصی از گیت‌هاب',
+        checkHealthBtn: 'بررسی سلامت سرور',
+        exportSecretsBtn: 'خروجی سکرت‌ها',
+        themeDay: 'حالت روز',
+        themeNight: 'حالت شب',
+        adminPortalBtn: '👑 پنل مدیریت',
+        studioBtn: '🚪 استودیو',
+        step1Label: 'گیت‌هاب و فورک',
+        step2Label: 'کلادفلر و D1',
+        step3Label: 'تلگرام و ربات',
+        step4Label: 'رانر Actions',
+        step5Label: 'ورود و تست',
+        pctComplete: '٪ تکمیل شده',
+        switchBtnText: 'English',
+        switchToast: 'زبان به فارسی تغییر یافت 🇮🇷'
+      },
+      en: {
+        pageTitle: '🚀 Interactive Step-by-Step Setup Wizard | Arizo Self v3.6.0 PRO',
+        brandDesc: 'Interactive GitHub Setup Wizard for Selfbot Studio',
+        checkHealthBtn: 'Check Server Health',
+        exportSecretsBtn: 'Export Secrets',
+        themeDay: 'Day Mode',
+        themeNight: 'Night Mode',
+        adminPortalBtn: '👑 Admin Portal',
+        studioBtn: '🚪 Studio',
+        step1Label: 'GitHub & Fork',
+        step2Label: 'Cloudflare & D1',
+        step3Label: 'Telegram & Bot',
+        step4Label: 'Actions Runner',
+        step5Label: 'Test & Launch',
+        pctComplete: '% Completed',
+        switchBtnText: 'فارسی',
+        switchToast: 'Language switched to English 🇬🇧'
+      }
+    };
+
+    window.applyLanguage = function(lang) {
+      if (lang !== 'en' && lang !== 'fa') lang = 'fa';
+      window.currentLang = lang;
+      localStorage.setItem('arizo_lang', lang);
+
+      document.documentElement.setAttribute('lang', lang);
+      document.documentElement.setAttribute('dir', lang === 'en' ? 'ltr' : 'rtl');
+
+      var dict = window.WIZARD_I18N[lang] || window.WIZARD_I18N.fa;
+
+      document.title = dict.pageTitle;
+
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+
+      var langText = document.getElementById('langText');
+      if (langText) {
+        langText.textContent = dict.switchBtnText;
+      }
+
+      var savedTheme = wizardState.theme || document.documentElement.getAttribute('data-theme') || 'dark';
+      updateThemeDisplay(savedTheme);
+
+      if (typeof currentStep !== 'undefined') {
+        goToStep(currentStep);
+      }
+    };
+
+    window.toggleLanguage = function() {
+      var next = window.currentLang === 'en' ? 'fa' : 'en';
+      window.applyLanguage(next);
+      var dict = window.WIZARD_I18N[next];
+      showToast(dict.switchToast);
+    };
+
     function goToStep(step) {
       if (step < 1 || step > totalSteps) return;
       currentStep = step;
@@ -1635,15 +1757,24 @@ export function setupWizardHTML(env = {}, url = {}) {
       // آپدیت نوار پیشرفت
       var pct = Math.round(((step) / totalSteps) * 100);
       document.getElementById('progressBar').style.width = pct + '%';
-      document.getElementById('progressPctText').textContent = pct + '٪ تکمیل شده';
+      var isEn = window.currentLang === 'en';
+      document.getElementById('progressPctText').textContent = pct + (isEn ? '% Completed' : '٪ تکمیل شده');
 
-      var titles = [
+      var titlesFa = [
         'مرحله ۱ از ۵: گیت‌هاب و نیازمندی‌ها',
         'مرحله ۲ از ۵: کلادفلر و پایگاه داده D1',
         'مرحله ۳ از ۵: تلگرام و ربات کمکی',
         'مرحله ۴ از ۵: رانر ۲۴ ساعته GitHub Actions',
         'مرحله ۵ از ۵: چک‌لیست نهایی، سلامت و اتصال'
       ];
+      var titlesEn = [
+        'Step 1 of 5: GitHub & Prerequisites',
+        'Step 2 of 5: Cloudflare & D1 Database',
+        'Step 3 of 5: Telegram & Helper Bot',
+        'Step 4 of 5: 24/7 GitHub Actions Runner',
+        'Step 5 of 5: Final Checklist, Health & Connect'
+      ];
+      var titles = isEn ? titlesEn : titlesFa;
       document.getElementById('progressStepTitle').textContent = titles[step - 1];
 
       // آپدیت تب‌ها
@@ -2020,8 +2151,15 @@ export function setupWizardHTML(env = {}, url = {}) {
     function updateThemeDisplay(t) {
       var icon = document.getElementById('themeIcon');
       var text = document.getElementById('themeText');
+      var isEn = window.currentLang === 'en';
       if (icon) icon.textContent = t === 'dark' ? '☀️' : '🌙';
-      if (text) text.textContent = t === 'dark' ? 'حالت روز' : 'حالت شب';
+      if (text) {
+        if (isEn) {
+          text.textContent = t === 'dark' ? 'Day Mode' : 'Night Mode';
+        } else {
+          text.textContent = t === 'dark' ? 'حالت روز' : 'حالت شب';
+        }
+      }
     }
 
     // کلیدهای میانبر کیبورد
@@ -2042,6 +2180,9 @@ export function setupWizardHTML(env = {}, url = {}) {
       var savedTheme = wizardState.theme || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       updateThemeDisplay(savedTheme);
+      if (typeof window.applyLanguage === 'function') {
+        window.applyLanguage(window.currentLang || 'fa');
+      }
     });
   </script>
 </body>
