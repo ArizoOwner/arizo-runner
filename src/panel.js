@@ -4587,7 +4587,11 @@ export function panelHTML(env, options = {}) {
         icon.textContent = theme === 'dark' ? '☀️' : '🌙';
       }
       if (text) {
-        text.textContent = theme === 'dark' ? 'حالت روز' : 'حالت شب';
+        if (window.currentLang === 'en') {
+          text.textContent = theme === 'dark' ? 'Day Mode' : 'Night Mode';
+        } else {
+          text.textContent = theme === 'dark' ? 'حالت روز' : 'حالت شب';
+        }
       }
     }
     updateThemeUI(document.documentElement.getAttribute('data-theme') || 'dark');
