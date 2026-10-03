@@ -399,6 +399,14 @@ export function checkUserSubscription(user) {
 
 let activeUsersCache = null;
 let activeUsersCacheTime = 0;
+let activeUsersETag = null;
+
+// ⚡ کش پایدار رابط‌های گرافیکی در حافظه ایزولیت ورکر (Zero Redundant HTML String Interpolation)
+let cachedPanelHtml = null;
+let cachedAdminHtml = null;
+let cachedWizardHtml = null;
+const STATIC_ASSET_ETAG = '"arizo-v3.6.0-opt"';
+let cachedFaviconResponse = null;
 
 export default {
   async fetch(request, env) {
@@ -429,9 +437,10 @@ export default {
       });
     }
 
-    // ⚡ فاوا آیکون با کیفیت برداری اختصاصی Arizo (Favicon Handler)
+    // ⚡ فاوا آیکون با کیفیت برداری اختصاصی Arizo (Favicon Handler با کش نامتغیر ۷ روزه)
     if (url.pathname === '/favicon.ico' || url.pathname === '/favicon.svg') {
-      const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      if (!cachedFaviconResponse) {
+        const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0f172a"/>
@@ -443,35 +452,47 @@ export default {
       <stop offset="50%" stop-color="#818cf8"/>
       <stop offset="100%" stop-color="#c084fc"/>
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="2.5" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#bg)"/>
   <rect x="2" y="2" width="60" height="60" rx="14" fill="none" stroke="url(#neon)" stroke-width="2" opacity="0.6"/>
-  <path d="M35 8 L18 34 L31 34 L27 56 L46 28 L33 28 Z" fill="url(#neon)" filter="url(#glow)"/>
+  <path d="M35 8 L18 34 L31 34 L27 56 L46 28 L33 28 Z" fill="url(#neon)"/>
 </svg>`;
-      return new Response(faviconSvg, {
-        headers: {
-          'Content-Type': 'image/svg+xml;charset=utf-8',
-          'Cache-Control': 'public, max-age=86400, immutable',
-          ...SECURITY_HEADERS
-        }
-      });
+        cachedFaviconResponse = new Response(faviconSvg, {
+          headers: {
+            'Content-Type': 'image/svg+xml;charset=utf-8',
+            'Cache-Control': 'public, max-age=604800, immutable',
+            'ETag': '"arizo-favicon-v3"',
+            ...SECURITY_HEADERS
+          }
+        });
+      }
+      if (request.headers.get('if-none-match') === '"arizo-favicon-v3"') {
+        return new Response(null, { status: 304, headers: cachedFaviconResponse.headers });
+      }
+      return cachedFaviconResponse.clone();
     }
 
-    // ۱. سرو رابط کاربری پنل با جلوگیری از کش شدن فایل کهنه در مرورگر
+    // ۱. سرو رابط کاربری پنل با اعتبارسنجی شرطی ETag و کش هوشمند RAM
     if (url.pathname === '/') {
-      return new Response(panelHTML(env), {
+      const etag = STATIC_ASSET_ETAG;
+      if (request.headers.get('if-none-match') === etag) {
+        return new Response(null, {
+          status: 304,
+          headers: {
+            'ETag': etag,
+            'Cache-Control': 'public, max-age=0, must-revalidate',
+            ...SECURITY_HEADERS
+          }
+        });
+      }
+      if (!cachedPanelHtml) {
+        cachedPanelHtml = panelHTML(env);
+      }
+      return new Response(cachedPanelHtml, {
         headers: {
           'Content-Type': 'text/html;charset=utf-8',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'ETag': etag,
+          'Cache-Control': 'public, max-age=0, must-revalidate',
           ...SECURITY_HEADERS
         },
       });
@@ -479,12 +500,25 @@ export default {
 
     // 👑 ۲. ورود مستقیم و اختصاصی به پنل ارشد مانیتورینگ (/admin)
     if (url.pathname === '/admin' || url.pathname === '/admin/') {
-      return new Response(panelHTML(env, { autoOpenAdmin: true }), {
+      const etag = '"arizo-adm-v3.6.0-opt"';
+      if (request.headers.get('if-none-match') === etag) {
+        return new Response(null, {
+          status: 304,
+          headers: {
+            'ETag': etag,
+            'Cache-Control': 'public, max-age=0, must-revalidate',
+            ...SECURITY_HEADERS
+          }
+        });
+      }
+      if (!cachedAdminHtml) {
+        cachedAdminHtml = panelHTML(env, { autoOpenAdmin: true });
+      }
+      return new Response(cachedAdminHtml, {
         headers: {
           'Content-Type': 'text/html;charset=utf-8',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'ETag': etag,
+          'Cache-Control': 'public, max-age=0, must-revalidate',
           ...SECURITY_HEADERS
         },
       });
@@ -492,12 +526,25 @@ export default {
 
     // 🚀 ویزارد تعاملی و گرافیکی ستاپ و راه‌اندازی شخصی (Self-Hosting Setup Wizard)
     if (url.pathname === '/setup' || url.pathname === '/wizard') {
-      return new Response(setupWizardHTML(env, url), {
+      const etag = '"arizo-wiz-v3.6.0-opt"';
+      if (request.headers.get('if-none-match') === etag) {
+        return new Response(null, {
+          status: 304,
+          headers: {
+            'ETag': etag,
+            'Cache-Control': 'public, max-age=0, must-revalidate',
+            ...SECURITY_HEADERS
+          }
+        });
+      }
+      if (!cachedWizardHtml) {
+        cachedWizardHtml = setupWizardHTML(env, url);
+      }
+      return new Response(cachedWizardHtml, {
         headers: {
           'Content-Type': 'text/html;charset=utf-8',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'ETag': etag,
+          'Cache-Control': 'public, max-age=0, must-revalidate',
           ...SECURITY_HEADERS
         },
       });
@@ -2187,27 +2234,36 @@ export default {
       return await timingSafeStringCompare(token, secret);
     }
 
-    // ۱. دریافت لیست کاربران فعال برای رانر خارجی
+    // ۱. دریافت لیست کاربران فعال برای رانر خارجی با کش هوشمند و کاهش رایت D1
     if (url.pathname === '/api/internal/active-users' && request.method === 'GET') {
       if (!await isRunnerAuthorized(request, env)) {
         return json({ error: 'unauthorized runner' }, 401);
       }
 
-      globalThis.lastRunnerSyncTime = Date.now();
-      if (env.DB) {
-        env.DB.prepare("INSERT OR REPLACE INTO kv_store (key, value, updated_at) VALUES ('runner:last_ping', ?, ?)").bind(String(Date.now()), Date.now()).run().catch(() => {});
+      const now = Date.now();
+      globalThis.lastRunnerSyncTime = now;
+
+      // بهینه‌سازی دیتابیس D1: ذخیره پینگ رانر هر ۳ دقیقه یک‌بار به جای هر دقیقه (کاهش ۶۶٪ عملیات رایت)
+      if (env.DB && (!globalThis.lastD1PingWrite || (now - globalThis.lastD1PingWrite > 180000))) {
+        globalThis.lastD1PingWrite = now;
+        env.DB.prepare("INSERT OR REPLACE INTO kv_store (key, value, updated_at) VALUES ('runner:last_ping', ?, ?)").bind(String(now), now).run().catch(() => {});
       }
 
-      // بهینه‌سازی مصرف سهمیه کلادفلر: کش ۳۰ ثانیه‌ای درون حافظه ایزولیت (کاهش بیش از ۹۵٪ سهمیه KV Read)
-      if (activeUsersCache && (Date.now() - activeUsersCacheTime < 30000)) {
-        return json({ ok: true, users: activeUsersCache, serverTime: Date.now(), cached: true });
+      // بهینه‌سازی مصرف سهمیه کلادفلر: کش ۶۰ ثانیه‌ای درون حافظه ایزولیت همراه با پشتیبانی از ۳۰۴ ETag
+      if (activeUsersCache && (now - activeUsersCacheTime < 60000)) {
+        const clientEtag = request.headers.get('if-none-match');
+        if (clientEtag && clientEtag === activeUsersETag) {
+          return new Response(null, { status: 304, headers: { 'ETag': activeUsersETag } });
+        }
+        return json({ ok: true, users: activeUsersCache, serverTime: now, cached: true }, 200, { 'ETag': activeUsersETag });
       }
 
       const usersList = await env.KV.get('users_list', 'json') || [];
       if (!usersList.length) {
         activeUsersCache = [];
-        activeUsersCacheTime = Date.now();
-        return json({ ok: true, users: [], serverTime: Date.now() });
+        activeUsersCacheTime = now;
+        activeUsersETag = '"au-0-' + now + '"';
+        return json({ ok: true, users: [], serverTime: now }, 200, { 'ETag': activeUsersETag });
       }
 
       const userObjects = await Promise.all(
@@ -2250,10 +2306,8 @@ export default {
             muteEnabled: !!u.telegram.muteEnabled || (Array.isArray(u.telegram.mutedUsers) && u.telegram.mutedUsers.length > 0),
             mutedUsers: u.telegram.mutedUsers || [],
             antiTtlEnabled: !!(u.telegram.antiTtlEnabled ?? u.antiTtlEnabled),
-            // 👻 Ghost Mode (مدیریت تیک آبی)
             ghostMode: !!u.telegram.ghostMode,
             ghostExcludeList: u.telegram.ghostExcludeList || [],
-            // 🤖 AI Smart Reply (پاسخ هوشمند)
             aiReplyEnabled: !!u.telegram.aiReplyEnabled,
             aiProvider: u.telegram.aiProvider || 'gemini',
             aiApiKey: u.telegram.aiApiKey || '',
@@ -2261,18 +2315,17 @@ export default {
             aiContext: u.telegram.aiContext || '',
             aiMaxReplies: u.telegram.aiMaxReplies ?? 3,
             aiCooldown: u.telegram.aiCooldown ?? 5,
-            bot: u.telegram?.bot || null,
-            lastTime: u.status?.lastTime || null,
+            bot: u.telegram.bot || null
           });
         }
       }
 
       activeUsersCache = activeUsers;
-      activeUsersCacheTime = Date.now();
-      return json({ ok: true, users: activeUsers, serverTime: Date.now() });
+      activeUsersCacheTime = now;
+      activeUsersETag = '"au-' + activeUsers.length + '-' + now + '"';
+      return json({ ok: true, users: activeUsersCache, serverTime: now }, 200, { 'ETag': activeUsersETag });
     }
 
-    // ۲. به‌روزرسانی وضعیت کاربران از طریق رانر خارجی
     if (url.pathname === '/api/internal/update-status' && request.method === 'POST') {
       if (!await isRunnerAuthorized(request, env)) {
         return json({ error: 'unauthorized runner' }, 401);
