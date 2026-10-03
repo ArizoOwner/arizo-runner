@@ -47,6 +47,11 @@ function json(data, status = 200, extraHeaders = {}) {
   });
 }
 
+function etagMatches(reqEtag, targetEtag) {
+  if (!reqEtag || !targetEtag) return false;
+  return reqEtag.replace(/^W\//i, '').replace(/["']/g, '').trim() === targetEtag.replace(/^W\//i, '').replace(/["']/g, '').trim();
+}
+
 function getClientIP(request) {
   return request.headers.get('cf-connecting-ip') ||
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -466,7 +471,7 @@ export default {
           }
         });
       }
-      if (request.headers.get('if-none-match') === '"arizo-favicon-v3"') {
+      if (etagMatches(request.headers.get('if-none-match'), '"arizo-favicon-v3"')) {
         return new Response(null, { status: 304, headers: cachedFaviconResponse.headers });
       }
       return cachedFaviconResponse.clone();
@@ -475,7 +480,7 @@ export default {
     // ۱. سرو رابط کاربری پنل با اعتبارسنجی شرطی ETag و کش هوشمند RAM
     if (url.pathname === '/') {
       const etag = STATIC_ASSET_ETAG;
-      if (request.headers.get('if-none-match') === etag) {
+      if (etagMatches(request.headers.get('if-none-match'), etag)) {
         return new Response(null, {
           status: 304,
           headers: {
@@ -501,7 +506,7 @@ export default {
     // 👑 ۲. ورود مستقیم و اختصاصی به پنل ارشد مانیتورینگ (/admin)
     if (url.pathname === '/admin' || url.pathname === '/admin/') {
       const etag = '"arizo-adm-v3.6.0-opt"';
-      if (request.headers.get('if-none-match') === etag) {
+      if (etagMatches(request.headers.get('if-none-match'), etag)) {
         return new Response(null, {
           status: 304,
           headers: {
@@ -527,7 +532,7 @@ export default {
     // 🚀 ویزارد تعاملی و گرافیکی ستاپ و راه‌اندازی شخصی (Self-Hosting Setup Wizard)
     if (url.pathname === '/setup' || url.pathname === '/wizard') {
       const etag = '"arizo-wiz-v3.6.0-opt"';
-      if (request.headers.get('if-none-match') === etag) {
+      if (etagMatches(request.headers.get('if-none-match'), etag)) {
         return new Response(null, {
           status: 304,
           headers: {
@@ -2252,7 +2257,7 @@ export default {
       // بهینه‌سازی مصرف سهمیه کلادفلر: کش ۶۰ ثانیه‌ای درون حافظه ایزولیت همراه با پشتیبانی از ۳۰۴ ETag
       if (activeUsersCache && (now - activeUsersCacheTime < 60000)) {
         const clientEtag = request.headers.get('if-none-match');
-        if (clientEtag && clientEtag === activeUsersETag) {
+        if (clientEtag && etagMatches(clientEtag, activeUsersETag)) {
           return new Response(null, { status: 304, headers: { 'ETag': activeUsersETag } });
         }
         return json({ ok: true, users: activeUsersCache, serverTime: now, cached: true }, 200, { 'ETag': activeUsersETag });
