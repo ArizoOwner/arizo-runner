@@ -4600,195 +4600,63 @@ export function panelHTML(env, options = {}) {
     // 🌐 موتور چندزبانه بومی (Dual-Language I18N Engine)
     // ==========================================
     window.currentLang = localStorage.getItem('arizo_lang') || 'fa';
+    window.TRANSLATIONS_MAP = {"⚡ Arizo Self | پلتفرم استودیوی سلف‌بات هوشمند تلگرام و پنل مدیریت":"⚡ Arizo Self | Intelligent Telegram Selfbot Studio & Cloud Management","حالت روز":"Day Mode","حالت شب":"Night Mode","راهنمای امکانات":"Feature Tour","پنل مدیریت":"Admin Portal","کاربر":"User","مرکز فرماندهی و فروشگاه Arizo Self":"Arizo Self Command Center & Store","مرکز فرماندهی و فروشگاه آریزو سلف":"Arizo Self Command Center & Store","بازگشت به پنل کاربران":"Return to User Dashboard","آمار و شاخص‌ها":"Stats & Metrics","صدور و انبار لایسنس":"License Inventory","مدیریت کاربران و ربات‌ها":"Users & Selfbots","۰":"0","👥 کل کاربران":"👥 Total Users","🟢 ربات‌های فعال":"🟢 Active Selfbots","🎟️ کدهای آماده فروش":"🎟️ Available Licenses","💳 کدهای مصرف‌شده":"💳 Redeemed Licenses","🌐 سلامت شبکه ابری Arizo Edge":"🌐 Arizo Edge Cloud Network Health","سرورهای Cloudflare Workers با توزیع جهانی در حال اجرای کرون‌جاب‌های زمان‌بندی‌شده هستند. اتصال همگام‌ساز تهران در میلی‌ثانیه صفر هر دقیقه فعال است.":"Cloudflare Workers edge network running scheduled cron jobs globally. Tehran sync active at second 00.000 of every minute.","صدور کدهای جدید لایسنس Arizo Self برای فروش به خریداران":"Issue New Arizo Self Licenses for Customers","تعداد کد":"Code Quantity","۱ عدد کد":"1 License Key","۵ عدد کد":"5 License Keys","۱۰ عدد کد":"10 License Keys","۲۰ عدد کد":"20 License Keys","نوع اشتراک و اعتبار":"Subscription Plan & Validity","اشتراک ۱ ماهه (۳۰ روز)":"1 Month (30 Days)","اشتراک ۳ ماهه (۹۰ روز)":"3 Months (90 Days)","اشتراک ۶ ماهه (۱۸۰ روز)":"6 Months (180 Days)","اشتراک دائمی و نامحدود":"Lifetime Unlimited Plan","⭐ سفارشی (تعیین روز دلخواه توسط ادمین)":"⭐ Custom (Admin-defined days)","تعداد روزهای اعتبار":"Duration (Days)","🎟️ تولید کدهای لایسنس جدید و اضافه به انبار":"🎟️ Generate & Add License Keys to Inventory","📋 انبار کدهای لایسنس موجود (کپی مستقیم جهت ارسال به مشتری)":"📋 Active License Inventory (Click to copy for clients)","🔄 رفرش":"🔄 Refresh","کد لایسنس":"License Key","پلن و روزها":"Plan & Validity","وضعیت":"Status","عملیات":"Actions","درحال بارگذاری کدها...":"Loading licenses...","👥 مانیتورینگ زنده کاربران، ربات‌های کمکی و امنیت ۲FA":"👥 Live User Monitoring, Helper Bots & 2FA Security","🔄 رفرش سریع":"🔄 Quick Refresh","🤖 دارای ربات کمکی":"🤖 Has Helper Bot","🔐 تایید ۲FA فعال":"🔐 2FA Enabled","📱 سلف‌بات فعال":"📱 Selfbot Active","🌐 همه کاربران":"🌐 All Users","🤖 دارای ربات کمکی اختصاصی":"🤖 Has Dedicated Bot","⚪ فاقد ربات کمکی":"⚪ No Helper Bot","🔓 تایید ۲FA خاموش":"🔓 2FA Disabled","🟢 سلف‌بات متصل و فعال":"🟢 Selfbot Connected & Active","⏸️ معلق یا منقضی‌شده":"⏸️ Suspended or Expired","🛡️ مدیران ارشد سیستم":"🛡️ System Administrators","🛡️ ارتقا به مدیر":"🛡️ Promote to Admin","🔄 بروزرسانی":"🔄 Update","نام کاربری":"Username","دسترسی":"Role","ربات کمکی":"Helper Bot","امنیت ۲FA":"2FA Security","تلگرام":"Telegram","پلن و اعتبار":"Plan & Expiry","درحال بارگذاری کاربران...":"Loading users...","↩️ بازگشت به داشبورد کاربری":"↩️ Return to User Dashboard","ورود به حساب":"Sign In","ساخت حساب (نیاز به لایسنس)":"Create Account (License Required)","ثبت‌نام با لایسنس":"Register with License","نام کاربری اختصاصی":"Account Username","رمز عبور امن":"Secure Password","ورود به داشبورد Arizo Self":"Sign In to Arizo Self Dashboard","ورود به داشبورد":"Sign In to Dashboard","🎟️ کد لایسنس / ردیم‌کد فعال‌سازی":"🎟️ License Key / Activation Code","الزامی جهت ساخت حساب":"Required for account registration","(برای ثبت‌نام الزامی است)":"(Required for registration)","💳 این کد را از فروشنده دریافت کرده و در اینجا وارد کنید (برای مدیر اول در دیتابیس تازه، نیازی به لایسنس نیست).":"Obtain this license key from the vendor (first administrator requires no license).","کد لایسنس توسط مدیر یا فروشنده ارائه می‌شود (کاربر اول سیستم نیازی به کد ندارد)":"License key provided by vendor (first admin needs no license)","نام کاربری جدید":"New Username","رمز عبور قوی":"Strong Password","رمز عبور امن (حداقل ۸ کاراکتر)":"Secure Password (min 8 chars)","تکرار رمز عبور":"Confirm Password","ثبت‌نام و فعال‌سازی اشتراک Arizo Self":"Register & Activate Arizo Self Subscription","ثبت‌نام و فعال‌سازی اشتراک":"Register & Activate Subscription","حساب کاربری و سلف‌بات شما در حالت تعلیق قرار دارد (Suspended)":"Your Account and Selfbot Are Currently Suspended","حساب کاربری شما معلق شده است":"Your Account Has Been Suspended","مدت زمان اشتراک شما به پایان رسیده و عملکرد سلف‌بات روی تلگرام متوقف شده است. جهت فعال‌سازی مجدد و خروج آنی از تعلیق، کد لایسنس جدید خود را وارد کنید:":"Your subscription has expired and Telegram selfbot operations are paused. Enter a valid renewal key to reactivate:","دسترسی شما به سلف‌بات موقتاً مسدود شده است. جهت فعال‌سازی مجدد، لایسنس تمدید معتبر وارد کنید:":"Access to your selfbot is temporarily restricted. Enter a renewal license key to reactivate:","🚀 خروج از تعلیق و شارژ":"🚀 Reactivate & Renew Subscription","ثبت لایسنس و رفع تعلیق":"Apply License & Reactivate","شبیه‌ساز زنده پروفایل تلگرام (Live Telegram Mockup)":"Live Telegram Profile Mockup","پیش‌نمایش زنده در تلگرام":"Live Telegram Preview","پیش‌نمایش لحظه‌ای":"Live Preview","سینک زنده":"Live Sync","کاربر Arizo":"Arizo User","کاربر تلگرام":"Telegram User","۰۰:۰۰":"00:00","آنلاین (لحظه‌ای به وقت تهران)":"Online (Tehran Atomic Time)","آنلاین":"online","بیوگرافی زنده تلگرام (Bio / About)":"Live Telegram Bio (About)","بیوگرافی زنده":"Live Bio","در انتظار فعال‌سازی بیوگرافی هوشمند...":"Awaiting Live Bio activation...","در حال دریافت وضعیت بیو...":"Syncing bio status...","تقویم خورشیدی و زمان اتمی تهران":"Calendar & Atomic Tehran Clock","تقویم جاری:":"Current Calendar:","درحال محاسبه تقویم خورشیدی...":"Calculating calendar...","همگام‌سازی لحظه‌ای تهران":"Tehran Real-Time Sync","⚡ موتور نوسان‌ساز ابری و کرون‌جاب فعال":"⚡ Edge Engine & Atomic Cron Active","اشتراک: استاندارد":"Subscription: Standard","فونت: بولد لوکس":"Font: Luxury Bold","بخش ۲: اتصال حساب تلگرام به Arizo Self":"Part 2: Connect Telegram Account to Arizo Self","اتصال سشن اکانت تلگرام":"Connect Telegram Account Session","✕ انصراف و بازگشت":"✕ Cancel & Return","انصراف و بازگشت":"Cancel & Return","ایزوله در Cloudflare KV":"Isolated in Cloudflare KV","رمزنگاری نظامی KV":"Military Grade KV Encryption","ارسال کد پیامکی":"SMS / Telegram Code","ورود مستقیم با شماره تلفن":"Direct Phone Login","رشته StringSession مستقیم":"Direct StringSession","ورود با StringSession پیش‌ساخته":"StringSession Login","شماره تلفن اکانت تلگرام":"Telegram Account Phone Number","شماره تلفن با پیش‌شماره بین‌المللی":"Phone Number (International format)","کد ۵ رقمی ارسالی از سوی تلگرام":"5-Digit Telegram Verification Code","کد تایید پیامک/تلگرام":"Verification Code (Telegram/SMS)","رمز تأیید دو مرحله‌ای اکانت (2FA)":"Account Two-Step Verification (2FA)","رمز عبور دومرحله‌ای تلگرام (۲FA)":"Two-Step Verification (2FA) Password","دریافت کد ورود از سرور تلگرام":"Request Telegram Login Code","درخواست و ارسال کد ورود تلگرام":"Request Telegram Login Code","رشته سشن خام تلگرام (StringSession)":"Raw Telegram StringSession","رشته متنی سشن تلگرام (Telethon / GramJS / Pyrogram)":"Telegram StringSession (Telethon / GramJS / Pyrogram)","اتصال و رمزنگاری فوری با AES-256":"Connect & Encrypt with AES-256","ذخیره و اعتبارسنجی سشن":"Validate & Save Session","استودیوی شخصی‌سازی و امکانات پیشرفته":"Customization Studio & Advanced Features","استودیوی جامع شخصی‌سازی":"Comprehensive Studio","⚠️ وضعیت ارتباط با تلگرام:":"⚠️ Telegram Connection Status:","🔄 اتصال مجدد اکانت تلگرام":"🔄 Reconnect Telegram Account","ساعت و استایل":"Clock & Style","منشی خودکار":"Auto-Secretary","فیلتر سکوت":"Silence Filter","حالت خواب":"Sleep Schedule","ربات و لاگر":"Bot & Logger","حالت شبح":"Ghost Mode","پاسخ AI":"Smart AI Reply","پاسخ هوشمند AI":"Smart AI Reply","امنیت و ۲FA":"Security & 2FA","انتخاب کاراکتر جداکننده ساعت و دقیقه":"Choose Hour & Minute Colon Separator","پیشوند ساعت (قبل از ساعت)":"Clock Prefix (Before digits)","پسوند ساعت (بعد از ساعت)":"Clock Suffix (After digits)","حالت ۱۲ ساعته (AM / PM لوکس)":"12-Hour Format (Deluxe AM/PM)","نمایش ساعت به‌صورت ۱۲ ساعته همراه با نشانگر فانتزی ᴬᴹ / ᴾᴹ":"Display in 12-hour format with deluxe ᴬᴹ / ᴾᴹ indicator","ارقام دلخواه دستی (۱۰ کاراکتر ۰ تا ۹)":"Custom Digits (10 characters 0 to 9)","جداکننده":"Separator","فعال‌سازی بیوگرافی زنده و هوشمند (Live Bio)":"Enable Dynamic Live Bio","به‌روزرسانی خودکار بیو تلگرام با ساعت، تقویم و متون پویا":"Auto-update Telegram bio with time, calendar and variables","قالب متن بیوگرافی تلگرام (حداکثر ۷۰ کاراکتر)":"Telegram Bio Template (Max 70 chars)","افزودن متغیر با کلیک:":"Click to add variable:","⏰ {time} (ساعت)":"⏰ {time} (Time)","🗓️ {date} (تاریخ)":"🗓️ {date} (Date)","☀️ {day} (روز هفته)":"☀️ {day} (Weekday)","🔋 {battery} (باتری زمان)":"🔋 {battery} (Time Battery)","♈ {zodiac} (برج فلکی)":"♈ {zodiac} (Zodiac)","🌸 {season} (فصل)":"🌸 {season} (Season)","🎭 {mood} (مود زمان)":"🎭 {mood} (Time Mood)","🎉 {occasion} (مناسبت)":"🎉 {occasion} (Occasion)","💬 {quote} (جمله انگیزشی)":"💬 {quote} (Quote)","🌐 {en_day} (روز انگلیسی)":"🌐 {en_day} (English Day)","💡 قالب‌های محبوب و آماده:":"💡 Popular Pre-Made Templates:","منشی خودکار پیوی (AFK Auto-Secretary)":"AFK Private Auto-Secretary","هنگامی که آنلاین نیستید، پیام‌های خصوصی به طور هوشمند و خودکار پاسخ داده می‌شوند":"When you are away, private messages are answered intelligently","متن پاسخ خودکار منشی به مخاطبان در پیوی":"Auto-Secretary Reply Message","فاصله زمانی ارسال مجدد برای یک مخاطب (کول‌داون ضد اسپم)":"Cooldown Interval per Contact","هر ۵ دقیقه یک‌بار به هر فرد":"Every 5 minutes per contact","هر ۱۰ دقیقه یک‌بار به هر فرد (پیشنهادی)":"Every 10 minutes per contact (Recommended)","هر ۳۰ دقیقه یک‌بار به هر فرد":"Every 30 minutes per contact","هر ۱ ساعت یک‌بار به هر فرد":"Every 1 hour per contact","فقط یک‌بار در طول شبانه‌روز به هر فرد":"Once per 24 hours per contact","💡 این قابلیت مانع از اسپم شدن چت هنگامی که مخاطب چندین پیام متوالی می‌فرستد می‌شود.":"💡 This prevents chat spam when a contact sends multiple consecutive messages.","سکوت و حذف آنی پیام‌های افراد مزاحم (Mute Filter)":"Mute & Instant Purge Filter","پیام‌های ارسال‌شده توسط کاربران مشخص‌شده بلافاصله برای دو طرف پاک می‌شوند":"Messages from specified users are immediately deleted for both sides","لیست آیدی‌های عددی یا یوزرنیم‌های تلگرام جهت سکوت (با کاما جدا کنید)":"Telegram IDs or Usernames to Mute (comma separated)","💡 شما همچنین در محیط تلگرام می‌توانید با ریپلای روی پیام هر شخص و ارسال":"💡 In Telegram you can also reply to a message and send","او را اضافه کرده و با":"to mute them, and use","از سکوت خارج کنید.":"to unmute.","حالت خواب و استراحت شبانه (Sleep Mode)":"Night Sleep Schedule","در ساعات مشخص‌شده، به‌روزرسانی متوقف شده یا متن خواب قرار می‌گیرد":"During specified hours, updates pause or sleep status is displayed","شروع خواب (ساعت)":"Sleep Start Hour","۲۲:۰۰ (۱۰ شب)":"22:00 (10 PM)","۲۳:۰۰ (۱۱ شب)":"23:00 (11 PM)","۰۰:۰۰ (نیمه‌شب)":"00:00 (Midnight)","۰۱:۰۰ (بامداد)":"01:00 (1 AM)","۰۲:۰۰ (بامداد)":"02:00 (2 AM)","پایان خواب (ساعت)":"Sleep Wakeup Hour","۰۶:۰۰ (صبح)":"06:00 (6 AM)","۰۷:۰۰ (صبح)":"07:00 (7 AM)","۰۸:۰۰ (صبح)":"08:00 (8 AM)","۰۹:۰۰ (صبح)":"09:00 (9 AM)","۱۰:۰۰ (صبح)":"10:00 (10 AM)","متن نام خانوادگی در طول ساعات خواب":"Last Name Text During Sleep Hours","حالت شبح — خواندن بدون تیک آبی (Ghost Read)":"Ghost Mode — Stealth Read","وقتی این قابلیت فعال باشه، تمام پیام‌های خصوصی جدید به صورت خودکار به":"When enabled, incoming private messages automatically forward to your","ربات اختصاصی":"dedicated bot","شما فوروارد می‌شن و می‌تونید اونجا بخونیدشون بدون اینکه تیک آبی بخوره. وقتی آماده بودید، با دستور":"where you can read them without blue ticks. When ready, use","در تلگرام می‌تونید تیک آبی رو دستی بزنید.":"in Telegram to manually send read receipts.","فعال‌سازی حالت شبح (Ghost Mode)":"Enable Ghost Mode","پیام‌های خصوصی رو بخونید بدون تیک آبی — فوروارد خودکار به ربات":"Read private messages silently without blue checkmarks","دستورات سریع تلگرامی:":"Telegram In-Chat Shortcuts:","— تیک آبی رو برای چتی که توش هستید بزنید":"— Mark current chat as read","— تیک آبی رو برای همه چت‌ها یکجا بزنید":"— Mark all unread chats as read","— فعال‌سازی سریع حالت شبح":"— Quick activate Ghost Mode","— غیرفعال کردن حالت شبح":"— Quick deactivate Ghost Mode","لیست استثنا — افرادی که همیشه تیک آبی بخوره (اختیاری)":"Whitelist — Contacts who always receive read receipts (Optional)","💡 برای این افراد، تیک آبی به صورت عادی کار می‌کنه و حالت شبح روی اونا اعمال نمی‌شه.":"💡 For these contacts, read receipts work normally and Ghost Mode is bypassed.","نکته مهم:":"Important Notice:","حالت شبح فقط زمانی کار می‌کنه که پیام‌ها رو از طریق":"Ghost Mode only suppresses read receipts when reading via the","ربات":"bot","بخونید. اگر چت رو مستقیم توی اپلیکیشن تلگرام باز کنید، تیک آبی از طرف اپلیکیشن ارسال می‌شه.":". If you open the chat directly in Telegram app, read receipts will be sent.","پاسخ هوشمند مبتنی بر هوش مصنوعی (AI Smart Reply)":"AI Smart Reply Assistant","به جای یک پیام ثابت AFK، هوش مصنوعی":"Instead of a static AFK note, AI replies intelligently","متناسب با محتوای پیام":"based on context","به مخاطبین پاسخ می‌دهد. هر کاربر API Key خودش رو وارد می‌کنه و هزینه‌ای برای سرور نداره.":"to incoming chats. Each user brings their own API key with zero host cost.","فعال‌سازی پاسخ هوشمند AI (جایگزین AFK ثابت)":"Enable AI Smart Reply (Replaces static AFK)","وقتی فعال باشه، AI به جای پیام ثابت منشی، هوشمندانه پاسخ می‌دهد":"When enabled, AI replies dynamically instead of a static message","پایش هوشمند وضعیت آنلاین:":"Smart Online Presence Monitor:","هوش مصنوعی تنها در زمان":"AI replies exclusively when you are","آفلاین بودن":"offline","به پیوی‌ها پاسخ می‌دهد. به محض اینکه آنلاین شوید، پیامی بخوانید یا در حال چت با مخاطبان باشید، منشی خودکار فوراً متوقف می‌شود.":". The moment you come online or read a message, AI auto-replies immediately pause.","سرویس‌دهنده هوش مصنوعی (AI Provider)":"AI Provider","Google Gemini (رایگان — پیشنهادی)":"Google Gemini (Free — Recommended)","Custom API (سرویس سفارشی)":"Custom OpenAI-compatible API","کلید API هوش مصنوعی (API Key)":"AI API Key","حذف کامل کلید API (رفع تداخل)":"Clear API Key (Reset)","از":"From","اینجا":"here","رایگان دریافت کنید |":"get a free key |","شخصیت و دستورالعمل AI (System Prompt)":"AI System Prompt & Instructions","💡 حداکثر ۵۰۰ کاراکتر. این متن شخصیت AI را تعیین می‌کند.":"💡 Max 500 characters. Defines AI tone, personality and constraints.","اطلاعات پایه برای AI (زمینه و کانتکست)":"Background Facts & Context for AI","💡 AI از این اطلاعات برای پاسخ دقیق‌تر استفاده می‌کند.":"💡 AI references this context for accurate answers (e.g. office hours).","حداکثر تعداد پاسخ به هر شخص":"Max Replies per Contact","فقط ۱ پاسخ":"Only 1 reply","حداکثر ۲ پاسخ":"Max 2 replies","حداکثر ۳ پاسخ (پیشنهادی)":"Max 3 replies (Recommended)","حداکثر ۵ پاسخ":"Max 5 replies","حداکثر ۱۰ پاسخ":"Max 10 replies","نامحدود (۲۰ پاسخ)":"Unlimited (20 replies)","فاصله زمانی بین پاسخ‌ها (کول‌داون)":"Reply Cooldown Interval","⚡ بدون محدودیت زمانی (فوری و بدون کول‌داون)":"⚡ Instant (No cooldown)","هر ۱ دقیقه":"Every 1 minute","هر ۳ دقیقه":"Every 3 minutes","هر ۵ دقیقه (پیشنهادی)":"Every 5 minutes (Recommended)","هر ۱۰ دقیقه":"Every 10 minutes","هر ۳۰ دقیقه":"Every 30 minutes","نکته:":"Note:","وقتی پاسخ هوشمند AI فعال باشد، اولویت بالاتری نسبت به منشی خودکار (AFK) دارد و فقط در صورت":"When AI Reply is active, it takes priority over AFK auto-responder and only responds when you are","آفلاین بودن شما":"offline","، متناسب با سوال مخاطب پاسخ می‌دهد.":", tailoring answers to the contact's query.","اتصال ربات دستیار اختصاصی تلگرام (BotFather API)":"Connect Telegram Helper Bot (BotFather API)","قانون انحصار و امنیت:":"Exclusive Security Policy:","هر کاربر باید در":"Each subscriber must create a dedicated bot in","ربات اختصاصی و مجزای خود را بسازد و توکن آن را وارد کند. به منظور حفظ کامل حریم خصوصی و امنیت حساب، این ربات منحصراً به مالک حساب پاسخ می‌دهد و دسترسی هر فرد دیگری به پیام‌ها یا دستورات ربات به طور کامل مسدود و غیرمجاز است.":"and provide its token. To maintain absolute privacy, this bot exclusively answers the account owner and blocks all external users.","توکن ربات تلگرام (API Token از BotFather@)":"Telegram Bot API Token (from @BotFather)","➕ دریافت توکن از @BotFather":"➕ Get Token from @BotFather","⚡ اتصال و فعال‌سازی وب‌هوک":"⚡ Connect & Enable Webhook","ربات تلگرام":"Telegram Bot","🚀 باز کردن ربات در تلگرام":"🚀 Open Bot in Telegram","🔌 قطع اتصال ربات":"🔌 Disconnect Bot","وضعیت وب‌هوک:":"Webhook Status:","متصل و فعال":"Connected & Active","ورود به پنل (Mini App):":"Telegram Mini App Launch:","دکمه منو فعال شد":"Menu Button Active","امنیت انحصاری (مخصوص شما):":"Exclusive Security (Owner Only):","ربات منحصراً به شناسه تلگرام شما پاسخ می‌دهد و برای بقیه مسدود است.":"Bot strictly answers your Telegram ID and ignores everyone else.","🔒 آماده قفل با اولین /start":"🔒 Ready to Lock upon first /start","✏️ تنظیم شناسه":"✏️ Configure ID","پس از اتصال، یک‌بار وارد ربات تلگرام خود شده و دستور":"After connecting, open your Telegram bot and send","را بفرستید تا ربات منحصراً به اکانت شما قفل شده و پنل گرافیکی داخل تلگرام فعال شود.":"to lock the bot to your account and activate the in-app Mini App.","🗑️ سطل زباله و ضد حذف پیام‌های پیوی (Anti-Delete)":"🗑️ Anti-Delete Private Message Vault","اگر شخصی در پیوی پیامی را پاک کند، متن یا رسانه ذخیره شده فوراً به ربات اختصاصی شما ارسال می‌شود":"When a contact deletes a message, the cached text or media is immediately forwarded to your bot","✏️ مانیتور و ضد ویرایش پیام‌های پیوی (Anti-Edit)":"✏️ Anti-Edit Private Message Monitor","اگر شخصی پیامی را تغییر دهد، متن قبل از ویرایش و متن جدید در ربات تلگرام به شما نمایش داده می‌شود":"When a contact edits a message, the pre-edit text and diff are delivered to your bot","📸 نجات و ارسال رسانه‌های زمان‌دار به ربات (Anti-TTL)":"📸 Anti-TTL View-Once Media Saver","تصاویر، فیلم‌ها و ویس‌های محوشونده (View-Once) مستقیماً به پیوی ربات اختصاصی شما ارسال می‌شوند":"Expiring photos, video notes and voice clips are saved and forwarded to your helper bot","سپر امنیتی پیشرفته Arizo Self & Zero-Trust":"Arizo Self Advanced Security & Zero-Trust Shield","حساب کاربری شما تحت حفاظت لایه‌های دفاعی چندگانه شامل رمزنگاری کوانتوم‌امن، تله‌های دفاعی Honeypot، سنسورهای تشخیص نفوذ و احراز هویت دوعاملی (TOTP) قرار دارد.":"Your account is guarded by multi-layered defenses: AES-GCM encryption, Zero-Trust Honeypot traps, and RFC 6238 2FA.","احراز هویت دو مرحله‌ای (Google Authenticator / 2FA)":"Two-Factor Authentication (Google Authenticator / 2FA)","محافظت از حساب در برابر نفوذ با کدهای ۶ رقمی زمان‌محور":"Protect your account with 30-second rotating 6-digit TOTP codes","غیرفعال ❌":"Disabled ❌","فعال و ایمن 🟢":"Active & Secure 🟢","با فعال‌سازی ۲FA، هنگام هر بار ورود به پنل، علاوه بر رمز عبور، به کد یکبار مصرف اپلیکیشن Google Authenticator یا 2FAS نیز احتیاج خواهید داشت.":"When 2FA is active, every sign-in requires a rotating code from Google Authenticator or 2FAS alongside your password.","🔐 راه‌اندازی و فعال‌سازی ۲FA":"🔐 Configure & Enable 2FA","گام ۱: اسکن تصویر QR یا کپی کلید دستی":"Step 1: Scan QR Code or Copy Secret Key","اپلیکیشن Google Authenticator یا 2FAS را باز کرده و این بارکد را اسکن کنید.":"Open Google Authenticator or 2FAS and scan this barcode.","📱 باز کردن مستقیم در Authenticator (ویژه موبایل)":"📱 Open Directly in Authenticator (Mobile)","یا کلید محرمانه ۳۲ کاراکتری را دستی وارد نمایید:":"Or manually enter this 32-character Base32 secret key:","📋 کپی کلید دستی":"📋 Copy Secret Key","گام ۲: کد ۶ رقمی تولید شده در اپلیکیشن را وارد کنید":"Step 2: Enter the 6-Digit Code from Your App","تأیید نهایی و فعال‌سازی ۲FA":"Verify & Enable 2FA","انصراف":"Cancel","احراز هویت دو مرحله‌ای (2FA) برای حساب شما فعال است.":"Two-Factor Authentication (2FA) is currently active on your account.","❌ غیرفعال‌سازی ۲FA":"❌ Disable 2FA","🔑 کدهای بازیابی اضطراری (Emergency Backup Codes)":"🔑 Emergency Backup Recovery Codes","📋 کپی تمام کدها":"📋 Copy All Backup Codes","در صورت عدم دسترسی به گوشی یا اپ Authenticator، با هر یک از این کدهای یک‌بار مصرف می‌توانید وارد حساب شوید:":"If you lose access to your authenticator app, use any of these single-use codes to sign in:","پشتیبان‌گیری رمزنگاری شده (Encrypted Backup & Restore)":"Encrypted Backup & Disaster Recovery","دانلود نسخه پشتیبان امن از تمام تنظیمات و سشن، یا بازیابی آن روی سرور":"Export secure encrypted backup of all settings, or restore to server","📥 ایجاد و دریافت خروجی امن":"📥 Export Secure Backup","تمام تنظیمات ساعت، بیوگرافی، منشی، بلاک‌لیست و سشن تلگرام شما با الگوریتم AES-GCM و رمز شما قفل شده و به شکل فایل دانلود می‌شود.":"All clock, bio, AFK, blocklist, and session data is encrypted with AES-256-GCM using your password.","💾 خروجی پشتیبان (Export)":"💾 Export Backup","📤 بازیابی فایل پشتیبان (Restore)":"📤 Restore Backup File","فایل بکاپ دانلود شده را انتخاب و رمزی که با آن قفل شده را وارد نمایید تا تنظیمات بازگردانی شوند:":"Select your encrypted backup file and enter the password used to lock it:","🔄 بازیابی اطلاعات (Restore)":"🔄 Restore Backup","تله‌های دفاعی و حسگر هانی‌پات (Zero-Trust Honeypot)":"Zero-Trust Honeypot Defensive Traps","مسدودسازی خودکار آی‌پی‌های مشکوک و پویشگران آسیب‌پذیری وب":"Automatic IP bans against vulnerability scanners & hostile probes","فعال و هوشیار 🟢":"Active & Vigilant 🟢","ترافیک‌های اسکنر مانند تلاش برای دسترسی به مسیرهای فرضی ادمین، کدهای شل، فایل‌های دات‌ان‌وی و باگ‌های شناخته‌شده، بلافاصله در لبه شبکه Cloudflare مسدود شده و در لاگ‌های امنیتی ثبت می‌گردند.":"Malicious scans probing decoy admin paths, shell endpoints, or .env files are blocked instantly at Cloudflare edge and logged.","قابلیت قبلی":"Previous","🕒 ساعت و استایل":"🕒 Clock & Style","۱":"1","۹)":"9)","قابلیت بعدی":"Next","قبلی":"Previous","از ۹":"of 9","بعدی":"Next","💾 ذخیره و اعمال تغییرات استودیو":"💾 Save Studio Changes","ذخیره آنی تغییرات استودیو":"Save Studio Changes","وضعیت سرویس و مانیتورینگ سلامت":"Service Health & Cloud Monitoring","وضعیت سلامت و پایپ‌لاین ابری":"System Health & Cloud Pipeline","⚡ تست به‌روزرسانی آنی":"⚡ Instant Sync Test","همگام‌سازی فوری":"Sync Now","⏸️ توقف موقت":"⏸️ Pause Selfbot","توقف موقت سلف‌بات":"Pause Selfbot","📱 تعویض اکانت":"📱 Change Telegram Session","تغییر سشن اکانت تلگرام":"Change Telegram Session","وضعیت سلف‌بات شما":"Your Selfbot Status","وضعیت سلف‌بات:":"Selfbot Status:","🟢 فعال و آنلاین":"🟢 Active & Online","آخرین به‌روزرسانی تلگرام":"Last Telegram Sync","آخرین همگام‌سازی:":"Last Sync:","درحال استعلام...":"Checking telemetry...","شبکه ابری Arizo Self فعال است":"Arizo Self Cloud Network is Active","پلتفرم ابری هوشمند سلف‌بات تلگرام آریزو | طراحی شده با معماری Edge و بدون سرور (Serverless)":"Arizo Telegram Selfbot Cloud Platform | Engineered with Serverless Edge Architecture","معرفی امکانات و سرویس‌های پیشرفته | Arizo Self v3.6.0 PRO":"Feature Tour & Advanced Services | Arizo Self v3.6.0 PRO","استودیوی ابری سلف‌بات هوشمند تلگرام":"Intelligent Telegram Selfbot Cloud Studio","پلتفرم متمرکز ابری جهت خودکارسازی و مدیریت نمایه تلگرام بر بستر سرورلس ۲۴ ساعته بدون نیاز به آنلاین بودن دستگاه یا سرور اختصاصی.":"Centralized 24/7 serverless platform automating Telegram profiles without dedicated servers or keeping your phone online.","واکنش زیر ۴۰ms":"Sub-40ms Latency","۱۰۰٪ ابری ۲۴/۷":"100% 24/7 Cloud","دیتابیس هیبرید D1 + KV":"Hybrid D1 + KV Database","امنیت ۲FA و هانی‌پات":"2FA & Honeypot Security","ساعت زنده نام کاربری":"Live Profile Clock","۳۲ قلم نوشتاری":"32 Font Styles","به‌روزرسانی خودکار و بلادرنگ زمان تهران در نام کاربری تلگرام با ۳۲ استایل قلم فارسی و لاتین، ارقام محلی و نمایش ۱۲/۲۴ ساعته رأس ثانیه ۰۰.":"Real-time automated Telegram name clock synchronization with 32 designer presets, custom local digits, and 12/24h precision at second 00.","بیوگرافی زنده و تقویم":"Dynamic Bio & Calendar","متغیرهای هوشمند":"Smart Dynamic Variables","نمایش تقویم زنده هجری شمسی، روز هفته و ساعت در بخش Bio تلگرام با الگوهای مدرن و متغیرهای داینامیک.":"Dynamic Telegram bio updates displaying calendar, day of week, and time formatted with modern templates.","منشی خودکار پیوی (AFK)":"AFK Private Auto-Secretary","سیستم ضد اسپم":"Anti-Spam Cooldown","پاسخگویی هوشمند به پیام‌های شخصی هنگام آفلاین بودن، با قابلیت تعریف متن سفارشی، فاصله زمانی و استثناسازی ربات‌ها و کاربران.":"Smart auto-replies to private messages when offline, featuring custom templates, cooldowns, and bot whitelisting.","دستیار هوش مصنوعی (AI)":"AI Chat Assistant","پاسخگوی چت لبه‌ای":"Edge Contextual Responder","تعامل زبانی و پاسخ‌دهی خودکار به چت‌ها با استفاده از مدل‌های پیشرفته هوش مصنوعی متصل به سامانه سرورلس ابری.":"Context-aware conversational replies powered by advanced LLM integration directly on serverless edge.","پایشگر ضد حذف (Anti-Delete)":"Anti-Delete Message Vault","متن، عکس، ویس و فایل":"Text, Photos, Audio & Files","ضبط و فوروارد بلادرنگ پیام‌ها، فایل‌ها، تصاویر، ویس‌ها و استیکرهای پاک‌شده توسط مخاطبان در پیوی به ربات دستیار شخصی.":"Immediate capture and forwarding of deleted private messages, media, stickers, and voice notes to your helper bot.","مانیتور ضد ویرایش (Anti-Edit)":"Anti-Edit Message Monitor","متن قبل و بعد ادیت":"Pre-Edit & Post-Edit Diff","آشکارسازی و ارسال متن اولیه پیام‌ها قبل از ویرایش به همراه نسخه اصلاح‌شده و زمان دقیق به ربات دستیار برای ثبت تاریخچه.":"Instant detection of edited private messages, sending the original text and updated diff to your helper bot.","آرشیو رسانه‌ها (Anti-TTL)":"Anti-TTL Media Archiver","رسانه‌های View-Once":"View-Once Self-Destructing Media","ذخیره و فوروارد فوری عکس‌ها و ویدیوهای محوشونده و تایمردار تلگرام پیش از سوختن یا ناپدید شدن با حداکثر کیفیت اصلی.":"Download and archive disappearing view-once media before expiration in uncompressed original quality.","حالت روح و نامرئی (Ghost Mode)":"Ghost & Stealth Mode","مشاهده بدون تیک دوم":"Silent Read Without Seen Status","مشاهده و مرور پیام‌های دریافتی بدون سین خوردن با امکان فعال‌سازی از پنل یا دستور تلگرامی":"Browse incoming private messages without triggering seen checkmarks, toggleable via panel or in-chat commands","و":"and","مدیریت سکوت و فیلتر (Mute)":"Silence Filter & Auto-Purge","پاکسازی دوطرفه چت":"Two-Way Instant Message Purge","مسدودسازی و حذف خودکار و آنی پیام‌های کاربران مزاحم با دستور تلگرامی":"Instantly purge incoming messages from unwanted senders for both parties using Telegram command","و مدیریت یکپارچه از طریق پنل.":"or the web panel.","حالت خواب شبانه (Sleep Mode)":"Night Sleep Automation","اتوماسیون استراحت":"Rest Hours Automation","تغییر خودکار نام خانوادگی به حالت استراحت و به تعویق انداختن پیام‌ها در ساعات مشخص شبانه به صورت اتوماتیک.":"Automatically append sleep indicator to your profile name and defer notifications during configured rest hours.","تایید دومرحله‌ای (Google 2FA)":"Two-Factor Auth (Google 2FA)","استاندارد TOTP RFC 6238":"RFC 6238 TOTP Standard","محافظت نفوذناپذیر از حساب پنل کاربری با Google Authenticator، رمز موقت ۶ رقمی و ۸ کد بازیابی اضطراری.":"Bulletproof account protection using Google Authenticator, 30s rotating tokens, and 8 disaster recovery backup codes.","دفاع فعال هانی‌پات (Honeypot)":"Active Zero-Trust Honeypot","تله امنیتی و بلاک IP":"Decoy Traps & Auto IP Bans","کشف و مهار اسکنرهای مخرب روی روت‌های حساس، مسدودسازی آنی IP نفوذگر و ارسال گزارش حمله به ربات تلگرام.":"Detect and ban vulnerability scanners on sensitive paths, instantly blacklisting hostile IPs and alarming your bot.","ویزارد راه‌اندازی تحت وب (/setup)":"Web Setup Wizard (/setup)","بدون کدنویسی":"Zero Coding Required","راهنمای جامع تعاملی ۵ مرحله‌ای برای دریافت API کلیدها، ایجاد سشن تلگرام و راه‌اندازی آسان و بدون ترمینال.":"Step-by-step interactive 5-stage launcher to generate keys, test bot tokens, and deploy without terminal skills.","سیستم ارتقا به مدیر (Role System)":"Role Management & Promotion","ارتقا / تنزل آنی":"Instant Promote / Demote","امکان ارتقای مستقیم کاربران به مدیر سیستم یا تنزل به کاربر عادی در جدول کاربران و پنل بازرس با تایید امنیتی.":"Promote users to Administrator or demote to standard subscriber with instant permission sync.","داشبورد مانیتورینگ (/admin)":"Admin Command Center (/admin)","روت مستقل و امن":"Dedicated Secure Route","مشاهده آمارهای زنده دیتابیس، نرخ رایت‌ها، سشن‌های فعال، خطاهای ثبت‌شده و وضعیت ربات‌های کمکی در صفحه مجزا.":"Real-time database analytics, active sessions, error telemetry, and helper bot status on an isolated admin dashboard.","موتور ذخیره‌سازی هیبرید D1 + KV":"Hybrid Storage Engine (D1 + KV)","۱۰۰,۰۰۰ رایت D1 روزانه":"100,000 Free Daily D1 Writes","بهره‌گیری همزمان از Cloudflare D1 و KV همراه با کش رم هوشمند جهت به صفر رساندن استهلاک دیتابیس بدون مصرف اضافه.":"Combines Cloudflare D1 and KV with intelligent RAM caching to eliminate redundant database quota wear.","انبار لایسنس و ردیم‌کد (License Vault)":"License Key Inventory Vault","مدیریت اعتبار و تاریخ انقضا":"Subscription & Expiry Tracking","تولید، ابطال و رصد کدهای اشتراک مدت‌دار با فرمت استاندارد ARIZO-XXXX، تخصیص مستقیم به کاربران و مدیریت مالی اشتراک‌ها.":"Generate, revoke, and track standardized ARIZO-XXXX license keys, assigning plan tiers and managing subscriptions.","مینی اپلیکیشن تلگرام (Telegram WebApp)":"Telegram Mini App (WebApp)","ورود مستقیم SSO":"Seamless SSO Authentication","دسترسی تمام‌عیار و مدیریت سلف‌بات مستقیماً از درون محیط تلگرام با ورود خودکار امن و هماهنگی کامل با تم تلگرام.":"Full-featured selfbot management right inside Telegram with automatic single-sign-on and theme matching.","عدم نمایش خودکار در دفعات بعدی":"Do not show automatically again","ویزارد راه‌اندازی (/setup)":"Setup Wizard (/setup)","بستن":"Close","ورود به استودیو":"Enter Studio","⚙️ تنظیمات و امنیت حساب Arizo Self":"⚙️ Account Settings & Security","تنظیمات و مدیریت حساب کاربری":"Account Settings & Management","🎟️ تمدید اعتبار با ردیم‌کد جدید Arizo":"🎟️ Extend Subscription with License Key","تمدید و ارتقای اشتراک با لایسنس":"Extend Subscription with License","تمدید و شارژ اشتراک":"Apply & Extend Subscription","ثبت و تمدید اشتراک":"Apply & Extend","🔑 تغییر رمز عبور ورود":"🔑 Change Account Password","تغییر رمز عبور ورود به پنل":"Change Account Password","رمز عبور فعلی":"Current Password","رمز عبور جدید (حداقل ۸ کاراکتر)":"New Password (min 8 chars)","رمز عبور جدید":"New Password","ثبت رمز عبور جدید":"Update Password","بروزرسانی رمز عبور":"Update Password","🔌 قطع اتصال حساب تلگرام":"🔌 Disconnect Telegram Account","قطع اتصال سشن تلگرام":"Disconnect Telegram Session","🗑️ حذف کامل حساب کاربری و تمام داده‌ها":"🗑️ Permanently Delete Account & All Data","حذف دائمی حساب کاربری":"Permanently Delete Account","ثبت‌نام:":"Registered:","کد لایسنس:":"License Code:","💡 تمامی تغییرات بلافاصله در حافظه Edge Cloudflare ذخیره و اعمال می‌گردند.":"💡 All changes are immediately stored and propagated across Cloudflare Edge.","بستن پنجره":"Close Window","Switch Language / تغییر زبان":"Switch Language / تغییر زبان","تغییر حالت شب و روز":"Toggle Dark / Light Mode","راهنمای جامع امکانات و سرویس‌های سامانه Arizo Self":"Arizo Self Complete Feature Tour & Service Guide","ورود به پنل مدیریت ارشد و مانیتورینگ":"Enter Admin Command Center & Monitoring","تنظیمات حساب":"Account Settings","خروج":"Sign Out","خروج از حساب":"Sign Out","مثال: ۱۵ (تعداد روز اعتبار لایسنس)":"e.g. 15 (Validity days)","🔍 جستجو بر اساس نام کاربری، شناسه تلگرام یا ربات...":"🔍 Search by username, Telegram ID or bot...","ارتقای یک کاربر به مدیر سامانه":"Promote a user to system administrator","تازه‌سازی لیست":"Refresh Directory","نام کاربری شما (مثال: amirmaster)":"Your username (e.g. alex_vip)","نام کاربری شما (مثلاً alex_vip)":"Your username (e.g. alex_vip)","رمز عبور حساب کاربری (••••••••)":"Account password (••••••••)","رمز عبور حساب":"Account password","کد لایسنس فعال‌سازی (مثال: ARIZO-XXXX-XXXX-XXXX)":"Activation license key (e.g. ARIZO-XXXX-XXXX-XXXX)","کد لایسنس خریداری شده (ARIZO-XXXX-XXXX-XXXX)":"License key (ARIZO-XXXX-XXXX-XXXX)","نام کاربری دلخواه (مثال: amir_vip)":"Desired username (e.g. alex_vip)","نام کاربری دلخواه (حروف انگلیسی و اعداد)":"Choose username (alphanumeric)","رمز عبور امن و قوی (حداقل ۸ کاراکتر)":"Strong Password (min 8 chars)","حداقل ۸ کاراکتر":"At least 8 characters","تکرار مجدد رمز عبور جهت اطمینان":"Re-enter your password","رمز عبور را مجدداً وارد نمایید":"Re-enter your password","کد لایسنس جدید جهت خروج از تعلیق (مثال: ARIZO-XXXX-XXXX-XXXX)":"Renewal license key (e.g. ARIZO-XXXX-XXXX-XXXX)","لایسنس فعال‌سازی جدید...":"New renewal license key...","شماره همراه با پیش‌شماره کشور (مثال: 989123456789+)":"Phone number with country code (e.g. +14155552671)","+989123456789 یا +14155552671":"+14155552671 or +989123456789","کد ۵ رقمی ارسالی از تلگرام (مثال: 58291)":"5-digit verification code (e.g. 58291)","کد ۵ رقمی دریافتی":"5-digit verification code","رمز تأیید دومرحله‌ای (در صورت فعال بودن 2FA)":"2FA Password (if enabled on account)","در صورت داشتن رمز دو مرحله‌ای وارد کنید":"Enter 2FA password if enabled","رشته طولانی StringSession تلگرام خود را اینجا وارد کنید (Pyrogram یا Telethon/GramJS)...":"Paste your Telegram StringSession here (Pyrogram or Telethon/GramJS)...","1BJWap1wB... یا 1ApWap...":"1BJWap1wB... or 1ApWap...","پیشوند ساعت (مثلاً: [ یا | یا ⚡)":"Clock prefix (e.g. [ or | or ⚡)","پسوند ساعت (مثلاً: ] یا ⚡ یا VIP)":"Clock suffix (e.g. ] or ⚡ or VIP)","۱۰ رقم دلخواه از ۰ تا ۹ به ترتیب (مثال: ۰۱۲۳۴۵۶۷۸۹)":"10 custom digits from 0 to 9 (e.g. 0123456789)","قالب بیوگرافی (مثال: ⏳ {time} | 📅 {date} | ⚡ Arizo Pro)":"Bio template (e.g. ⏳ {time} | 📅 {date} | ⚡ Arizo Pro)","متن پاسخ خودکار منشی (مثال: درود! در حال حاضر امکان پاسخگویی ندارم. به محض آنلاین شدن پاسخ خواهم داد ⏳)":"Away reply text (e.g. Hello! Currently away, will reply as soon as online ⏳)","آیدی‌های عددی یا یوزرنیم‌های تلگرام با کاما (مثال: 123456789, @username, 987654321)":"Telegram IDs or usernames separated by comma (e.g. 123456789, @user)","متن نام خانوادگی در خواب (مثال: 😴 Sleep یا 🌙 خوابیدم)":"Sleep status name text (e.g. 😴 Sleep)","آیدی عددی یا یوزرنیم افرادی که می‌خواید تیک آبی برایشون فعال بمونه (با کاما جدا کنید)":"Telegram IDs/usernames exempt from Ghost Mode (comma separated)","کلید API خود را از پنل Gemini یا OpenAI دریافت و اینجا وارد کنید":"Paste your Google Gemini or OpenAI API Key here","نمایش / مخفی‌سازی کلید":"Show / Hide Key","به AI بگویید چطور رفتار کنه (مثلاً: مؤدبانه و رسمی پاسخ بده، از اطلاعات خصوصی صحبت نکنه)":"Instruct AI personality (e.g. Reply politely and formally, keep answers concise)","اطلاعاتی که AI اجازه داره بگه (مثلاً: ساعت کاری من ۹ تا ۵ هست، برنامه‌نویس هستم)":"Context facts for AI (e.g. My working hours are 9 to 5, I am a developer)","توکن ربات دریافتی از BotFather@ (مثال: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ)":"Bot token from @BotFather (e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ)","تنظیم یا تغییر دستی شناسه تلگرام مجاز":"Manually Set Authorized Telegram Owner ID","کلید دستی":"Manual Key","مثال: 123456":"e.g. 123456","رمز عبور حساب برای رمزنگاری فایل":"Account password used to encrypt backup","رمز عبور استفاده شده هنگام بکاپ":"Password used when backup was created","کد لایسنس تمدید (مثال: ARIZO-XXXX-XXXX-XXXX)":"Renewal License Key (ARIZO-XXXX-XXXX-XXXX)","کد لایسنس تمدید (ARIZO-XXXX-XXXX-XXXX)":"Renewal License Key (ARIZO-XXXX-XXXX-XXXX)","رمز عبور فعلی حساب شما":"Your current account password","رمز عبور فعلی خود را وارد کنید":"Enter current password","رمز عبور جدید و امن (حداقل ۸ کاراکتر)":"New secure password (min 8 chars)","🚀 ویزارد راه‌اندازی هوشمند و گام‌به‌گام | Arizo Self v3.6.0 PRO":"🚀 Interactive Step-by-Step Setup Wizard | Arizo Self v3.6.0 PRO","ویزارد هوشمند و تعاملی ستاپ شخصی از گیت‌هاب":"Interactive GitHub Setup Wizard for Selfbot Studio","بررسی سلامت سرور":"Check Server Health","خروجی سکرت‌ها":"Export Secrets","👑 پنل مدیریت":"👑 Admin Portal","🚪 استودیو":"🚪 Studio","مرحله ۱ از ۵: گیت‌هاب و نیازمندی‌ها":"Step 1 of 5: GitHub & Prerequisites","۲۰٪ تکمیل شده":"20% Completed","گیت‌هاب و فورک":"GitHub & Fork","۲":"2","کلادفلر و D1":"Cloudflare & D1","۳":"3","تلگرام و ربات":"Telegram & Bot","۴":"4","رانر Actions":"Actions Runner","۵":"5","ورود و تست":"Test & Launch","📥 مرحله اول: انشعاب پروژه در گیت‌هاب (Fork) و دانلود سورس":"📥 Step 1: Fork Project on GitHub & Clone Source","یک نسخه مستقل از پروژه را در اکانت گیت‌هاب خود فورک کنید. با وارد کردن نام کاربری گیت‌هاب در کادر زیر، تمام آدرس‌ها و دستورات به نام شما شخصی‌سازی خواهند شد!":"Fork an independent copy of the repository into your GitHub account. Enter your GitHub username below to personalize all URLs and commands automatically!","👤 نام کاربری شما در GitHub (شخصی‌سازی خودکار همه لینک‌ها و دستورات)":"👤 Your GitHub Username (Auto-personalizes all links & commands)","هنوز وارد نشده":"Not entered yet","🍴 فورک مستقیم در گیت‌هاب":"🍴 Fork Directly on GitHub","💡 با وارد کردن یوزرنیم، لینک‌های ریپازیتوری، آدرس تنظیم سکرت‌ها و دستورات کلون به طور خودکار بروز می‌شوند.":"💡 Entering your username updates repository links, secrets settings URL, and clone commands instantly.","🍴 ریپازیتوری رسمی پروژه":"🍴 Official Repository","سورس اصلی سلف‌بات روی گیت‌هاب قرار دارد. برای شروع روی دکمه زیر بزنید و در صفحه گیت‌هاب، دکمه":"The source repository is hosted on GitHub. Click the button below and on the GitHub page press","را بفشارید:":"to fork:","🔗 مشاهده ریپوی مرجع گیت‌هاب":"🔗 View Source on GitHub","💻 پیش‌نیازهای نرم‌افزاری ساده":"💻 Basic Software Prerequisites","تنها ابزارهای مورد نیاز برای استفاده:":"The only prerequisites required:","نصب بودن":"Installed","Node.js 18 یا بالاتر":"Node.js 18 or higher","روی سیستم":"on your local system","یک حساب کاربری رایگان در":"A free account on","یک اکانت رایگان در":"A free account on","برای رانر دائمی":"for continuous 24/7 runner","⌨️ دریافت سورس و نصب پکیج‌ها:":"⌨️ Clone Source & Install Dependencies:","PowerShell (ویندوز)":"PowerShell (Windows)","Bash (مک و لینوکس)":"Bash (macOS & Linux)","📋 کپی کامل دستور":"📋 Copy Command","مرحله بعد: کلادفلر و پایگاه داده D1":"Next Step: Cloudflare & D1 Database","گام بعدی: ساخت ورکر و دیتابیس کلادفلر":"Next Step: Create Cloudflare Worker & D1 Database","⛅ مرحله دوم: پایگاه داده SQLite ابری (D1) و حافظه کلادفلر (KV)":"⛅ Step 2: Serverless SQLite Database (D1) & KV Cache","پروژه Arizo Self از معماری پیشرفته هیبریدی D1 + KV با سقف ۱۰۰,۰۰۰ رایت رایگان در روز استفاده می‌کند.":"Arizo Self utilizes a high-efficiency hybrid D1 + KV architecture with 100,000 free daily writes.","🪄 استخراج جادویی شناسه‌ها از لاگ ترمینال (بدون نیاز به پیدا کردن دستی UUID!)":"🪄 Magic ID Extractor from Terminal Log (Zero manual UUID hunting)","وقتی دستورات ساخت D1 یا KV را اجرا کردید، کل خروجی چاپ شده در ترمینال را در کادر زیر پیست کنید تا سیستم شناسه‌ها را به صورت خودکار تشخیص داده و فیلدها را پر کند:":"Paste the terminal output from D1 or KV creation commands below; the wizard will automatically parse UUIDs and fill all fields:","🗄️ ۱. ساخت پایگاه داده D1":"🗄️ 1. Create D1 Database","این دستور را در ترمینال پوشه پروژه اجرا کنید:":"Run this command in the project directory terminal:","کپی":"Copy","💡 شناسه تولیدشده (database_id) را در فیلد زیر وارد یا پیست کنید.":"💡 Enter or paste the generated database_id in the field below.","⚡ ۲. ساخت حافظه کش KV":"⚡ 2. Create KV Namespace","این دستور را در ترمینال اجرا کنید:":"Run this command in your terminal:","💡 شناسه تولیدشده (id) را در فیلد زیر وارد یا پیست کنید.":"💡 Enter or paste the generated namespace ID in the field below.","⚙️ تولیدکننده زنده و دانلود مستقیم فایل":"⚙️ Live wrangler.toml Generator & Direct Download","📥 دانلود مستقیم فایل wrangler.toml":"📥 Direct Download wrangler.toml","⚡ ساخت خودکار جداول D1":"⚡ Automatic D1 Schema Setup","اطلاعات را وارد کنید؛ پیش‌نمایش به صورت بلادرنگ بروزرسانی شده و می‌توانید فایل آماده را مستقیماً دانلود کنید:":"Fill in your details; the preview updates in real-time and you can download the ready-to-deploy configuration directly:","نام ورکر (Worker Name)":"Worker Name","شناسه KV Namespace (KV ID)":"KV Namespace ID","شناسه پایگاه داده D1 (Database ID)":"D1 Database ID","رمز عبور مدیریت (Admin Master Password)":"Admin Password","🎲 تولید تصادفی":"🎲 Generate Random","wrangler.toml (خروجی آماده دیپلوی)":"wrangler.toml (Ready for Deploy)","📥 دانلود فایل":"📥 Download File","📋 کپی کامل":"📋 Copy All","🚀 دستور دیپلوی به کلادفلر:":"🚀 Deploy to Cloudflare Command:","📋 کپی دستور":"📋 Copy Command","➡️ مرحله قبل":"⬅️ Previous Step","مرحله بعد: کلیدهای تلگرام و ربات کمکی":"Next Step: Telegram API Keys & Helper Bot","📱 مرحله سوم: اتصال کلاینت رسمی تلگرام و ساخت ربات کمکی":"📱 Step 3: Connect Telegram API Client & Create Helper Bot","ربات کمکی اختصاصی برای ارسال پیام‌های پاک‌شده، پیام‌های زمان‌دار قبل از انقضا و کدهای ورود به پیوی شما استفاده می‌شود.":"Your dedicated helper bot forwards anti-delete message recovery, anti-TTL media, and security alerts directly to your private chat.","🔑 ۱. شناسه و هش رسمی تلگرام":"🔑 1. Official Telegram Client ID & Hash","این مقادیر شناسه کلاینت رسمی تلگرام دسکتاپ هستند و سیستم به طور پیش‌فرض از آن‌ها استفاده می‌کند (نیازی به تغییر ندارید):":"These are official Telegram Desktop credentials used by default (no change required):","در صورت تمایل به دریافت کلید شخصی می‌توانید به سایت رسمی":"If you prefer your own personal Telegram developer credentials, visit","مراجعه کنید.":".","🤖 ۲. ایجاد ربات در BotFather تلگرام":"🤖 2. Create Bot in Telegram @BotFather","یک ربات اختصاصی و رایگان برای خود بسازید:":"Create a dedicated free bot for your account:","در تلگرام وارد آیدی":"In Telegram open","شوید.":".","دستور":"Send command","را بفرستید.":".","یک نام و یک یوزرنیم دلخواه (که به bot ختم شود) برگزینید.":"Choose a name and username ending in 'bot'.","توکن تلگرام داده‌شده را کپی و در کادر زیر وارد کنید.":"Copy the provided Telegram Bot Token and paste it below.","🤖 باز کردن ربات‌فادر در تلگرام":"🤖 Open @BotFather in Telegram","🔍 تستر و اعتبارسنجی آنلاین توکن ربات تلگرام":"🔍 Online Telegram Bot Token Validator & Ping Tester","توکن ربات خود را اینجا وارد کنید تا سیستم از طریق ارتباط مستقیم با API تلگرام صحت آن را تایید کند:":"Enter your bot token below to test live connectivity directly with Telegram API:","🚀 تست آنلاین توکن":"🚀 Test Bot Token Online","💬 ارسال پیام تست به پیوی شما از طریق این ربات:":"💬 Send test message to your Telegram chat via this bot:","📩 ارسال پیام تست":"📩 Send Test Message","مرحله بعد: رانر ۲۴ ساعته GitHub Actions":"Next Step: 24/7 GitHub Actions Runner","⚡ مرحله چهارم: فعال‌سازی رانر دائمی و ۲۴ ساعته در GitHub Actions":"⚡ Step 4: Enable 24/7 Persistent Runner in GitHub Actions","گیت‌هاب اکشنز ساعت زنده، بیوگرافی هوشمند و پایش ۲۴ ساعته را بدون قطعی و کاملاً رایگان روی سرورهای ابری گیت‌هاب روشن نگه می‌دارد.":"GitHub Actions keeps your live atomic clock, smart bio, and 24/7 monitors active without interruptions or server fees.","🛡️ مسیر ثبت سکرت‌ها در گیت‌هاب (Repository Secrets)":"🛡️ Repository Secrets Setup Path","🔗 رفتن مستقیم به صفحه Secrets ریپازیتوری شما":"🔗 Open Repository Secrets Page","در ریپازیتوری خود وارد مسیر زیر شوید و چهار متغیر زیر را ثبت نمایید:":"Navigate to the following settings path in your repo and add these four secrets:","نام Secret در گیت‌هاب":"Secret Name in GitHub","مقدار شما":"Your Value","عملیات کپی نام":"Copy Name Action","عملیات کپی مقدار":"Copy Value Action","کپی نام":"Copy Name","کپی مقدار":"Copy Value","▶️ استارت گردش کار رانر (Run Workflow)":"▶️ Run Workflow","🚀 رفتن به صفحه Actions ریپازیتوری شما":"🚀 Open Actions Page in Your Repo","در صفحه گیت‌هاب ریپوی خود، به تب":"In your GitHub repo go to tab","بروید ➔ گردش‌کار":"➔ Select workflow","را انتخاب کنید ➔ دکمه":"➔ Click button","را بزنید!":"!","🟢 رانر ابری فعال شده و هر ۴ ساعت به‌صورت خودکار چرخه اجرای خود را تمدید می‌کند.":"🟢 Cloud runner is active and automatically loops every 4 hours without interruption.","مرحله بعد: ورود به پنل و تست نهایی":"Next Step: Sign In & Final Launch","🎉 مرحله پنجم: چک‌لیست نهایی، بررسی سلامت و اتصال تلگرام":"🎉 Step 5: Final Readiness Checklist, Diagnostics & Connect","تبریک! تمام اجزای سیستم پیکربندی شدند. اکنون می‌توانید سلامت سیستم را چک کرده، نسخه پشتیبان دانلود کنید و وارد پنل شوید.":"Congratulations! All components are configured. You can now verify health, download backups, and sign in to the studio.","📋 چک‌لیست آمادگی نهایی:":"📋 Final Readiness Checklist:","روی هر مورد کلیک کنید تا تیک بخورد":"Click each item to check off","انشعاب پروژه (Fork) در حساب شخصی گیت‌هاب":"Fork project into your personal GitHub account","پروژه در ریپازیتوری شخصی شما کلون و آماده شد.":"Repository cloned and ready in your personal account.","کلادفلر ورکر و دیتابیس D1 ساخته و مستقر شد":"Cloudflare Worker & D1 Database deployed","پایگاه داده SQLite ابری با سقف ۱۰۰ هزار رایت رایگان در روز راه‌اندازی شد.":"Serverless SQLite database initialized with 100,000 free daily writes.","ربات کمکی در BotFather ایجاد و اعتبارسنجی شد":"Helper Bot created and validated in @BotFather","توکن ربات تایید شده و آماده دریافت پیام‌هاست.":"Bot token verified and ready to forward messages.","سکرت‌های گیت‌هاب اکشنز ست و رانر استارت شد":"GitHub Secrets set & Actions runner started","آدرس ورکر و رمز رانر در Secrets ثبت شدند.":"Worker URL and runner secret configured in repo settings.","👑 ورود مدیر کل به پنل مدیریت":"👑 Sign In to Admin Command Center","وارد روت":"Navigate to route","شده و رمز عبوری که در":"and use the password defined in","تنظیم کردید را بزنید تا به انبار لایسنس، تله‌متری و ارتقای کاربران دسترسی یابید.":"to access the license inventory, telemetry, and user management.","ورود به پنل مدیریت (/admin)":"Sign In to Admin Portal (/admin)","📱 اتصال اکانت تلگرام به سلف‌بات":"📱 Connect Telegram Account to Selfbot","در داشبورد کاربری، روی":"In the user dashboard, click","اسکن QR تلگرام":"Scan Telegram QR","بزنید و از تلگرام گوشی در مسیر":"and from Telegram app navigate to","کد را اسکن نمایید.":"to scan the QR code.","ورود به داشبورد کاربری استودیو":"Sign In to Studio User Dashboard","💾 دانلود پکیج پیکربندی (JSON Backup)":"💾 Download Configuration Package (JSON Backup)","🩺 عیب‌یابی و اسکن اتصالات ورکر":"🩺 Live Cloud Diagnostics & Connection Scan","🚀 ورود به استودیو و پایان راه‌اندازی":"🚀 Enter Studio & Finish Setup","🩺 عیب‌یابی زنده اتصالات و پیکربندی ورکر":"🩺 Live Worker Diagnostics & Health Scan","در حال ارتباط با ورکر کلادفلر و اعتبارسنجی اتصالات...":"Connecting to Cloudflare Worker and validating endpoints...","📦 خروجی یکجای سکرت‌های GitHub Actions":"📦 Bulk Export GitHub Actions Secrets","تمامی متغیرهای محیطی با فرمت":"All environment variables formatted as","آماده برای کپی یا استفاده مستقیم:":"ready to copy or use directly:","📋 کپی کل متن":"📋 Copy Entire Block","پیام سیستم":"System Notification","بررسی زنده سلامت دیتابیس و سرویس":"Check Live Database & Service Health","خروجی یکجای سکرت‌های رانر":"Bulk Export Runner Secrets","تغییر تم روز و شب":"Toggle Day / Night Mode","ورود مستقیم به پنل مدیریت":"Direct Entry to Admin Portal","ورود به پنل استودیو سلف‌بات":"Enter Selfbot Studio Panel","مثال: AmirHossein یا your-github-username":"e.g. AmirHossein or your-github-username","متن خروجی ترمینال را اینجا Paste کنید...":"Paste terminal output here...","مثال: b56bacf321a54731ba4a1e69a5619898":"e.g. b56bacf321a54731ba4a1e69a5619898","مثال: 4edef38a-95d4-4459-a904-5248a8952363":"e.g. 4edef38a-95d4-4459-a904-5248a8952363","شناسه عددی چت شما (Chat ID عددی)":"Your numerical Telegram Chat ID"};
 
-    window.I18N = {
-      fa: {
-        themeDay: 'حالت روز',
-        themeNight: 'حالت شب',
-        featureTour: 'راهنمای قابلیت‌ها',
-        adminPortal: 'پنل مدیریت',
-        userSettings: 'تنظیمات حساب کاربری',
-        userLogout: 'خروج از حساب',
-        adminHeaderTitle: 'مرکز فرماندهی و فروشگاه آریزو سلف',
-        adminReturnBtn: 'بازگشت به پنل کاربران',
-        adminTabStats: 'آمار و تحلیل وضعیت',
-        adminTabCodes: 'مدیریت و صدور لایسنس',
-        adminTabUsers: 'کاربران و سلف‌بات‌ها',
-        authTabLogin: 'ورود به حساب',
-        authTabRegister: 'ثبت‌نام با لایسنس',
-        authUsernameLabel: 'نام کاربری',
-        authUsernamePlaceholder: 'نام کاربری شما (مثلاً alex_vip)',
-        authPasswordLabel: 'رمز عبور',
-        authPasswordPlaceholder: 'رمز عبور حساب',
-        authLoginBtn: 'ورود به داشبورد',
-        authLicenseLabel: 'کد لایسنس / فعال‌سازی',
-        authLicenseReq: '(برای ثبت‌نام الزامی است)',
-        authLicensePlaceholder: 'کد لایسنس خریداری شده (ARIZO-XXXX-XXXX-XXXX)',
-        authLicenseHint: 'کد لایسنس توسط مدیر یا فروشنده ارائه می‌شود (کاربر اول سیستم نیازی به کد ندارد)',
-        authRegUsernameLabel: 'نام کاربری جدید',
-        authRegUsernamePlaceholder: 'نام کاربری دلخواه (حروف انگلیسی و اعداد)',
-        authRegPassLabel: 'رمز عبور قوی',
-        authRegPassPlaceholder: 'حداقل ۸ کاراکتر',
-        authRegPassConfirmLabel: 'تکرار رمز عبور',
-        authRegPassConfirmPlaceholder: 'رمز عبور را مجدداً وارد نمایید',
-        authRegBtn: 'ثبت‌نام و فعال‌سازی اشتراک',
-        suspensionTitle: 'حساب کاربری شما معلق شده است',
-        suspensionDesc: 'دسترسی شما به سلف‌بات موقتاً مسدود شده است. جهت فعال‌سازی مجدد، لایسنس تمدید معتبر وارد کنید:',
-        suspensionPlaceholder: 'لایسنس فعال‌سازی جدید...',
-        suspensionBtn: 'ثبت لایسنس و رفع تعلیق',
-        mockupTitle: 'پیش‌نمایش زنده در تلگرام',
-        mockupTag: 'سینک زنده',
-        mockupDefaultUser: 'کاربر تلگرام',
-        mockupOnline: 'آنلاین',
-        mockupBioLabel: 'بیوگرافی زنده',
-        mockupBioWait: 'در حال دریافت وضعیت بیو...',
-        mockupDateLabel: 'تقویم جاری:',
-        mockupSyncChip: '⚡ موتور نوسان‌ساز ابری و کرون‌جاب فعال',
-        tgConnectTitle: 'اتصال سشن اکانت تلگرام',
-        tgConnectCancel: 'انصراف و بازگشت',
-        tgKvTag: 'رمزنگاری نظامی KV',
-        tgTabPhone: 'ورود مستقیم با شماره تلفن',
-        tgTabSession: 'ورود با StringSession پیش‌ساخته',
-        tgPhoneLabel: 'شماره تلفن با پیش‌شماره بین‌المللی',
-        tgPhonePlaceholder: '+989123456789 یا +14155552671',
-        tgCodeLabel: 'کد تایید پیامک/تلگرام',
-        tgCodePlaceholder: 'کد ۵ رقمی دریافتی',
-        tgPassLabel: 'رمز عبور دومرحله‌ای تلگرام (۲FA)',
-        tgPassPlaceholder: 'در صورت داشتن رمز دو مرحله‌ای وارد کنید',
-        tgAuthBtn: 'درخواست و ارسال کد ورود تلگرام',
-        tgSessionLabel: 'رشته متنی سشن تلگرام (Telethon / GramJS / Pyrogram)',
-        tgSessionPlaceholder: '1BJWap1wB... یا 1ApWap...',
-        tgSessBtn: 'ذخیره و اعتبارسنجی سشن',
-        studioTitle: 'استودیوی جامع شخصی‌سازی',
-        studioTabClock: 'ساعت و استایل',
-        studioTabBio: 'بیوگرافی زنده',
-        studioTabAfk: 'منشی خودکار',
-        studioTabMute: 'فیلتر سکوت',
-        studioTabAutomation: 'حالت خواب',
-        studioTabBot: 'ربات و لاگر',
-        studioTabGhost: 'حالت شبح',
-        studioTabAI: 'پاسخ هوشمند AI',
-        studioTabSecurity: 'امنیت و ۲FA',
-        stepPrev: 'قبلی',
-        stepOf: 'از ۹',
-        stepNext: 'بعدی',
-        saveBtn: 'ذخیره آنی تغییرات استودیو',
-        telemetrySectionTitle: 'وضعیت سلامت و پایپ‌لاین ابری',
-        syncBtn: 'همگام‌سازی فوری',
-        pauseBtn: 'توقف موقت سلف‌بات',
-        switchTgBtn: 'تغییر سشن اکانت تلگرام',
-        botStatusLabel: 'وضعیت سلف‌بات:',
-        lastUpdateLabel: 'آخرین همگام‌سازی:',
-        footerText: 'پلتفرم ابری هوشمند سلف‌بات تلگرام آریزو | طراحی شده با معماری Edge و بدون سرور (Serverless)',
-        settingsHeading: 'تنظیمات و مدیریت حساب کاربری',
-        redeemExtendTitle: 'تمدید و ارتقای اشتراک با لایسنس',
-        extendPlaceholder: 'کد لایسنس تمدید (ARIZO-XXXX-XXXX-XXXX)',
-        extendBtn: 'ثبت و تمدید اشتراک',
-        changePassTitle: 'تغییر رمز عبور ورود به پنل',
-        oldPassLabel: 'رمز عبور فعلی',
-        oldPassPlaceholder: 'رمز عبور فعلی خود را وارد کنید',
-        newPassLabel: 'رمز عبور جدید',
-        newPassPlaceholder: 'حداقل ۸ کاراکتر',
-        savePassBtn: 'بروزرسانی رمز عبور',
-        disconnectTgBtn: 'قطع اتصال سشن تلگرام',
-        deleteAccountBtn: 'حذف دائمی حساب کاربری'
-      },
-      en: {
-        themeDay: 'Day Mode',
-        themeNight: 'Night Mode',
-        featureTour: 'Feature Tour',
-        adminPortal: 'Admin Portal',
-        userSettings: 'Account Settings',
-        userLogout: 'Sign Out',
-        adminHeaderTitle: 'Arizo Self Command Center & Store',
-        adminReturnBtn: 'Return to User Panel',
-        adminTabStats: 'Stats & Analytics',
-        adminTabCodes: 'License Inventory',
-        adminTabUsers: 'Users & Selfbots',
-        authTabLogin: 'Sign In',
-        authTabRegister: 'Register with License',
-        authUsernameLabel: 'Username',
-        authUsernamePlaceholder: 'Your username (e.g. alex_vip)',
-        authPasswordLabel: 'Password',
-        authPasswordPlaceholder: 'Account password',
-        authLoginBtn: 'Sign In to Dashboard',
-        authLicenseLabel: 'License Key / Activation Code',
-        authLicenseReq: '(Required for registration)',
-        authLicensePlaceholder: 'License key (ARIZO-XXXX-XXXX-XXXX)',
-        authLicenseHint: 'License key provided by vendor (first admin needs no license)',
-        authRegUsernameLabel: 'New Username',
-        authRegUsernamePlaceholder: 'Choose username (alphanumeric)',
-        authRegPassLabel: 'Strong Password',
-        authRegPassPlaceholder: 'At least 8 characters',
-        authRegPassConfirmLabel: 'Confirm Password',
-        authRegPassConfirmPlaceholder: 'Re-enter your password',
-        authRegBtn: 'Register & Activate Subscription',
-        suspensionTitle: 'Your Account Has Been Suspended',
-        suspensionDesc: 'Access to your selfbot is temporarily restricted. Enter a renewal license key to reactivate:',
-        suspensionPlaceholder: 'New renewal license key...',
-        suspensionBtn: 'Apply License & Reactivate',
-        mockupTitle: 'Live Telegram Preview',
-        mockupTag: 'Live Sync',
-        mockupDefaultUser: 'Telegram User',
-        mockupOnline: 'online',
-        mockupBioLabel: 'Live Bio',
-        mockupBioWait: 'Syncing bio status...',
-        mockupDateLabel: 'Calendar:',
-        mockupSyncChip: '⚡ Edge Engine & Atomic Cron Active',
-        tgConnectTitle: 'Connect Telegram Account Session',
-        tgConnectCancel: 'Cancel & Return',
-        tgKvTag: 'Military Grade KV Encryption',
-        tgTabPhone: 'Direct Phone Login',
-        tgTabSession: 'StringSession Login',
-        tgPhoneLabel: 'Phone Number (International format)',
-        tgPhonePlaceholder: '+14155552671 or +989123456789',
-        tgCodeLabel: 'Verification Code (Telegram/SMS)',
-        tgCodePlaceholder: '5-digit verification code',
-        tgPassLabel: 'Two-Step Verification (2FA) Password',
-        tgPassPlaceholder: 'Enter your 2FA password if enabled',
-        tgAuthBtn: 'Request Telegram Login Code',
-        tgSessionLabel: 'Telegram StringSession (Telethon / GramJS / Pyrogram)',
-        tgSessionPlaceholder: '1BJWap1wB... or 1ApWap...',
-        tgSessBtn: 'Validate & Save Session',
-        studioTitle: 'Comprehensive Studio',
-        studioTabClock: 'Clock & Style',
-        studioTabBio: 'Dynamic Bio',
-        studioTabAfk: 'Auto-Secretary',
-        studioTabMute: 'Silence Filter',
-        studioTabAutomation: 'Sleep Schedule',
-        studioTabBot: 'Bot & Logger',
-        studioTabGhost: 'Ghost Mode',
-        studioTabAI: 'Smart AI Reply',
-        studioTabSecurity: 'Security & 2FA',
-        stepPrev: 'Previous',
-        stepOf: 'of 9',
-        stepNext: 'Next',
-        saveBtn: 'Save Studio Changes',
-        telemetrySectionTitle: 'System Health & Cloud Pipeline',
-        syncBtn: 'Sync Now',
-        pauseBtn: 'Pause Selfbot',
-        switchTgBtn: 'Change Telegram Session',
-        botStatusLabel: 'Selfbot Status:',
-        lastUpdateLabel: 'Last Sync:',
-        footerText: 'Arizo Telegram Selfbot Cloud Platform | Engineered with Serverless Edge Architecture',
-        settingsHeading: 'Account Settings & Management',
-        redeemExtendTitle: 'Extend Subscription with License',
-        extendPlaceholder: 'Renewal License Key (ARIZO-XXXX-XXXX-XXXX)',
-        extendBtn: 'Apply & Extend',
-        changePassTitle: 'Change Account Password',
-        oldPassLabel: 'Current Password',
-        oldPassPlaceholder: 'Enter current password',
-        newPassLabel: 'New Password',
-        newPassPlaceholder: 'At least 8 characters',
-        savePassBtn: 'Update Password',
-        disconnectTgBtn: 'Disconnect Telegram Session',
-        deleteAccountBtn: 'Permanently Delete Account'
+    window.translateDOM = function(root, lang) {
+      var isEn = (lang === 'en');
+      if (!root) root = document.body;
+      if (!root) return;
+
+      var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+      var node;
+      while ((node = walker.nextNode())) {
+        var raw = node.nodeValue;
+        if (!raw) continue;
+        var trimmed = raw.trim();
+        if (!trimmed || trimmed.length < 2) continue;
+
+        if (typeof node.__origFa === 'undefined') {
+          if (window.TRANSLATIONS_MAP[trimmed]) {
+            node.__origFa = trimmed;
+            node.__leadWs = raw.substring(0, raw.indexOf(trimmed));
+            node.__trailWs = raw.substring(raw.indexOf(trimmed) + trimmed.length);
+          }
+        }
+
+        if (node.__origFa) {
+          if (isEn) {
+            var trans = window.TRANSLATIONS_MAP[node.__origFa];
+            if (trans) {
+              node.nodeValue = node.__leadWs + trans + node.__trailWs;
+            }
+          } else {
+            node.nodeValue = node.__leadWs + node.__origFa + node.__trailWs;
+          }
+        }
       }
-    };
 
-    window.t = function(key, fallback) {
-      var dict = window.I18N[window.currentLang] || window.I18N.fa;
-      return (dict && dict[key]) || fallback || key;
+      var elementsWithAttr = root.querySelectorAll ? root.querySelectorAll('[placeholder], [title], [aria-label]') : [];
+      elementsWithAttr.forEach(function(el) {
+        ['placeholder', 'title', 'aria-label'].forEach(function(attr) {
+          var val = el.getAttribute(attr);
+          if (!val) return;
+          var trimmed = val.trim();
+          var key = '__origFa_' + attr;
+          if (typeof el[key] === 'undefined') {
+            if (window.TRANSLATIONS_MAP[trimmed]) {
+              el[key] = trimmed;
+            }
+          }
+          if (el[key]) {
+            if (isEn) {
+              var trans = window.TRANSLATIONS_MAP[el[key]];
+              if (trans) el.setAttribute(attr, trans);
+            } else {
+              el.setAttribute(attr, el[key]);
+            }
+          }
+        });
+      });
     };
 
     window.applyLanguage = function(lang) {
@@ -4799,38 +4667,30 @@ export function panelHTML(env, options = {}) {
       document.documentElement.setAttribute('lang', lang);
       document.documentElement.setAttribute('dir', lang === 'en' ? 'ltr' : 'rtl');
 
-      var dict = window.I18N[lang] || window.I18N.fa;
+      var dict = (window.I18N && window.I18N[lang]) || (window.I18N && window.I18N.fa) || {};
 
-      // به‌روزرسانی تمام المان‌های نشاندار
       document.querySelectorAll('[data-i18n]').forEach(function(el) {
         var key = el.getAttribute('data-i18n');
-        if (dict[key]) {
-          el.textContent = dict[key];
-        }
+        if (dict[key]) el.textContent = dict[key];
       });
-
       document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
         var key = el.getAttribute('data-i18n-placeholder');
-        if (dict[key]) {
-          el.placeholder = dict[key];
-        }
+        if (dict[key]) el.placeholder = dict[key];
       });
-
       document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
         var key = el.getAttribute('data-i18n-title');
-        if (dict[key]) {
-          el.title = dict[key];
-        }
+        if (dict[key]) el.title = dict[key];
       });
 
-      // به‌روزرسانی متن دکمه سوئیچ زبان
+      // ترجمه جامع و دقیق تمامی بخش‌ها و پنل‌های استودیو
+      window.translateDOM(document.body, lang);
+
       var langBtn = document.getElementById('langToggleBtn');
       if (langBtn) {
         langBtn.textContent = lang === 'en' ? '🌐 فارسی' : '🌐 English';
         langBtn.title = lang === 'en' ? 'تغییر زبان به فارسی' : 'Switch Language to English';
       }
 
-      // به‌روزرسانی تم و پریست‌ها
       updateThemeUI(document.documentElement.getAttribute('data-theme') || 'dark');
       if (typeof window.renderPresetCards === 'function') {
         window.renderPresetCards();
@@ -5841,7 +5701,8 @@ export function panelHTML(env, options = {}) {
       }
     };
 
-    window.openSettingsModal = function() { document.getElementById('settingsModal').classList.remove('hidden'); };
+    window.openSettingsModal = function() { document.getElementById('settingsModal').classList.remove('hidden');
+      window.translateDOM(document.getElementById('settingsModal'), window.currentLang); };
     window.closeSettingsModal = function() { document.getElementById('settingsModal').classList.add('hidden'); };
 
     window.openFeaturesModal = function() {
