@@ -28,11 +28,11 @@ jobs:
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: 📦 Install Dependencies (Fast Cached)
-        run: npm ci --prefer-offline --no-audit --no-fund --production
+        run: npm install --no-audit --no-fund --omit=dev
 
       - name: 🚀 Run Clock Engine
         env:
