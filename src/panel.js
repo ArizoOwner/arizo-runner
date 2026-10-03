@@ -16,11 +16,15 @@ export function panelHTML(env, options = {}) {
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     window.START_IN_ADMIN = ${autoOpenAdmin ? 'true' : 'false'};
-    // ⚡ Anti-FOUC Theme Initializer & Telegram WebApp SSO
+    // ⚡ Anti-FOUC Theme & Language Initializer & Telegram WebApp SSO
     (function() {
       try {
         var savedTheme = localStorage.getItem('arizo_theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
+
+        var savedLang = localStorage.getItem('arizo_lang') || 'fa';
+        document.documentElement.setAttribute('lang', savedLang);
+        document.documentElement.setAttribute('dir', savedLang === 'en' ? 'ltr' : 'rtl');
 
         var urlParams = new URLSearchParams(window.location.search);
         var ssoToken = urlParams.get('token');
@@ -275,6 +279,37 @@ export function panelHTML(env, options = {}) {
       transition: background-color 0.4s var(--smooth-physics), color 0.4s var(--smooth-physics);
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* 🌐 استایل‌های هماهنگ با زبان انگلیسی و چیدمان استاندارد LTR */
+    html[dir="ltr"] body,
+    html[lang="en"] body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      direction: ltr;
+      text-align: left;
+    }
+    html[dir="ltr"] .modal-header,
+    html[dir="ltr"] .modal-head,
+    html[dir="ltr"] .section-header,
+    html[dir="ltr"] .form-group,
+    html[dir="ltr"] .toggle-row,
+    html[dir="ltr"] .telemetry-card,
+    html[dir="ltr"] .features-modal-header,
+    html[dir="ltr"] .feature-card-item,
+    html[dir="ltr"] th,
+    html[dir="ltr"] td {
+      text-align: left;
+    }
+    html[dir="ltr"] .modal-head .btn-close,
+    html[dir="ltr"] .features-modal-header .btn-close {
+      margin-left: auto;
+      margin-right: 0;
+    }
+    html[dir="ltr"] .studio-nav-btn.prev .nav-arrow {
+      transform: scaleX(-1);
+    }
+    html[dir="ltr"] .studio-nav-btn.next .nav-arrow {
+      transform: scaleX(-1);
     }
 
     p, span, label, div, h1, h2, h3, h4, h5, h6 {
@@ -2753,28 +2788,34 @@ export function panelHTML(env, options = {}) {
       </div>
 
       <div class="nav-actions">
+        <!-- 🌐 دکمه سوئیچ زبان انگلیسی / فارسی -->
+        <button class="btn-theme-toggle" id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language / تغییر زبان" style="border-color: rgba(56, 189, 248, 0.35); color: #38bdf8; background: rgba(56, 189, 248, 0.08);">
+          <span id="langIcon">🌐</span>
+          <span class="theme-text" id="langText" style="font-weight:700;">English</span>
+        </button>
+
         <!-- ☀️ دکمه سوئیچ تم روز و شب -->
         <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="تغییر حالت شب و روز">
           <span class="theme-icon-rotate" id="themeIcon">☀️</span>
-          <span class="theme-text" id="themeText">حالت روز</span>
+          <span class="theme-text" id="themeText" data-i18n="themeDay">حالت روز</span>
         </button>
 
         <!-- 💡 دکمه رسمی راهنمای امکانات سامانه -->
         <button class="btn-theme-toggle" id="featureTourNavBtn" onclick="openFeaturesModal()" title="راهنمای جامع امکانات و سرویس‌های سامانه Arizo Self" style="border-color: rgba(168, 85, 247, 0.3); color: #c4b5fd; background: rgba(168, 85, 247, 0.1);">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          <span class="theme-text" style="font-weight:700;">راهنمای امکانات</span>
+          <span class="theme-text" style="font-weight:700;" data-i18n="featureTour">راهنمای امکانات</span>
         </button>
 
         <!-- 👑 دکمه طلایی دسترسی به پنل مدیریت (فقط برای ادمین پس از لاگین نمایان می‌شود) -->
         <button class="btn-admin-highlight hidden" id="adminPortalNavBtn" onclick="openAdminPortal()" title="ورود به پنل مدیریت ارشد و مانیتورینگ">
-          <span>👑</span> <span>پنل مدیریت</span>
+          <span>👑</span> <span data-i18n="adminPortal">پنل مدیریت</span>
         </button>
 
         <!-- نشانگر حساب کاربری کاربر متصل -->
         <div id="userHeaderBadge" class="hidden" style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:0.85rem; font-weight:700; color:var(--accent-indigo);" id="usernameDisplay">کاربر</span>
-          <button class="btn-nav-action" onclick="openSettingsModal()" title="تنظیمات حساب">⚙️</button>
-          <button class="btn-nav-action" onclick="logoutUser()" title="خروج" style="color:var(--accent-rose);">🚪</button>
+          <button class="btn-nav-action" onclick="openSettingsModal()" title="تنظیمات حساب" data-i18n-title="userSettings">⚙️</button>
+          <button class="btn-nav-action" onclick="logoutUser()" title="خروج" data-i18n-title="userLogout" style="color:var(--accent-rose);">🚪</button>
         </div>
       </div>
     </div>
@@ -2783,10 +2824,10 @@ export function panelHTML(env, options = {}) {
     <div id="adminPanelSection" class="glass-card hidden">
       <div class="section-header">
         <div class="section-title">
-          <span>👑</span> مرکز فرماندهی و فروشگاه Arizo Self
+          <span>👑</span> <span data-i18n="adminHeaderTitle">مرکز فرماندهی و فروشگاه Arizo Self</span>
         </div>
         <button class="btn-nav-action" onclick="closeAdminPortal()" style="color:var(--accent-rose);">
-          <span>✕</span> بازگشت به پنل کاربران
+          <span>✕</span> <span data-i18n="adminReturnBtn">بازگشت به پنل کاربران</span>
         </button>
       </div>
 
@@ -2796,13 +2837,13 @@ export function panelHTML(env, options = {}) {
         <!-- 📑 نوار تب‌های تفکیک‌شده ادمین -->
         <div class="admin-subtab-bar">
           <button id="adminSubtabStats" class="admin-subtab-btn active" onclick="switchAdminSubtab('stats')">
-            <span>📊</span> آمار و شاخص‌ها
+            <span>📊</span> <span data-i18n="adminTabStats">آمار و شاخص‌ها</span>
           </button>
           <button id="adminSubtabCodes" class="admin-subtab-btn" onclick="switchAdminSubtab('codes')">
-            <span>🎟️</span> صدور و انبار لایسنس
+            <span>🎟️</span> <span data-i18n="adminTabCodes">صدور و انبار لایسنس</span>
           </button>
           <button id="adminSubtabUsers" class="admin-subtab-btn" onclick="switchAdminSubtab('users')">
-            <span>👥</span> مدیریت کاربران و ربات‌ها
+            <span>👥</span> <span data-i18n="adminTabUsers">مدیریت کاربران و ربات‌ها</span>
           </button>
         </div>
 
@@ -2978,27 +3019,27 @@ export function panelHTML(env, options = {}) {
     <div id="userAuthSection" class="glass-card">
       <div class="segmented-control">
         <button id="userTabLogin" class="segmented-btn active" onclick="switchUserTab('login')">
-          <span>🔑</span> ورود به حساب
+          <span>🔑</span> <span data-i18n="authTabLogin">ورود به حساب</span>
         </button>
         <button id="userTabRegister" class="segmented-btn" onclick="switchUserTab('register')">
-          <span>✨</span> ساخت حساب (نیاز به لایسنس)
+          <span>✨</span> <span data-i18n="authTabRegister">ساخت حساب (نیاز به لایسنس)</span>
         </button>
       </div>
 
       <!-- فرم ورود کاربران عادی -->
       <div id="loginFormBox">
         <div class="form-group">
-          <label class="form-label">نام کاربری اختصاصی</label>
-          <input type="text" id="loginUsername" class="input-field mono" placeholder="نام کاربری شما (مثال: amirmaster)" autocomplete="username">
+          <label class="form-label" data-i18n="authUsernameLabel">نام کاربری اختصاصی</label>
+          <input type="text" id="loginUsername" class="input-field mono" placeholder="نام کاربری شما (مثال: amirmaster)" autocomplete="username" data-i18n-placeholder="authUsernamePlaceholder">
         </div>
 
         <div class="form-group">
-          <label class="form-label">رمز عبور امن</label>
-          <input type="password" id="loginPassword" class="input-field" placeholder="رمز عبور حساب کاربری (••••••••)" autocomplete="current-password">
+          <label class="form-label" data-i18n="authPasswordLabel">رمز عبور امن</label>
+          <input type="password" id="loginPassword" class="input-field" placeholder="رمز عبور حساب کاربری (••••••••)" autocomplete="current-password" data-i18n-placeholder="authPasswordPlaceholder">
         </div>
 
         <button class="btn btn-primary" id="loginBtn" onclick="doUserLogin()">
-          <span>ورود به داشبورد Arizo Self</span>
+          <span data-i18n="authLoginBtn">ورود به داشبورد Arizo Self</span>
         </button>
 
       </div>
@@ -3007,32 +3048,32 @@ export function panelHTML(env, options = {}) {
       <div id="registerFormBox" class="hidden">
         <div class="form-group" style="background: var(--accent-purple-bg); border: 1px dashed var(--accent-purple-border); border-radius: var(--radius-md); padding: 14px;">
           <label class="form-label" style="color: var(--accent-purple);">
-            <span>🎟️ کد لایسنس / ردیم‌کد فعال‌سازی</span>
-            <span style="font-size:0.75rem; color:var(--accent-amber);">الزامی جهت ساخت حساب</span>
+            <span data-i18n="authLicenseLabel">🎟️ کد لایسنس / ردیم‌کد فعال‌سازی</span>
+            <span style="font-size:0.75rem; color:var(--accent-amber);" data-i18n="authLicenseReq">الزامی جهت ساخت حساب</span>
           </label>
-          <input type="text" id="regLicenseCode" class="input-field mono" placeholder="کد لایسنس فعال‌سازی (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase; font-size:1.05rem; letter-spacing:1px; color:var(--accent-purple);">
-          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
+          <input type="text" id="regLicenseCode" class="input-field mono" placeholder="کد لایسنس فعال‌سازی (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase; font-size:1.05rem; letter-spacing:1px; color:var(--accent-purple);" data-i18n-placeholder="authLicensePlaceholder">
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5;" data-i18n="authLicenseHint">
             💳 این کد را از فروشنده دریافت کرده و در اینجا وارد کنید (برای مدیر اول در دیتابیس تازه، نیازی به لایسنس نیست).
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">نام کاربری جدید</label>
-          <input type="text" id="regUsername" class="input-field mono" placeholder="نام کاربری دلخواه (مثال: amir_vip)">
+          <label class="form-label" data-i18n="authRegUsernameLabel">نام کاربری جدید</label>
+          <input type="text" id="regUsername" class="input-field mono" placeholder="نام کاربری دلخواه (مثال: amir_vip)" data-i18n-placeholder="authRegUsernamePlaceholder">
         </div>
 
         <div class="form-group">
-          <label class="form-label">رمز عبور امن (حداقل ۸ کاراکتر)</label>
-          <input type="password" id="regPassword" class="input-field" placeholder="رمز عبور امن و قوی (حداقل ۸ کاراکتر)">
+          <label class="form-label" data-i18n="authRegPassLabel">رمز عبور امن (حداقل ۸ کاراکتر)</label>
+          <input type="password" id="regPassword" class="input-field" placeholder="رمز عبور امن و قوی (حداقل ۸ کاراکتر)" data-i18n-placeholder="authRegPassPlaceholder">
         </div>
 
         <div class="form-group">
-          <label class="form-label">تکرار رمز عبور</label>
-          <input type="password" id="regPasswordConfirm" class="input-field" placeholder="تکرار مجدد رمز عبور جهت اطمینان">
+          <label class="form-label" data-i18n="authRegPassConfirmLabel">تکرار رمز عبور</label>
+          <input type="password" id="regPasswordConfirm" class="input-field" placeholder="تکرار مجدد رمز عبور جهت اطمینان" data-i18n-placeholder="authRegPassConfirmPlaceholder">
         </div>
 
         <button class="btn btn-primary" id="regBtn" onclick="doUserRegister()">
-          <span>ثبت‌نام و فعال‌سازی اشتراک Arizo Self</span>
+          <span data-i18n="authRegBtn">ثبت‌نام و فعال‌سازی اشتراک Arizo Self</span>
         </button>
       </div>
     </div>
@@ -3042,16 +3083,16 @@ export function panelHTML(env, options = {}) {
       <div style="display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
         <div style="font-size: 2.2rem; line-height: 1;">⚠️</div>
         <div style="flex:1; min-width: 250px;">
-          <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-rose); margin-bottom: 6px;">
+          <div style="font-size: 1.05rem; font-weight: 800; color: var(--accent-rose); margin-bottom: 6px;" data-i18n="suspensionTitle">
             حساب کاربری و سلف‌بات شما در حالت تعلیق قرار دارد (Suspended)
           </div>
-          <div style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+          <div style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;" data-i18n="suspensionDesc">
             مدت زمان اشتراک شما به پایان رسیده و عملکرد سلف‌بات روی تلگرام متوقف شده است. جهت فعال‌سازی مجدد و خروج آنی از تعلیق، کد لایسنس جدید خود را وارد کنید:
           </div>
           <div class="input-action-row" style="max-width: 580px;">
-            <input type="text" id="quickRenewCodeInput" class="input-field mono" placeholder="کد لایسنس جدید جهت خروج از تعلیق (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase; font-weight: 700; color: var(--accent-purple);">
+            <input type="text" id="quickRenewCodeInput" class="input-field mono" placeholder="کد لایسنس جدید جهت خروج از تعلیق (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase; font-weight: 700; color: var(--accent-purple);" data-i18n-placeholder="suspensionPlaceholder">
             <button class="btn btn-primary" id="quickRenewBtn" onclick="doQuickRenew()" style="background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);">
-              <span>🚀 خروج از تعلیق و شارژ</span>
+              <span data-i18n="suspensionBtn">🚀 خروج از تعلیق و شارژ</span>
             </button>
           </div>
         </div>
@@ -3062,9 +3103,9 @@ export function panelHTML(env, options = {}) {
     <div id="clockHeroCard" class="glass-card hidden">
       <div class="section-header">
         <div class="section-title">
-          <span>📱</span> شبیه‌ساز زنده پروفایل تلگرام (Live Telegram Mockup)
+          <span>📱</span> <span data-i18n="mockupTitle">شبیه‌ساز زنده پروفایل تلگرام (Live Telegram Mockup)</span>
         </div>
-        <span class="section-tag">پیش‌نمایش لحظه‌ای</span>
+        <span class="section-tag" data-i18n="mockupTag">پیش‌نمایش لحظه‌ای</span>
       </div>
 
       <!-- Telegram Profile Realistic Mockup -->
@@ -3076,12 +3117,12 @@ export function panelHTML(env, options = {}) {
           </div>
           <div class="tg-mockup-info">
             <div class="tg-mockup-name-row">
-              <span class="tg-mockup-firstname" id="mockupFirstName">کاربر Arizo</span>
+              <span class="tg-mockup-firstname" id="mockupFirstName" data-i18n="mockupDefaultUser">کاربر Arizo</span>
               <span class="tg-mockup-lastname" id="mockupLastName">۰۰:۰۰</span>
             </div>
             <div class="tg-mockup-status">
               <span class="tg-status-dot"></span>
-              <span>آنلاین (لحظه‌ای به وقت تهران)</span>
+              <span data-i18n="mockupOnline">آنلاین (لحظه‌ای به وقت تهران)</span>
             </div>
           </div>
         </div>
@@ -3090,14 +3131,14 @@ export function panelHTML(env, options = {}) {
           <div class="tg-mockup-field">
             <div class="tg-field-icon">💬</div>
             <div class="tg-field-content">
-              <div class="tg-field-label">بیوگرافی زنده تلگرام (Bio / About)</div>
-              <div class="tg-field-value" id="mockupBio">در انتظار فعال‌سازی بیوگرافی هوشمند...</div>
+              <div class="tg-field-label" data-i18n="mockupBioLabel">بیوگرافی زنده تلگرام (Bio / About)</div>
+              <div class="tg-field-value" id="mockupBio" data-i18n="mockupBioWait">در انتظار فعال‌سازی بیوگرافی هوشمند...</div>
             </div>
           </div>
           <div class="tg-mockup-field">
             <div class="tg-field-icon">🗓️</div>
             <div class="tg-field-content">
-              <div class="tg-field-label">تقویم خورشیدی و زمان اتمی تهران</div>
+              <div class="tg-field-label" data-i18n="mockupDateLabel">تقویم خورشیدی و زمان اتمی تهران</div>
               <div class="tg-field-value" id="persianDateText">درحال محاسبه تقویم خورشیدی...</div>
             </div>
           </div>
@@ -3111,7 +3152,7 @@ export function panelHTML(env, options = {}) {
 
         <div class="clock-badges-row">
           <span class="meta-chip active">
-            <span class="dot-pulse"></span> همگام‌سازی لحظه‌ای تهران
+            <span class="dot-pulse"></span> <span data-i18n="mockupSyncChip">همگام‌سازی لحظه‌ای تهران</span>
           </span>
           <span class="meta-chip" id="userPlanBadge">اشتراک: استاندارد</span>
           <span class="meta-chip" id="userFontBadge">فونت: بولد لوکس</span>
@@ -3123,51 +3164,51 @@ export function panelHTML(env, options = {}) {
     <div id="telegramConnectSection" class="glass-card hidden">
       <div class="section-header">
         <div class="section-title">
-          <span>📱</span> بخش ۲: اتصال حساب تلگرام به Arizo Self
+          <span>📱</span> <span data-i18n="tgConnectTitle">بخش ۲: اتصال حساب تلگرام به Arizo Self</span>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <button id="btnCancelTgConnect" class="btn-nav-action hidden" onclick="cancelTelegramConnect()" style="color:var(--text-muted); font-size:0.78rem;">
-            <span>✕ انصراف و بازگشت</span>
+            <span data-i18n="tgConnectCancel">✕ انصراف و بازگشت</span>
           </button>
-          <span class="section-tag">ایزوله در Cloudflare KV</span>
+          <span class="section-tag" data-i18n="tgKvTag">ایزوله در Cloudflare KV</span>
         </div>
       </div>
 
       <div class="segmented-control">
-        <button id="tabTgPhone" class="segmented-btn active" onclick="switchTgTab('phone')">ارسال کد پیامکی</button>
-        <button id="tabTgSess" class="segmented-btn" onclick="switchTgTab('session')">رشته StringSession مستقیم</button>
+        <button id="tabTgPhone" class="segmented-btn active" onclick="switchTgTab('phone')" data-i18n="tgTabPhone">ارسال کد پیامکی</button>
+        <button id="tabTgSess" class="segmented-btn" onclick="switchTgTab('session')" data-i18n="tgTabSession">رشته StringSession مستقیم</button>
       </div>
 
       <!-- با شماره تلفن -->
       <div id="tgPhoneBox">
         <div class="form-group">
-          <label class="form-label">شماره تلفن اکانت تلگرام</label>
-          <input type="tel" id="tgPhone" class="input-field mono" placeholder="شماره همراه با پیش‌شماره کشور (مثال: 989123456789+)" dir="ltr">
+          <label class="form-label" data-i18n="tgPhoneLabel">شماره تلفن اکانت تلگرام</label>
+          <input type="tel" id="tgPhone" class="input-field mono" placeholder="شماره همراه با پیش‌شماره کشور (مثال: 989123456789+)" dir="ltr" data-i18n-placeholder="tgPhonePlaceholder">
         </div>
 
         <div id="tgCodeGroup" class="form-group hidden">
-          <label class="form-label">کد ۵ رقمی ارسالی از سوی تلگرام</label>
-          <input type="text" id="tgCode" class="input-field mono" placeholder="کد ۵ رقمی ارسالی از تلگرام (مثال: 58291)" maxlength="8" dir="ltr">
+          <label class="form-label" data-i18n="tgCodeLabel">کد ۵ رقمی ارسالی از سوی تلگرام</label>
+          <input type="text" id="tgCode" class="input-field mono" placeholder="کد ۵ رقمی ارسالی از تلگرام (مثال: 58291)" maxlength="8" dir="ltr" data-i18n-placeholder="tgCodePlaceholder">
         </div>
 
         <div id="tgPassGroup" class="form-group hidden">
-          <label class="form-label">رمز تأیید دو مرحله‌ای اکانت (2FA)</label>
-          <input type="password" id="tgPass" class="input-field" placeholder="رمز تأیید دومرحله‌ای (در صورت فعال بودن 2FA)">
+          <label class="form-label" data-i18n="tgPassLabel">رمز تأیید دو مرحله‌ای اکانت (2FA)</label>
+          <input type="password" id="tgPass" class="input-field" placeholder="رمز تأیید دومرحله‌ای (در صورت فعال بودن 2FA)" data-i18n-placeholder="tgPassPlaceholder">
         </div>
 
         <button class="btn btn-primary" id="tgAuthBtn" onclick="doTelegramAuth()">
-          <span>دریافت کد ورود از سرور تلگرام</span>
+          <span data-i18n="tgAuthBtn">دریافت کد ورود از سرور تلگرام</span>
         </button>
       </div>
 
       <!-- با سشن مستقیم -->
       <div id="tgSessBox" class="hidden">
         <div class="form-group">
-          <label class="form-label">رشته سشن خام تلگرام (StringSession)</label>
-          <textarea id="tgSessionInput" class="input-field mono" rows="4" placeholder="رشته طولانی StringSession تلگرام خود را اینجا وارد کنید (Pyrogram یا Telethon/GramJS)..." dir="ltr"></textarea>
+          <label class="form-label" data-i18n="tgSessionLabel">رشته سشن خام تلگرام (StringSession)</label>
+          <textarea id="tgSessionInput" class="input-field mono" rows="4" placeholder="رشته طولانی StringSession تلگرام خود را اینجا وارد کنید (Pyrogram یا Telethon/GramJS)..." dir="ltr" data-i18n-placeholder="tgSessionPlaceholder"></textarea>
         </div>
         <button class="btn btn-primary" id="tgSessBtn" onclick="doConnectDirectSession()">
-          <span>اتصال و رمزنگاری فوری با AES-256</span>
+          <span data-i18n="tgSessBtn">اتصال و رمزنگاری فوری با AES-256</span>
         </button>
       </div>
     </div>
@@ -3176,7 +3217,7 @@ export function panelHTML(env, options = {}) {
     <div id="dashboardSection" class="glass-card hidden">
       <div class="section-header">
         <div class="section-title">
-          <span>🎨</span> استودیوی شخصی‌سازی و امکانات پیشرفته
+          <span>🎨</span> <span data-i18n="studioTitle">استودیوی شخصی‌سازی و امکانات پیشرفته</span>
         </div>
         <span class="section-tag">Arizo Studio Pro</span>
       </div>
@@ -3197,31 +3238,31 @@ export function panelHTML(env, options = {}) {
       <!-- 📑 نوار تب‌های استودیو - کاملاً واکنش‌گرا و ریسپانسیو برای موبایل و کامپیوتر -->
       <div class="studio-tab-bar">
         <button id="studioTabClock" class="studio-tab-btn active" onclick="switchStudioTab('clock')">
-          <span>🕒</span> <span>ساعت و استایل</span>
+          <span>🕒</span> <span data-i18n="studioTabClock">ساعت و استایل</span>
         </button>
         <button id="studioTabBio" class="studio-tab-btn" onclick="switchStudioTab('bio')">
-          <span>📝</span> <span>بیوگرافی زنده</span>
+          <span>📝</span> <span data-i18n="studioTabBio">بیوگرافی زنده</span>
         </button>
         <button id="studioTabAfk" class="studio-tab-btn" onclick="switchStudioTab('afk')">
-          <span>🤖</span> <span>منشی خودکار</span>
+          <span>🤖</span> <span data-i18n="studioTabAfk">منشی خودکار</span>
         </button>
         <button id="studioTabMute" class="studio-tab-btn" onclick="switchStudioTab('mute')">
-          <span>🔇</span> <span>فیلتر سکوت</span>
+          <span>🔇</span> <span data-i18n="studioTabMute">فیلتر سکوت</span>
         </button>
         <button id="studioTabAutomation" class="studio-tab-btn" onclick="switchStudioTab('automation')">
-          <span>🌙</span> <span>حالت خواب</span>
+          <span>🌙</span> <span data-i18n="studioTabAutomation">حالت خواب</span>
         </button>
         <button id="studioTabBot" class="studio-tab-btn" onclick="switchStudioTab('bot')">
-          <span>⚡</span> <span>ربات و لاگر</span>
+          <span>⚡</span> <span data-i18n="studioTabBot">ربات و لاگر</span>
         </button>
         <button id="studioTabGhost" class="studio-tab-btn" onclick="switchStudioTab('ghost')">
-          <span>👻</span> <span>حالت شبح</span>
+          <span>👻</span> <span data-i18n="studioTabGhost">حالت شبح</span>
         </button>
         <button id="studioTabAI" class="studio-tab-btn" onclick="switchStudioTab('ai')">
-          <span>🤖</span> <span>پاسخ AI</span>
+          <span>🤖</span> <span data-i18n="studioTabAI">پاسخ AI</span>
         </button>
         <button id="studioTabSecurity" class="studio-tab-btn" onclick="switchStudioTab('security')">
-          <span>🔐</span> <span>امنیت و ۲FA</span>
+          <span>🔐</span> <span data-i18n="studioTabSecurity">امنیت و ۲FA</span>
         </button>
       </div>
 
@@ -3875,7 +3916,7 @@ export function panelHTML(env, options = {}) {
         <button type="button" class="studio-nav-btn prev" id="studioNavPrev" onclick="navigateStudioStep(-1)">
           <span class="nav-arrow">◀</span>
           <div class="nav-btn-text">
-            <span class="nav-btn-sub">قابلیت قبلی</span>
+            <span class="nav-btn-sub" data-i18n="stepPrev">قابلیت قبلی</span>
             <span class="nav-btn-title" id="studioNavPrevTitle">ساعت و استایل</span>
           </div>
         </button>
@@ -3883,14 +3924,14 @@ export function panelHTML(env, options = {}) {
         <div class="studio-nav-center">
           <div class="studio-nav-counter">
             <span id="studioNavCurrentTitle" style="color:var(--text-main); font-weight:800; font-size:0.83rem;">🕒 ساعت و استایل</span>
-            <span style="opacity:0.6; font-size:0.75rem;"> (<span id="studioNavCurrentStep">۱</span> از ۹)</span>
+            <span style="opacity:0.6; font-size:0.75rem;"> (<span id="studioNavCurrentStep">۱</span> <span data-i18n="stepOf">از</span> ۹)</span>
           </div>
           <div class="studio-nav-dots" id="studioNavDots"></div>
         </div>
 
         <button type="button" class="studio-nav-btn next" id="studioNavNext" onclick="navigateStudioStep(1)">
           <div class="nav-btn-text">
-            <span class="nav-btn-sub">قابلیت بعدی</span>
+            <span class="nav-btn-sub" data-i18n="stepNext">قابلیت بعدی</span>
             <span class="nav-btn-title" id="studioNavNextTitle">بیوگرافی زنده</span>
           </div>
           <span class="nav-arrow">▶</span>
@@ -3898,37 +3939,37 @@ export function panelHTML(env, options = {}) {
       </div>
 
       <button class="btn btn-primary" id="saveBtn" onclick="saveFonts()" style="margin-top: 10px; margin-bottom: 24px;">
-        <span>💾 ذخیره و اعمال تغییرات استودیو</span>
+        <span data-i18n="saveBtn">💾 ذخیره و اعمال تغییرات استودیو</span>
       </button>
 
       <!-- ⚡ بخش ۴: عملیات و مانیتورینگ سلامت -->
       <div class="section-header" style="margin-top: 14px;">
         <div class="section-title">
-          <span>⚡</span> وضعیت سرویس و مانیتورینگ سلامت
+          <span>⚡</span> <span data-i18n="telemetrySectionTitle">وضعیت سرویس و مانیتورینگ سلامت</span>
         </div>
         <span class="section-tag">Edge Telemetry</span>
       </div>
 
       <div class="action-buttons-grid">
         <button class="btn btn-secondary" id="syncBtn" onclick="triggerImmediateSync()">
-          <span>⚡ تست به‌روزرسانی آنی</span>
+          <span data-i18n="syncBtn">⚡ تست به‌روزرسانی آنی</span>
         </button>
         <button class="btn btn-warning" id="toggleBotBtn" onclick="toggleBotState()">
-          <span id="toggleBotText">⏸️ توقف موقت</span>
+          <span id="toggleBotText" data-i18n="pauseBtn">⏸️ توقف موقت</span>
         </button>
         <button class="btn btn-secondary" onclick="showTelegramConnect()" style="color:var(--accent-blue); border-color:var(--accent-blue-border); font-size:0.82rem;">
-          <span>📱 تعویض اکانت</span>
+          <span data-i18n="switchTgBtn">📱 تعویض اکانت</span>
         </button>
       </div>
 
       <!-- کارت‌های مانیتورینگ سلامت -->
       <div class="health-grid">
         <div class="health-item">
-          <div class="health-label">وضعیت سلف‌بات شما</div>
+          <div class="health-label" data-i18n="botStatusLabel">وضعیت سلف‌بات شما</div>
           <div class="health-value" id="botStatusBadge" style="color:var(--accent-green);">🟢 فعال و آنلاین</div>
         </div>
         <div class="health-item">
-          <div class="health-label">آخرین به‌روزرسانی تلگرام</div>
+          <div class="health-label" data-i18n="lastUpdateLabel">آخرین به‌روزرسانی تلگرام</div>
           <div class="health-value" id="lastUpdateTime">درحال استعلام...</div>
         </div>
       </div>
@@ -3938,7 +3979,7 @@ export function panelHTML(env, options = {}) {
     <div class="footer-dock">
       <div style="display:flex; align-items:center; gap:8px;">
         <span class="dot-pulse"></span>
-        <span>شبکه ابری Arizo Self فعال است</span>
+        <span data-i18n="footerText">شبکه ابری Arizo Self فعال است</span>
       </div>
       <div style="font-size: 0.78rem; color: var(--text-dim);">
         Arizo Self Cloud Platform &copy; 2026
@@ -4307,33 +4348,33 @@ export function panelHTML(env, options = {}) {
   <div id="settingsModal" class="modal-backdrop hidden">
     <div class="modal-container">
       <div class="modal-head">
-        <div class="modal-heading">⚙️ تنظیمات و امنیت حساب Arizo Self</div>
+        <div class="modal-heading" data-i18n="settingsHeading">⚙️ تنظیمات و امنیت حساب Arizo Self</div>
         <button class="btn-close" onclick="closeSettingsModal()">&times;</button>
       </div>
 
       <!-- تمدید اشتراک با ردیم‌کد -->
       <div style="background: var(--accent-purple-bg); border: 1px solid var(--accent-purple-border); border-radius: 14px; padding: 16px; margin-bottom: 20px;">
-        <div style="font-size:0.88rem; font-weight:700; color:var(--accent-purple); margin-bottom:10px;">🎟️ تمدید اعتبار با ردیم‌کد جدید Arizo</div>
+        <div style="font-size:0.88rem; font-weight:700; color:var(--accent-purple); margin-bottom:10px;" data-i18n="redeemExtendTitle">🎟️ تمدید اعتبار با ردیم‌کد جدید Arizo</div>
         <div class="input-action-row">
-          <input type="text" id="extendCodeInput" class="input-field mono" placeholder="کد لایسنس تمدید (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase;">
+          <input type="text" id="extendCodeInput" class="input-field mono" placeholder="کد لایسنس تمدید (مثال: ARIZO-XXXX-XXXX-XXXX)" style="text-transform: uppercase;" data-i18n-placeholder="extendPlaceholder">
           <button class="btn btn-secondary" onclick="doRedeemExtend()" style="color:var(--accent-purple); border-color:var(--accent-purple-border); white-space:nowrap;">
-            <span>تمدید و شارژ اشتراک</span>
+            <span data-i18n="extendBtn">تمدید و شارژ اشتراک</span>
           </button>
         </div>
       </div>
 
       <!-- تغییر پسورد -->
       <div style="margin-bottom: 24px;">
-        <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; color: var(--accent-indigo);">🔑 تغییر رمز عبور ورود</div>
+        <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; color: var(--accent-indigo);" data-i18n="changePassTitle">🔑 تغییر رمز عبور ورود</div>
         <div class="form-group">
-          <label class="form-label">رمز عبور فعلی</label>
-          <input type="password" id="oldPassInput" class="input-field" placeholder="رمز عبور فعلی حساب شما">
+          <label class="form-label" data-i18n="oldPassLabel">رمز عبور فعلی</label>
+          <input type="password" id="oldPassInput" class="input-field" placeholder="رمز عبور فعلی حساب شما" data-i18n-placeholder="oldPassPlaceholder">
         </div>
         <div class="form-group">
-          <label class="form-label">رمز عبور جدید (حداقل ۸ کاراکتر)</label>
-          <input type="password" id="newPassInput" class="input-field" placeholder="رمز عبور جدید و امن (حداقل ۸ کاراکتر)">
+          <label class="form-label" data-i18n="newPassLabel">رمز عبور جدید (حداقل ۸ کاراکتر)</label>
+          <input type="password" id="newPassInput" class="input-field" placeholder="رمز عبور جدید و امن (حداقل ۸ کاراکتر)" data-i18n-placeholder="newPassPlaceholder">
         </div>
-        <button class="btn btn-secondary" onclick="doChangePassword()">ثبت رمز عبور جدید</button>
+        <button class="btn btn-secondary" onclick="doChangePassword()" data-i18n="savePassBtn">ثبت رمز عبور جدید</button>
       </div>
 
       <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin-bottom: 20px;">
@@ -4341,10 +4382,10 @@ export function panelHTML(env, options = {}) {
       <!-- عملیات حساس -->
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <button class="btn btn-secondary" onclick="doDisconnectTelegram()" style="color:var(--accent-amber);">
-          <span>🔌 قطع اتصال حساب تلگرام</span>
+          <span data-i18n="disconnectTgBtn">🔌 قطع اتصال حساب تلگرام</span>
         </button>
         <button class="btn btn-danger" onclick="doDeleteAccount()">
-          <span>🗑️ حذف کامل حساب کاربری و تمام داده‌ها</span>
+          <span data-i18n="deleteAccountBtn">🗑️ حذف کامل حساب کاربری و تمام داده‌ها</span>
         </button>
       </div>
     </div>
@@ -4552,41 +4593,295 @@ export function panelHTML(env, options = {}) {
     updateThemeUI(document.documentElement.getAttribute('data-theme') || 'dark');
 
     // ==========================================
+    // 🌐 موتور چندزبانه بومی (Dual-Language I18N Engine)
+    // ==========================================
+    window.currentLang = localStorage.getItem('arizo_lang') || 'fa';
+
+    window.I18N = {
+      fa: {
+        themeDay: 'حالت روز',
+        themeNight: 'حالت شب',
+        featureTour: 'راهنمای قابلیت‌ها',
+        adminPortal: 'پنل مدیریت',
+        userSettings: 'تنظیمات حساب کاربری',
+        userLogout: 'خروج از حساب',
+        adminHeaderTitle: 'مرکز فرماندهی و فروشگاه آریزو سلف',
+        adminReturnBtn: 'بازگشت به پنل کاربران',
+        adminTabStats: 'آمار و تحلیل وضعیت',
+        adminTabCodes: 'مدیریت و صدور لایسنس',
+        adminTabUsers: 'کاربران و سلف‌بات‌ها',
+        authTabLogin: 'ورود به حساب',
+        authTabRegister: 'ثبت‌نام با لایسنس',
+        authUsernameLabel: 'نام کاربری',
+        authUsernamePlaceholder: 'نام کاربری شما (مثلاً alex_vip)',
+        authPasswordLabel: 'رمز عبور',
+        authPasswordPlaceholder: 'رمز عبور حساب',
+        authLoginBtn: 'ورود به داشبورد',
+        authLicenseLabel: 'کد لایسنس / فعال‌سازی',
+        authLicenseReq: '(برای ثبت‌نام الزامی است)',
+        authLicensePlaceholder: 'کد لایسنس خریداری شده (ARIZO-XXXX-XXXX-XXXX)',
+        authLicenseHint: 'کد لایسنس توسط مدیر یا فروشنده ارائه می‌شود (کاربر اول سیستم نیازی به کد ندارد)',
+        authRegUsernameLabel: 'نام کاربری جدید',
+        authRegUsernamePlaceholder: 'نام کاربری دلخواه (حروف انگلیسی و اعداد)',
+        authRegPassLabel: 'رمز عبور قوی',
+        authRegPassPlaceholder: 'حداقل ۸ کاراکتر',
+        authRegPassConfirmLabel: 'تکرار رمز عبور',
+        authRegPassConfirmPlaceholder: 'رمز عبور را مجدداً وارد نمایید',
+        authRegBtn: 'ثبت‌نام و فعال‌سازی اشتراک',
+        suspensionTitle: 'حساب کاربری شما معلق شده است',
+        suspensionDesc: 'دسترسی شما به سلف‌بات موقتاً مسدود شده است. جهت فعال‌سازی مجدد، لایسنس تمدید معتبر وارد کنید:',
+        suspensionPlaceholder: 'لایسنس فعال‌سازی جدید...',
+        suspensionBtn: 'ثبت لایسنس و رفع تعلیق',
+        mockupTitle: 'پیش‌نمایش زنده در تلگرام',
+        mockupTag: 'سینک زنده',
+        mockupDefaultUser: 'کاربر تلگرام',
+        mockupOnline: 'آنلاین',
+        mockupBioLabel: 'بیوگرافی زنده',
+        mockupBioWait: 'در حال دریافت وضعیت بیو...',
+        mockupDateLabel: 'تقویم جاری:',
+        mockupSyncChip: '⚡ موتور نوسان‌ساز ابری و کرون‌جاب فعال',
+        tgConnectTitle: 'اتصال سشن اکانت تلگرام',
+        tgConnectCancel: 'انصراف و بازگشت',
+        tgKvTag: 'رمزنگاری نظامی KV',
+        tgTabPhone: 'ورود مستقیم با شماره تلفن',
+        tgTabSession: 'ورود با StringSession پیش‌ساخته',
+        tgPhoneLabel: 'شماره تلفن با پیش‌شماره بین‌المللی',
+        tgPhonePlaceholder: '+989123456789 یا +14155552671',
+        tgCodeLabel: 'کد تایید پیامک/تلگرام',
+        tgCodePlaceholder: 'کد ۵ رقمی دریافتی',
+        tgPassLabel: 'رمز عبور دومرحله‌ای تلگرام (۲FA)',
+        tgPassPlaceholder: 'در صورت داشتن رمز دو مرحله‌ای وارد کنید',
+        tgAuthBtn: 'درخواست و ارسال کد ورود تلگرام',
+        tgSessionLabel: 'رشته متنی سشن تلگرام (Telethon / GramJS / Pyrogram)',
+        tgSessionPlaceholder: '1BJWap1wB... یا 1ApWap...',
+        tgSessBtn: 'ذخیره و اعتبارسنجی سشن',
+        studioTitle: 'استودیوی جامع شخصی‌سازی',
+        studioTabClock: 'ساعت و استایل',
+        studioTabBio: 'بیوگرافی زنده',
+        studioTabAfk: 'منشی خودکار',
+        studioTabMute: 'فیلتر سکوت',
+        studioTabAutomation: 'حالت خواب',
+        studioTabBot: 'ربات و لاگر',
+        studioTabGhost: 'حالت شبح',
+        studioTabAI: 'پاسخ هوشمند AI',
+        studioTabSecurity: 'امنیت و ۲FA',
+        stepPrev: 'قبلی',
+        stepOf: 'از ۹',
+        stepNext: 'بعدی',
+        saveBtn: 'ذخیره آنی تغییرات استودیو',
+        telemetrySectionTitle: 'وضعیت سلامت و پایپ‌لاین ابری',
+        syncBtn: 'همگام‌سازی فوری',
+        pauseBtn: 'توقف موقت سلف‌بات',
+        switchTgBtn: 'تغییر سشن اکانت تلگرام',
+        botStatusLabel: 'وضعیت سلف‌بات:',
+        lastUpdateLabel: 'آخرین همگام‌سازی:',
+        footerText: 'پلتفرم ابری هوشمند سلف‌بات تلگرام آریزو | طراحی شده با معماری Edge و بدون سرور (Serverless)',
+        settingsHeading: 'تنظیمات و مدیریت حساب کاربری',
+        redeemExtendTitle: 'تمدید و ارتقای اشتراک با لایسنس',
+        extendPlaceholder: 'کد لایسنس تمدید (ARIZO-XXXX-XXXX-XXXX)',
+        extendBtn: 'ثبت و تمدید اشتراک',
+        changePassTitle: 'تغییر رمز عبور ورود به پنل',
+        oldPassLabel: 'رمز عبور فعلی',
+        oldPassPlaceholder: 'رمز عبور فعلی خود را وارد کنید',
+        newPassLabel: 'رمز عبور جدید',
+        newPassPlaceholder: 'حداقل ۸ کاراکتر',
+        savePassBtn: 'بروزرسانی رمز عبور',
+        disconnectTgBtn: 'قطع اتصال سشن تلگرام',
+        deleteAccountBtn: 'حذف دائمی حساب کاربری'
+      },
+      en: {
+        themeDay: 'Day Mode',
+        themeNight: 'Night Mode',
+        featureTour: 'Feature Tour',
+        adminPortal: 'Admin Portal',
+        userSettings: 'Account Settings',
+        userLogout: 'Sign Out',
+        adminHeaderTitle: 'Arizo Self Command Center & Store',
+        adminReturnBtn: 'Return to User Panel',
+        adminTabStats: 'Stats & Analytics',
+        adminTabCodes: 'License Inventory',
+        adminTabUsers: 'Users & Selfbots',
+        authTabLogin: 'Sign In',
+        authTabRegister: 'Register with License',
+        authUsernameLabel: 'Username',
+        authUsernamePlaceholder: 'Your username (e.g. alex_vip)',
+        authPasswordLabel: 'Password',
+        authPasswordPlaceholder: 'Account password',
+        authLoginBtn: 'Sign In to Dashboard',
+        authLicenseLabel: 'License Key / Activation Code',
+        authLicenseReq: '(Required for registration)',
+        authLicensePlaceholder: 'License key (ARIZO-XXXX-XXXX-XXXX)',
+        authLicenseHint: 'License key provided by vendor (first admin needs no license)',
+        authRegUsernameLabel: 'New Username',
+        authRegUsernamePlaceholder: 'Choose username (alphanumeric)',
+        authRegPassLabel: 'Strong Password',
+        authRegPassPlaceholder: 'At least 8 characters',
+        authRegPassConfirmLabel: 'Confirm Password',
+        authRegPassConfirmPlaceholder: 'Re-enter your password',
+        authRegBtn: 'Register & Activate Subscription',
+        suspensionTitle: 'Your Account Has Been Suspended',
+        suspensionDesc: 'Access to your selfbot is temporarily restricted. Enter a renewal license key to reactivate:',
+        suspensionPlaceholder: 'New renewal license key...',
+        suspensionBtn: 'Apply License & Reactivate',
+        mockupTitle: 'Live Telegram Preview',
+        mockupTag: 'Live Sync',
+        mockupDefaultUser: 'Telegram User',
+        mockupOnline: 'online',
+        mockupBioLabel: 'Live Bio',
+        mockupBioWait: 'Syncing bio status...',
+        mockupDateLabel: 'Calendar:',
+        mockupSyncChip: '⚡ Edge Engine & Atomic Cron Active',
+        tgConnectTitle: 'Connect Telegram Account Session',
+        tgConnectCancel: 'Cancel & Return',
+        tgKvTag: 'Military Grade KV Encryption',
+        tgTabPhone: 'Direct Phone Login',
+        tgTabSession: 'StringSession Login',
+        tgPhoneLabel: 'Phone Number (International format)',
+        tgPhonePlaceholder: '+14155552671 or +989123456789',
+        tgCodeLabel: 'Verification Code (Telegram/SMS)',
+        tgCodePlaceholder: '5-digit verification code',
+        tgPassLabel: 'Two-Step Verification (2FA) Password',
+        tgPassPlaceholder: 'Enter your 2FA password if enabled',
+        tgAuthBtn: 'Request Telegram Login Code',
+        tgSessionLabel: 'Telegram StringSession (Telethon / GramJS / Pyrogram)',
+        tgSessionPlaceholder: '1BJWap1wB... or 1ApWap...',
+        tgSessBtn: 'Validate & Save Session',
+        studioTitle: 'Comprehensive Studio',
+        studioTabClock: 'Clock & Style',
+        studioTabBio: 'Dynamic Bio',
+        studioTabAfk: 'Auto-Secretary',
+        studioTabMute: 'Silence Filter',
+        studioTabAutomation: 'Sleep Schedule',
+        studioTabBot: 'Bot & Logger',
+        studioTabGhost: 'Ghost Mode',
+        studioTabAI: 'Smart AI Reply',
+        studioTabSecurity: 'Security & 2FA',
+        stepPrev: 'Previous',
+        stepOf: 'of 9',
+        stepNext: 'Next',
+        saveBtn: 'Save Studio Changes',
+        telemetrySectionTitle: 'System Health & Cloud Pipeline',
+        syncBtn: 'Sync Now',
+        pauseBtn: 'Pause Selfbot',
+        switchTgBtn: 'Change Telegram Session',
+        botStatusLabel: 'Selfbot Status:',
+        lastUpdateLabel: 'Last Sync:',
+        footerText: 'Arizo Telegram Selfbot Cloud Platform | Engineered with Serverless Edge Architecture',
+        settingsHeading: 'Account Settings & Management',
+        redeemExtendTitle: 'Extend Subscription with License',
+        extendPlaceholder: 'Renewal License Key (ARIZO-XXXX-XXXX-XXXX)',
+        extendBtn: 'Apply & Extend',
+        changePassTitle: 'Change Account Password',
+        oldPassLabel: 'Current Password',
+        oldPassPlaceholder: 'Enter current password',
+        newPassLabel: 'New Password',
+        newPassPlaceholder: 'At least 8 characters',
+        savePassBtn: 'Update Password',
+        disconnectTgBtn: 'Disconnect Telegram Session',
+        deleteAccountBtn: 'Permanently Delete Account'
+      }
+    };
+
+    window.t = function(key, fallback) {
+      var dict = window.I18N[window.currentLang] || window.I18N.fa;
+      return (dict && dict[key]) || fallback || key;
+    };
+
+    window.applyLanguage = function(lang) {
+      if (lang !== 'en' && lang !== 'fa') lang = 'fa';
+      window.currentLang = lang;
+      localStorage.setItem('arizo_lang', lang);
+
+      document.documentElement.setAttribute('lang', lang);
+      document.documentElement.setAttribute('dir', lang === 'en' ? 'ltr' : 'rtl');
+
+      var dict = window.I18N[lang] || window.I18N.fa;
+
+      // به‌روزرسانی تمام المان‌های نشاندار
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key]) {
+          el.placeholder = dict[key];
+        }
+      });
+
+      document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n-title');
+        if (dict[key]) {
+          el.title = dict[key];
+        }
+      });
+
+      // به‌روزرسانی متن دکمه سوئیچ زبان
+      var langBtn = document.getElementById('langToggleBtn');
+      if (langBtn) {
+        langBtn.textContent = lang === 'en' ? '🌐 فارسی' : '🌐 English';
+        langBtn.title = lang === 'en' ? 'تغییر زبان به فارسی' : 'Switch Language to English';
+      }
+
+      // به‌روزرسانی تم و پریست‌ها
+      updateThemeUI(document.documentElement.getAttribute('data-theme') || 'dark');
+      if (typeof window.renderPresetCards === 'function') {
+        window.renderPresetCards();
+      }
+      if (typeof window.switchStudioTab === 'function' && typeof currentStudioTabIndex !== 'undefined' && STUDIO_TABS[currentStudioTabIndex]) {
+        window.switchStudioTab(STUDIO_TABS[currentStudioTabIndex].id, false);
+      }
+      if (typeof updateLiveClock === 'function') {
+        updateLiveClock();
+      }
+    };
+
+    window.toggleLanguage = function() {
+      var next = window.currentLang === 'en' ? 'fa' : 'en';
+      window.applyLanguage(next);
+      var toastMsg = next === 'en' ? 'Language switched to English 🇬🇧' : 'زبان به فارسی تغییر یافت 🇮🇷';
+      showToast(toastMsg, 'success');
+    };
+
+    // ==========================================
     // 🎨 پریست‌های فونت و استایل ساعت
     // ==========================================
     var presets = {
-      bold:           { name: 'بولد لوکس', digits: ['𝟎', '𝟏', '𝟐', '𝟑', '𝟒', '𝟓', '𝟔', '𝟕', '𝟖', '𝟗'] },
-      sansBold:       { name: 'سنس مدرن', digits: ['𝟬', '𝟭', '𝟮', '𝟯', '𝟰', '𝟱', '𝟲', '𝟳', '𝟴', '𝟵'] },
-      mono:           { name: 'مونو رترو', digits: ['𝟶', '𝟷', '𝟸', '𝟹', '𝟺', '𝟻', '𝟼', '𝟽', '𝟾', '𝟿'] },
-      double:         { name: 'دابل استروک', digits: ['𝟘', '𝟙', '𝟚', '𝟛', '𝟜', '𝟝', '𝟞', '𝟟', '𝟠', '𝟡'] },
-      bubble:         { name: 'حباب توخالی', digits: ['⓪', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'] },
-      blackCircled:   { name: 'دایره مشکی نئون', digits: ['⓿', '➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', '➒'] },
-      persian:        { name: 'فارسی اصیل', digits: ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'] },
-      arabic:         { name: 'عربی شرقی', digits: ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'] },
-      subscript:      { name: 'اندیس فانتزی', digits: ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] },
-      superscript:    { name: 'بالانویس مینی', digits: ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'] },
-      bracket:        { name: 'سلطنتی براکت', digits: ['⟦0⟧', '⟦1⟧', '⟦2⟧', '⟦3⟧', '⟦4⟧', '⟦5⟧', '⟦6⟧', '⟦7⟧', '⟦8⟧', '⟦9⟧'] },
-      japaneseBracket:{ name: 'براکت ژاپنی', digits: ['【0】', '【1】', '【2】', '【3】', '【4】', '【5】', '【6】', '【7】', '【8】', '【9】'] },
-      fullwidth:      { name: 'تمام‌پهنا (سایبر)', digits: ['０', '１', '２', '３', '۴', '۵', '۶', '۷', '۸', '۹'] },
-      parenthesized:  { name: 'پرانتز دایره‌ای', digits: ['⑽', '⑴', '⑵', '⑶', '⑷', '⑸', '⑹', '⑺', '⑻', '⑼'] },
-      dotted:         { name: 'نقطه‌دار رسمی', digits: ['0.', '⒈', '⒉', '⒊', '⒋', '⒌', '⒍', '⒎', '⒏', '⒐'] },
-      underlined:     { name: 'خط زیرین فانتزی', digits: ['0̲', '1̲', '2̲', '3̲', '4̲', '5̲', '6̲', '7̲', '8̲', '9̲'] },
-      strike:         { name: 'خط‌خورده مینیمال', digits: ['0̶', '1̶', '2̶', '3̶', '4̶', '5̶', '6̶', '7̶', '8̶', '9̶'] },
-      slashed:        { name: 'اسلش مورب', digits: ['0̷', '1̷', '2̷', '3̷', '4̷', '5̷', '6̷', '7̷', '8̷', '9̷'] },
-      neonGlow:       { name: 'نئون درخشان', digits: ['𝟢', '𝟣', '𝟤', '𝟥', '𝟦', '𝟧', '𝟨', '𝟩', '𝟪', '𝟫'] },
-      sansItalic:     { name: 'سنس ایتالیک', digits: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] },
-      serifBold:      { name: 'سریف سلطنتی', digits: ['𝟎', '𝟏', '𝟐', '𝟑', '𝟒', '𝟓', '𝟔', '𝟕', '𝟖', '𝟗'] },
-      spooky:         { name: 'وحشت هالووینی', digits: ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] },
-      heartAdorned:   { name: 'قلب عاشقانه', digits: ['0♡', '1♡', '2♡', '3♡', '4♡', '5♡', '6♡', '7♡', '8♡', '9♡'] },
-      sparkle:        { name: 'ستاره و درخشش', digits: ['0✨', '1✨', '2✨', '3✨', '4✨', '5✨', '6✨', '7✨', '8✨', '9✨'] },
-      fire:           { name: 'آتشین متحرک', digits: ['0🔥', '1🔥', '2🔥', '3🔥', '4🔥', '5🔥', '6🔥', '7🔥', '8🔥', '9🔥'] },
-      crystal:        { name: 'کریستال یخ', digits: ['0❄️', '1❄️', '2❄️', '3❄️', '4❄️', '5❄️', '6❄️', '7❄️', '8❄️', '9❄️'] },
-      boxedSquare:    { name: 'باکس مربعی', digits: ['[0]', '[1]', '[2]', '[3]', '[4]', '[5]', '[6]', '[7]', '[8]', '[9]'] },
-      curvedBrace:    { name: 'آکولاد فانتزی', digits: ['{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}'] },
-      chevron:        { name: 'پیکانی نئون', digits: ['«0»', '«1»', '«2»', '«3»', '«4»', '«5»', '«6»', '«7»', '«8»', '«9»'] },
-      persianSup:     { name: 'فارسی بالانویس', digits: ['۰', '¹', '²', '³', '⁴', '۵', '۶', '۷', '۸', '۹'] },
-      digital7:       { name: 'ساعت دیجیتال', digits: ['O', 'I', 'Z', 'E', 'h', 'S', 'b', 'L', 'B', 'q'] },
-      normal:         { name: 'کلاسیک استاندارد', digits: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] }
+      bold:           { name: 'بولد لوکس', nameEn: 'Luxury Bold', digits: ['𝟎', '𝟏', '𝟐', '𝟑', '𝟒', '𝟓', '𝟔', '𝟕', '𝟖', '𝟗'] },
+      sansBold:       { name: 'سنس مدرن', nameEn: 'Modern Sans', digits: ['𝟬', '𝟭', '𝟮', '𝟯', '𝟰', '𝟱', '𝟲', '𝟳', '𝟴', '𝟵'] },
+      mono:           { name: 'مونو رترو', nameEn: 'Retro Mono', digits: ['𝟶', '𝟷', '𝟸', '𝟹', '𝟺', '𝟻', '𝟼', '𝟽', '𝟾', '𝟿'] },
+      double:         { name: 'دابل استروک', nameEn: 'Double Stroke', digits: ['𝟘', '𝟙', '𝟚', '𝟛', '𝟜', '𝟝', '𝟞', '𝟟', '𝟠', '𝟡'] },
+      bubble:         { name: 'حباب توخالی', nameEn: 'Hollow Bubble', digits: ['⓪', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'] },
+      blackCircled:   { name: 'دایره مشکی نئون', nameEn: 'Neon Circled', digits: ['⓿', '➊', '➋', '➌', '➍', '➎', '➏', '➐', '➑', '➒'] },
+      persian:        { name: 'فارسی اصیل', nameEn: 'Classic Persian', digits: ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'] },
+      arabic:         { name: 'عربی شرقی', nameEn: 'Eastern Arabic', digits: ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'] },
+      subscript:      { name: 'اندیس فانتزی', nameEn: 'Subscript', digits: ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] },
+      superscript:    { name: 'بالانویس مینی', nameEn: 'Mini Superscript', digits: ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'] },
+      bracket:        { name: 'سلطنتی براکت', nameEn: 'Royal Bracket', digits: ['⟦0⟧', '⟦1⟧', '⟦2⟧', '⟦3⟧', '⟦4⟧', '⟦5⟧', '⟦6⟧', '⟦7⟧', '⟦8⟧', '⟦9⟧'] },
+      japaneseBracket:{ name: 'براکت ژاپنی', nameEn: 'Japanese Bracket', digits: ['【0】', '【1】', '【2】', '【3】', '【4】', '【5】', '【6】', '【7】', '【8】', '【9】'] },
+      fullwidth:      { name: 'تمام‌پهنا (سایبر)', nameEn: 'Cyber Fullwidth', digits: ['０', '１', '２', '３', '۴', '۵', '۶', '۷', '۸', '۹'] },
+      parenthesized:  { name: 'پرانتز دایره‌ای', nameEn: 'Parenthesized', digits: ['⑽', '⑴', '⑵', '⑶', '⑷', '⑸', '⑹', '⑺', '⑻', '⑼'] },
+      dotted:         { name: 'نقطه‌دار رسمی', nameEn: 'Formal Dotted', digits: ['0.', '⒈', '⒉', '⒊', '⒋', '⒌', '⒍', '⒎', '⒏', '⒐'] },
+      underlined:     { name: 'خط زیرین فانتزی', nameEn: 'Fancy Underlined', digits: ['0̲', '1̲', '2̲', '3̲', '4̲', '5̲', '6̲', '7̲', '8̲', '9̲'] },
+      strike:         { name: 'خط‌خورده مینیمال', nameEn: 'Minimal Strike', digits: ['0̶', '1̶', '2̶', '3̶', '4̶', '5̶', '6̶', '7̶', '8̶', '9̶'] },
+      slashed:        { name: 'اسلش مورب', nameEn: 'Oblique Slashed', digits: ['0̷', '1̷', '2̷', '3̷', '4̷', '5̷', '6̷', '7̷', '8̷', '9̷'] },
+      neonGlow:       { name: 'نئون درخشان', nameEn: 'Neon Glow', digits: ['𝟢', '𝟣', '𝟤', '𝟥', '𝟦', '𝟧', '𝟨', '𝟩', '𝟪', '𝟫'] },
+      sansItalic:     { name: 'سنس ایتالیک', nameEn: 'Sans Italic', digits: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] },
+      serifBold:      { name: 'سریف سلطنتی', nameEn: 'Royal Serif', digits: ['𝟎', '𝟏', '𝟐', '𝟑', '𝟒', '𝟓', '𝟔', '𝟕', '𝟖', '𝟗'] },
+      spooky:         { name: 'وحشت هالووینی', nameEn: 'Halloween Spooky', digits: ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'] },
+      heartAdorned:   { name: 'قلب عاشقانه', nameEn: 'Romantic Heart', digits: ['0♡', '1♡', '2♡', '3♡', '4♡', '5♡', '6♡', '7♡', '8♡', '9♡'] },
+      sparkle:        { name: 'ستاره و درخشش', nameEn: 'Star & Sparkle', digits: ['0✨', '1✨', '2✨', '3✨', '4✨', '5✨', '6✨', '7✨', '8✨', '9✨'] },
+      fire:           { name: 'آتشین متحرک', nameEn: 'Animated Fire', digits: ['0🔥', '1🔥', '2🔥', '3🔥', '4🔥', '5🔥', '6🔥', '7🔥', '8🔥', '9🔥'] },
+      crystal:        { name: 'کریستال یخ', nameEn: 'Ice Crystal', digits: ['0❄️', '1❄️', '2❄️', '3❄️', '4❄️', '5❄️', '6❄️', '7❄️', '8❄️', '9❄️'] },
+      boxedSquare:    { name: 'باکس مربعی', nameEn: 'Boxed Square', digits: ['[0]', '[1]', '[2]', '[3]', '[4]', '[5]', '[6]', '[7]', '[8]', '[9]'] },
+      curvedBrace:    { name: 'آکولاد فانتزی', nameEn: 'Curly Brace', digits: ['{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}'] },
+      chevron:        { name: 'پیکانی نئون', nameEn: 'Neon Chevron', digits: ['«0»', '«1»', '«2»', '«3»', '«4»', '«5»', '«6»', '«7»', '«8»', '«9»'] },
+      persianSup:     { name: 'فارسی بالانویس', nameEn: 'Persian Superscript', digits: ['۰', '¹', '²', '³', '⁴', '۵', '۶', '۷', '۸', '۹'] },
+      digital7:       { name: 'ساعت دیجیتال', nameEn: 'Digital 7-Seg', digits: ['O', 'I', 'Z', 'E', 'h', 'S', 'b', 'L', 'B', 'q'] },
+      normal:         { name: 'کلاسیک استاندارد', nameEn: 'Classic Standard', digits: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] }
     };
 
     var selectedDigits = presets.bold.digits;
@@ -5952,29 +6247,36 @@ export function panelHTML(env, options = {}) {
     // ==========================================
     // 🎨 راه‌اندازی گرید پریست‌های فونت
     // ==========================================
-    var grid = document.getElementById('presetBtns');
-    for (var key in presets) {
-      (function(k) {
-        var val = presets[k];
-        var card = document.createElement('div');
-        card.className = 'preset-card' + (k === 'bold' ? ' active' : '');
-        card.id = 'preset-' + k;
-        var p1 = val.digits[1] || '1';
-        var p2 = val.digits[2] || '2';
-        var p4 = val.digits[4] || '4';
-        var p5 = val.digits[5] || '5';
-        card.innerHTML = '<div class="preset-name">' + val.name + '</div><div class="preset-digits">' + p1 + p2 + ':' + p4 + p5 + '</div>';
-        card.onclick = function() { selectPreset(k); };
-        grid.appendChild(card);
-      })(key);
-    }
+    window.renderPresetCards = function() {
+      var grid = document.getElementById('presetBtns');
+      if (!grid) return;
+      grid.innerHTML = '';
+      for (var key in presets) {
+        (function(k) {
+          var val = presets[k];
+          var card = document.createElement('div');
+          card.className = 'preset-card' + (k === currentPresetKey ? ' active' : '');
+          card.id = 'preset-' + k;
+          var p1 = val.digits[1] || '1';
+          var p2 = val.digits[2] || '2';
+          var p4 = val.digits[4] || '4';
+          var p5 = val.digits[5] || '5';
+          var displayName = (window.currentLang === 'en' && val.nameEn) ? val.nameEn : val.name;
+          card.innerHTML = '<div class="preset-name">' + displayName + '</div><div class="preset-digits">' + p1 + p2 + ':' + p4 + p5 + '</div>';
+          card.onclick = function() { selectPreset(k); };
+          grid.appendChild(card);
+        })(key);
+      }
+    };
+    window.renderPresetCards();
 
     function selectPreset(key, isQuiet) {
       if (!presets[key]) return;
       currentPresetKey = key;
       selectedDigits = presets[key].digits;
       var fontBadge = document.getElementById('userFontBadge');
-      if (fontBadge) fontBadge.textContent = 'فونت: ' + presets[key].name;
+      var displayName = (window.currentLang === 'en' && presets[key].nameEn) ? presets[key].nameEn : presets[key].name;
+      if (fontBadge) fontBadge.textContent = (window.currentLang === 'en' ? 'Font: ' : 'فونت: ') + displayName;
       document.querySelectorAll('.preset-card').forEach(function(c) { c.classList.remove('active'); });
       var activeCard = document.getElementById('preset-' + key);
       if (activeCard) activeCard.classList.add('active');
@@ -5992,15 +6294,15 @@ export function panelHTML(env, options = {}) {
     // 🎨 کنترل تب‌های استودیوی شخصی‌سازی و ناوبری هوشمند
     // ==========================================
     var STUDIO_TABS = [
-      { id: 'clock', btn: 'studioTabClock', pane: 'studioPaneClock', title: 'ساعت و استایل', icon: '🕒' },
-      { id: 'bio', btn: 'studioTabBio', pane: 'studioPaneBio', title: 'بیوگرافی زنده', icon: '📝' },
-      { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk', title: 'منشی خودکار', icon: '🤖' },
-      { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute', title: 'فیلتر سکوت', icon: '🔇' },
-      { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation', title: 'حالت خواب', icon: '🌙' },
-      { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot', title: 'ربات و لاگر', icon: '⚡' },
-      { id: 'ghost', btn: 'studioTabGhost', pane: 'studioPaneGhost', title: 'حالت شبح', icon: '👻' },
-      { id: 'ai', btn: 'studioTabAI', pane: 'studioPaneAI', title: 'پاسخ هوشمند AI', icon: '🤖' },
-      { id: 'security', btn: 'studioTabSecurity', pane: 'studioPaneSecurity', title: 'امنیت و ۲FA', icon: '🔐' }
+      { id: 'clock', btn: 'studioTabClock', pane: 'studioPaneClock', title: 'ساعت و استایل', titleEn: 'Clock & Style', icon: '🕒' },
+      { id: 'bio', btn: 'studioTabBio', pane: 'studioPaneBio', title: 'بیوگرافی زنده', titleEn: 'Dynamic Bio', icon: '📝' },
+      { id: 'afk', btn: 'studioTabAfk', pane: 'studioPaneAfk', title: 'منشی خودکار', titleEn: 'Auto-Secretary', icon: '🤖' },
+      { id: 'mute', btn: 'studioTabMute', pane: 'studioPaneMute', title: 'فیلتر سکوت', titleEn: 'Silence Filter', icon: '🔇' },
+      { id: 'automation', btn: 'studioTabAutomation', pane: 'studioPaneAutomation', title: 'حالت خواب', titleEn: 'Sleep Schedule', icon: '🌙' },
+      { id: 'bot', btn: 'studioTabBot', pane: 'studioPaneBot', title: 'ربات و لاگر', titleEn: 'Bot & Logger', icon: '⚡' },
+      { id: 'ghost', btn: 'studioTabGhost', pane: 'studioPaneGhost', title: 'حالت شبح', titleEn: 'Ghost Mode', icon: '👻' },
+      { id: 'ai', btn: 'studioTabAI', pane: 'studioPaneAI', title: 'پاسخ هوشمند AI', titleEn: 'Smart AI Reply', icon: '🤖' },
+      { id: 'security', btn: 'studioTabSecurity', pane: 'studioPaneSecurity', title: 'امنیت و ۲FA', titleEn: 'Security & 2FA', icon: '🔐' }
     ];
 
     var currentStudioTabIndex = 0;
@@ -6046,26 +6348,29 @@ export function panelHTML(env, options = {}) {
       var currentTitle = document.getElementById('studioNavCurrentTitle');
       var currentStep = document.getElementById('studioNavCurrentStep');
 
-      if (currentTitle) currentTitle.textContent = STUDIO_TABS[index].icon + ' ' + STUDIO_TABS[index].title;
+      var curT = (window.currentLang === 'en' && STUDIO_TABS[index].titleEn) ? STUDIO_TABS[index].titleEn : STUDIO_TABS[index].title;
+      if (currentTitle) currentTitle.textContent = STUDIO_TABS[index].icon + ' ' + curT;
       if (currentStep) currentStep.textContent = String(index + 1);
 
       if (prevBtn && prevTitle) {
         if (index > 0) {
           prevBtn.disabled = false;
-          prevTitle.textContent = STUDIO_TABS[index - 1].title;
+          var prevT = (window.currentLang === 'en' && STUDIO_TABS[index - 1].titleEn) ? STUDIO_TABS[index - 1].titleEn : STUDIO_TABS[index - 1].title;
+          prevTitle.textContent = prevT;
         } else {
           prevBtn.disabled = true;
-          prevTitle.textContent = 'ابتدای استودیو';
+          prevTitle.textContent = window.currentLang === 'en' ? 'Start of Studio' : 'ابتدای استودیو';
         }
       }
 
       if (nextBtn && nextTitle) {
         if (index < STUDIO_TABS.length - 1) {
           nextBtn.disabled = false;
-          nextTitle.textContent = STUDIO_TABS[index + 1].title;
+          var nextT = (window.currentLang === 'en' && STUDIO_TABS[index + 1].titleEn) ? STUDIO_TABS[index + 1].titleEn : STUDIO_TABS[index + 1].title;
+          nextTitle.textContent = nextT;
         } else {
           nextBtn.disabled = true;
-          nextTitle.textContent = 'پایان استودیو';
+          nextTitle.textContent = window.currentLang === 'en' ? 'End of Studio' : 'پایان استودیو';
         }
       }
 
@@ -6138,6 +6443,16 @@ export function panelHTML(env, options = {}) {
       timeZone: 'Asia/Tehran', weekday: 'long'
     });
 
+    var tehranGregorianDateFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Tehran', weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
+    });
+    var tehranGregorianShortDateFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Tehran', month: 'short', day: 'numeric'
+    });
+    var tehranGregorianWeekdayFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Tehran', weekday: 'long'
+    });
+
     function updateLiveClock() {
       try {
         var now = Date.now();
@@ -6191,7 +6506,11 @@ export function panelHTML(env, options = {}) {
 
         var dateEl = document.getElementById('persianDateText');
         if (dateEl) {
-          dateEl.textContent = tehranPersianDateFmt.format(new Date(now));
+          if (window.currentLang === 'en') {
+            dateEl.textContent = tehranGregorianDateFmt.format(new Date(now)) + ' (Tehran Time)';
+          } else {
+            dateEl.textContent = tehranPersianDateFmt.format(new Date(now));
+          }
         }
 
         var bioEnabled = document.getElementById('bioEnabledToggle') ? document.getElementById('bioEnabledToggle').checked : false;
@@ -6199,8 +6518,9 @@ export function panelHTML(env, options = {}) {
         var mockupBioEl = document.getElementById('mockupBio');
         if (mockupBioEl) {
           if (bioEnabled && bioTemplate) {
-            var shortDate = tehranPersianShortDateFmt.format(new Date(now));
-            var weekday = tehranPersianWeekdayFmt.format(new Date(now));
+            var isEn = window.currentLang === 'en';
+            var shortDate = isEn ? tehranGregorianShortDateFmt.format(new Date(now)) : tehranPersianShortDateFmt.format(new Date(now));
+            var weekday = isEn ? tehranGregorianWeekdayFmt.format(new Date(now)) : tehranPersianWeekdayFmt.format(new Date(now));
             var renderedBio = bioTemplate
               .replace(/{time}/g, clockOnly)
               .replace(/{clock}/g, clockOnly)
@@ -6521,6 +6841,10 @@ export function panelHTML(env, options = {}) {
     // ==========================================
     window.loadUserDashboard = loadUserDashboard;
     async function loadUserDashboard() {
+      // تضمین اعمال ترجمه‌های زبان انتخاب شده روی رابط کاربری
+      if (typeof window.applyLanguage === 'function') {
+        window.applyLanguage(window.currentLang || 'fa');
+      }
       var token = getAuthToken();
       var adminNav = document.getElementById('adminPortalNavBtn');
       if (!token) {
