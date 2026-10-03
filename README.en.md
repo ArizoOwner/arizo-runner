@@ -4,7 +4,7 @@
 
 <br>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:6366f1,100:0ea5e9&height=220&section=header&text=⚡%20Arizo%20Telegram%20Self%20Manager&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=32&desc=Next-Gen%20Edge%20Selfbot%2C%202FA%20Security%2C%20Ghost%20Mode%2C%20AI%20Assistant%20%26%20Logger%20Studio&descSize=16&descAlignY=52&descAlign=50" width="100%"/>
+<img src="./assets/banner.svg" alt="Arizo Telegram Self Manager" width="100%"/>
 
 <br>
 
@@ -30,6 +30,12 @@
 > **🚀 Online Interactive Setup Wizard:**  
 > For easy, zero-command setup and automated configuration, launch the official **[Arizo Self Cloud Setup Wizard](https://arizo-self.arizosupport.workers.dev/setup)**:  
 > **🔗 Direct Link: [https://arizo-self.arizosupport.workers.dev/setup](https://arizo-self.arizosupport.workers.dev/setup)** (also accessible at `/wizard`)
+
+<br>
+
+<p align="center">
+  <img src="./assets/preview.png" alt="Arizo Web Studio Preview" width="95%" />
+</p>
 
 <br>
 
@@ -491,7 +497,7 @@ pm2 save && pm2 startup
 
 <br>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:6366f1,100:0ea5e9&height=120&section=footer" width="100%"/>
+<img src="./assets/footer.svg" alt="Arizo Footer Wave" width="100%"/>
 
 <br>
 
