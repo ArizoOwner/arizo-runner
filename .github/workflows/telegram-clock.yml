@@ -29,9 +29,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: 📦 Install Dependencies
-        run: npm install --production
+      - name: 📦 Install Dependencies (Fast Cached)
+        run: npm ci --prefer-offline --no-audit --no-fund --production
 
       - name: 🚀 Run Clock Engine
         env:
