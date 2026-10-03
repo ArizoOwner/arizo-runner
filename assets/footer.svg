@@ -1,0 +1,15 @@
+<svg width="1200" height="120" viewBox="0 0 1200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="footerWave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.9" />
+    </linearGradient>
+    <linearGradient id="footerAccent" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0.2" />
+    </linearGradient>
+  </defs>
+  <path d="M 0 50 Q 300 10 600 50 T 1200 40 L 1200 0 L 0 0 Z" fill="url(#footerWave)" />
+  <path d="M 0 65 Q 400 30 800 60 T 1200 50 L 1200 0 L 0 0 Z" fill="url(#footerAccent)" />
+</svg>
