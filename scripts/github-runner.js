@@ -2387,28 +2387,94 @@ class TelegramConnectionPool {
 
 const pool = new TelegramConnectionPool();
 
+let lastActiveUsersETag = null;
+let lastCachedUsersList = [];
+
 /**
- * دریافت لیست کاربران فعال از ورکر کلادفلر
+ * دریافت لیست کاربران فعال از ورکر کلادفلر با کش شرطی ۳۰۴ (Zero Redundant Payload)
  */
 async function fetchActiveUsers() {
   try {
-    const res = await fetch(`${CLOUDFLARE_URL}/api/internal/active-users`, {
-      headers: {
-        'Authorization': `Bearer ${RUNNER_SECRET}`,
-        'User-Agent': 'Arizo-Sub100ms-Engine/3.5'
-      }
-    });
+    const headers = {
+      'Authorization': `Bearer ${RUNNER_SECRET}`,
+      'User-Agent': 'Arizo-Sub100ms-Engine/3.6'
+    };
+    if (lastActiveUsersETag) {
+      headers['If-None-Match'] = lastActiveUsersETag;
+    }
+    const res = await fetch(`${CLOUDFLARE_URL}/api/internal/active-users`, { headers });
+
+    if (res.status === 304) {
+      // داده‌ها در سرور تغییر نکرده‌اند؛ استفاده از کش محلی بدون بارگذاری مجدد شبکه
+      return lastCachedUsersList;
+    }
 
     if (!res.ok) {
       const txt = await res.text();
       throw new Error(`Status ${res.status}: ${txt}`);
     }
 
+    const etag = res.headers.get('etag');
+    if (etag) lastActiveUsersETag = etag;
+
     const data = await res.json();
-    return data.users || [];
+    lastCachedUsersList = data.users || [];
+    return lastCachedUsersList;
   } catch (err) {
     console.error('⚠️ Cloudflare fetchActiveUsers error:', err.message);
-    return [];
+    return lastCachedUsersList;
+  }
+}
+
+/**
+ * همگام‌سازی بلادرنگ تنظیمات کاربران و استخر سوکت‌ها
+ */
+async function syncUserSettings(usersList) {
+  if (!Array.isArray(usersList)) return;
+  for (const u of usersList) {
+    let entry = pool.clients.get(u.username);
+    if (!entry && u.sessionEncrypted) {
+      try {
+        await pool.getOrCreateClient(u.username, u.sessionEncrypted, u);
+        entry = pool.clients.get(u.username);
+      } catch (_) {}
+    }
+    if (entry) {
+      if (entry.client && isClientConnected(entry)) {
+        entry.client.invoke(new Api.updates.GetState()).catch(() => {});
+      }
+
+      const serverMuted = Array.isArray(u.mutedUsers) ? u.mutedUsers : [];
+      entry.localMutedUsers = new Set(serverMuted.map(cleanMuteTarget).filter(Boolean));
+
+      entry.settings = {
+        afkEnabled: !!u.afkEnabled,
+        afkMessage: u.afkMessage || '',
+        afkCooldown: u.afkCooldown ?? 10,
+        muteEnabled: !!u.muteEnabled || serverMuted.length > 0,
+        mutedUsers: serverMuted,
+        antiTtlEnabled: !!u.antiTtlEnabled,
+        bot: u.bot || null,
+        ghostMode: !!u.ghostMode,
+        ghostExcludeList: Array.isArray(u.ghostExcludeList) ? u.ghostExcludeList : [],
+        aiReplyEnabled: !!u.aiReplyEnabled,
+        aiProvider: u.aiProvider || 'gemini',
+        aiApiKey: u.aiApiKey || '',
+        aiSystemPrompt: u.aiSystemPrompt || '',
+        aiContext: u.aiContext || '',
+        aiMaxReplies: u.aiMaxReplies ?? 3,
+        aiCooldown: u.aiCooldown ?? 5
+      };
+      resolveMutedUsernames(entry);
+
+      const nowTs = Date.now();
+      if (entry.client && isClientConnected(entry) && (!entry.lastDialogSync || (nowTs - entry.lastDialogSync > 3600000))) {
+        entry.lastDialogSync = nowTs;
+        fetchUserPrivateDialogs(entry.client, entry).then(dlgs => {
+          if (dlgs.length > 0) syncDialogsToCloudflare(u.username, dlgs);
+        }).catch(() => {});
+      }
+    }
   }
 }
 
@@ -3159,63 +3225,7 @@ async function main() {
     }));
   }
 
-  // به‌روزرسانی هوشمند تنظیمات استودیو هر ۳۵ ثانیه (کاهش ۷۰٪ مصرف ریکوئست‌های ورکر کلادفلر)
-  const settingsSyncInterval = setInterval(async () => {
-    try {
-      const freshUsers = await fetchActiveUsers();
-      for (const u of freshUsers) {
-        let entry = pool.clients.get(u.username);
-        if (!entry && u.sessionEncrypted) {
-          try {
-            await pool.getOrCreateClient(u.username, u.sessionEncrypted, u);
-            entry = pool.clients.get(u.username);
-          } catch (_) {}
-        }
-        if (entry) {
-          // فعال نگه‌داشتن مستمر ثبت نشست در سرور تلگرام برای دریافت آپدیت‌های زنده
-          if (entry.client && isClientConnected(entry)) {
-            entry.client.invoke(new Api.updates.GetState()).catch(() => {});
-          }
-
-          const serverMuted = Array.isArray(u.mutedUsers) ? u.mutedUsers : [];
-          entry.localMutedUsers = new Set(serverMuted.map(cleanMuteTarget).filter(Boolean));
-
-          entry.settings = {
-            afkEnabled: !!u.afkEnabled,
-            afkMessage: u.afkMessage || '',
-            afkCooldown: u.afkCooldown ?? 10,
-            muteEnabled: !!u.muteEnabled || serverMuted.length > 0,
-            mutedUsers: serverMuted,
-            antiTtlEnabled: !!u.antiTtlEnabled,
-            bot: u.bot || null,
-            // 👻 Ghost Mode
-            ghostMode: !!u.ghostMode,
-            ghostExcludeList: Array.isArray(u.ghostExcludeList) ? u.ghostExcludeList : [],
-            // 🤖 AI Smart Reply
-            aiReplyEnabled: !!u.aiReplyEnabled,
-            aiProvider: u.aiProvider || 'gemini',
-            aiApiKey: u.aiApiKey || '',
-            aiSystemPrompt: u.aiSystemPrompt || '',
-            aiContext: u.aiContext || '',
-            aiMaxReplies: u.aiMaxReplies ?? 3,
-            aiCooldown: u.aiCooldown ?? 5
-          };
-          resolveMutedUsernames(entry);
-
-          // همگام‌سازی دوره‌ای دیالوگ‌های خصوصی با ورکر کلادفلر (هر ۱ ساعت یکبار و همچنین هنگام درخواست فوری در ربات)
-          const nowTs = Date.now();
-          if (entry.client && isClientConnected(entry) && (!entry.lastDialogSync || (nowTs - entry.lastDialogSync > 3600000))) {
-            entry.lastDialogSync = nowTs;
-            fetchUserPrivateDialogs(entry.client, entry).then(dlgs => {
-              if (dlgs.length > 0) syncDialogsToCloudflare(u.username, dlgs);
-            }).catch(() => {});
-          }
-        }
-      }
-    } catch (_) {}
-  }, 35000);
-
-  // پردازش بلادرنگ و تطبیقی دستورات ربات تلگرام (Adaptive Polling: 1.5s هنگام فعالیت، 6s تا 12s در زمان بیکاری - صرفه‌جویی ۷۵٪ ریکوئست ورکر)
+  // پردازش بلادرنگ و تطبیقی دستورات ربات تلگرام (Adaptive Polling با صرفه‌جویی ۸۰٪ سهمیه ورکر)
   let botPollTimeout = null;
   let consecutiveIdlePolls = 0;
   async function runAdaptiveBotPoll() {
@@ -3226,11 +3236,11 @@ async function main() {
       } else {
         consecutiveIdlePolls++;
       }
-      // تنظیم هوشمند وقفه: در زمان بیکاری به مرور تا ۱۲ ثانیه افزایش می‌یابد تا سهمیه ریکوئست‌های ورکر مصرف نشود
-      const nextDelay = (actionCount > 0) ? 1500 : (consecutiveIdlePolls < 4 ? 6000 : 12000);
+      // در زمان فعالیت ۱.۵ ثانیه، در بیکاری کوتاه‌مدت ۶ ثانیه، و در بیکاری طولانی ۱۵ تا ۲۵ ثانیه
+      const nextDelay = (actionCount > 0) ? 1500 : (consecutiveIdlePolls < 4 ? 6000 : (consecutiveIdlePolls < 12 ? 15000 : 25000));
       botPollTimeout = setTimeout(runAdaptiveBotPoll, nextDelay);
     } catch (_) {
-      botPollTimeout = setTimeout(runAdaptiveBotPoll, 12000);
+      botPollTimeout = setTimeout(runAdaptiveBotPoll, 25000);
     }
   }
   runAdaptiveBotPoll();
@@ -3247,7 +3257,7 @@ async function main() {
 
     if (remainingTime <= 0) {
       console.log('🏁 Duration reached. Cleaning up and exiting...');
-      clearInterval(settingsSyncInterval);
+      // settingsSyncInterval removed (integrated into minute cycle)
       if (botPollTimeout) clearTimeout(botPollTimeout);
       await pool.disconnectAll();
       break;
@@ -3266,6 +3276,7 @@ async function main() {
     // ۲. پیش‌بارگذاری لیست کاربران و بررسی سوکت‌ها ۲ ثانیه قبل از دقیقه
     try {
       cachedUsers = await fetchActiveUsers();
+      await syncUserSettings(cachedUsers);
       await pool.cleanupStale(cachedUsers.map(u => u.username));
       
       // اطمینان از متصل بودن سوکت تمام کاربران
