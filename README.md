@@ -1,5 +1,7 @@
 <div align="center">
 
+[🇮🇷 فارسی](README.md) &nbsp; | &nbsp; [🇬🇧 English](README.en.md)
+
 <br>
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c3aed,50:6366f1,100:0ea5e9&height=220&section=header&text=⚡%20Arizo%20Telegram%20Self%20Manager&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=32&desc=Next-Gen%20Edge%20Selfbot%2C%202FA%20Security%2C%20Ghost%20Mode%2C%20AI%20Assistant%20%26%20Logger%20Studio&descSize=16&descAlignY=52&descAlign=50" width="100%"/>
